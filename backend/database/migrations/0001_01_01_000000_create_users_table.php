@@ -17,8 +17,16 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('phone')->nullable();
+            // 'admin' is the only elevated role — being an "owner" is implicit
+            // (you own at least one row in the properties table), not a role.
+            $table->string('role')->default('user');
+            $table->string('status')->default('active');
+            // Reserved for a future owner-verification (KYC) step. Not enforced yet.
+            $table->timestamp('owner_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
