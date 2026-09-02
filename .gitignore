@@ -1,0 +1,14 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Frontend (added in Phase 14)
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# Setup archives (temporary, used while syncing files into this folder)
+_setup/
