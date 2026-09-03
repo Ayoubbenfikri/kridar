@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Repositories\Contracts\PropertyRepositoryInterface;
+use App\Repositories\Eloquent\EloquentPropertyRepository;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -9,16 +11,14 @@ use Illuminate\Support\ServiceProvider;
  * Eloquent implementation (app/Repositories/Eloquent).
  *
  * Why this exists: Services depend on the interface, never on the
- * concrete Eloquent class. That means AvailabilityService, for example,
- * can be unit-tested with a fake repository instead of hitting a real
- * database — and swapping the data source later never touches the
+ * concrete Eloquent class. That means PropertyService, for example, can
+ * be unit-tested with a fake repository instead of hitting a real
+ * database, and swapping the data source later never touches the
  * Services or Controllers.
  *
- * Phase 3 (migrations, models, factories, seeders) starts filling this
- * array in, one repository at a time:
+ * Filled in one repository at a time as each feature phase needs it:
  *
- *   PropertyRepositoryInterface::class => EloquentPropertyRepository::class,
- *   ReservationRepositoryInterface::class => EloquentReservationRepository::class,
+ *   ReservationRepositoryInterface::class => EloquentReservationRepository::class, (Phase 8)
  */
 class RepositoryServiceProvider extends ServiceProvider
 {
@@ -26,7 +26,7 @@ class RepositoryServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     public array $bindings = [
-        //
+        PropertyRepositoryInterface::class => EloquentPropertyRepository::class,
     ];
 
     public function register(): void
