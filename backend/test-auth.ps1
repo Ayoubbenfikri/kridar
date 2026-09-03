@@ -9,18 +9,29 @@ HOW TO RUN:
   2. In another terminal, from the backend/ folder:
        powershell -ExecutionPolicy Bypass -File .\test-auth.ps1
 
-Why not plain curl: Sanctum's SPA auth needs a CSRF token read from a cookie
-and echoed back as a header on every write request (POST/PUT/DELETE). The
-Get-XsrfToken helper below does that automatically, the same way axios would
-in the real React app later.
+Why the extra headers: Sanctum only treats a request as coming from the
+frontend SPA (and therefore applies session + CSRF handling) when the
+Origin/Referer header matches an entry in SANCTUM_STATEFUL_DOMAINS. A real
+browser sends this automatically; PowerShell/curl do not, so this script
+sets it manually to http://localhost:5173 (the configured frontend origin)
+to simulate what the real React app will do later.
+
+Why not plain curl: Sanctum's SPA auth also needs a CSRF token read from a
+cookie and echoed back as a header on every write request (POST/PUT/DELETE).
+The Get-XsrfToken helper below does that automatically.
 #>
 
 $base = "http://localhost:8000"
+$frontendOrigin = "http://localhost:5173"
 $email = "test-$(Get-Random -Maximum 99999)@example.com"
 $password = "password123"
 
 function Get-XsrfToken {
     $cookie = $session.Cookies.GetCookies($base) | Where-Object { $_.Name -eq "XSRF-TOKEN" }
+    if (-not $cookie) {
+        Write-Host "WARNING: no XSRF-TOKEN cookie found in session yet." -ForegroundColor Yellow
+        return ""
+    }
     return [System.Net.WebUtility]::UrlDecode($cookie.Value)
 }
 
@@ -30,10 +41,46 @@ function Show-Step {
     Write-Host "=== $Title ===" -ForegroundColor Cyan
 }
 
+function Show-Error {
+    param($ErrorRecord)
+    Write-Host "FAILED" -ForegroundColor Red
+    Write-Host ("Exception type: " + $ErrorRecord.Exception.GetType().FullName)
+    Write-Host ("Exception message: " + $ErrorRecord.Exception.Message)
+
+    if ($ErrorRecord.ErrorDetails -and $ErrorRecord.ErrorDetails.Message) {
+        Write-Host "Response body:"
+        Write-Host $ErrorRecord.ErrorDetails.Message
+    } elseif ($ErrorRecord.Exception.Response) {
+        try {
+            $stream = $ErrorRecord.Exception.Response.GetResponseStream()
+            $reader = New-Object System.IO.StreamReader($stream)
+            $bodyText = $reader.ReadToEnd()
+            Write-Host "Response body (read manually):"
+            Write-Host $bodyText
+        } catch {
+            Write-Host "(could not read response body)"
+        }
+    } else {
+        Write-Host "(no response object at all - likely could not reach the server, or PowerShell version mismatch)"
+    }
+}
+
+$commonHeaders = @{
+    "Accept" = "application/json"
+    "Origin" = $frontendOrigin
+    "Referer" = "$frontendOrigin/"
+}
+
 # 0. Prime the session + CSRF cookie
 Show-Step "0. GET /sanctum/csrf-cookie"
-Invoke-WebRequest -Uri "$base/sanctum/csrf-cookie" -SessionVariable session | Out-Null
-Write-Host "Session cookie jar initialized."
+try {
+    Invoke-WebRequest -Uri "$base/sanctum/csrf-cookie" -Headers $commonHeaders -SessionVariable session -UseBasicParsing | Out-Null
+    Write-Host "Session cookie jar initialized."
+    $token = Get-XsrfToken
+    Write-Host ("XSRF token captured: " + [bool]$token)
+} catch {
+    Show-Error $_
+}
 
 # 1. Register
 Show-Step "1. POST /api/v1/auth/register ($email)"
@@ -45,19 +92,20 @@ $registerBody = @{
 } | ConvertTo-Json
 
 try {
+    $headers1 = $commonHeaders.Clone()
+    $headers1["X-XSRF-TOKEN"] = Get-XsrfToken
     $registerParams = @{
         Uri = "$base/api/v1/auth/register"
         Method = "Post"
         WebSession = $session
-        Headers = @{ "X-XSRF-TOKEN" = (Get-XsrfToken); "Accept" = "application/json" }
+        Headers = $headers1
         ContentType = "application/json"
         Body = $registerBody
     }
     $register = Invoke-RestMethod @registerParams
     $register | ConvertTo-Json -Depth 5
 } catch {
-    Write-Host "FAILED:" -ForegroundColor Red
-    Write-Host $_.ErrorDetails.Message
+    Show-Error $_
 }
 
 # 2. Me (should already be logged in - register() auto-logs in)
@@ -66,13 +114,12 @@ try {
     $meParams = @{
         Uri = "$base/api/v1/auth/me"
         WebSession = $session
-        Headers = @{ "Accept" = "application/json" }
+        Headers = $commonHeaders
     }
     $me = Invoke-RestMethod @meParams
     $me | ConvertTo-Json -Depth 5
 } catch {
-    Write-Host "FAILED:" -ForegroundColor Red
-    Write-Host $_.ErrorDetails.Message
+    Show-Error $_
 }
 
 Write-Host ""
@@ -83,17 +130,18 @@ Write-Host ">>> See the bottom of this script for how to test that link." -Foreg
 # 3. Logout
 Show-Step "3. POST /api/v1/auth/logout"
 try {
+    $headers3 = $commonHeaders.Clone()
+    $headers3["X-XSRF-TOKEN"] = Get-XsrfToken
     $logoutParams = @{
         Uri = "$base/api/v1/auth/logout"
         Method = "Post"
         WebSession = $session
-        Headers = @{ "X-XSRF-TOKEN" = (Get-XsrfToken); "Accept" = "application/json" }
+        Headers = $headers3
     }
     $logout = Invoke-RestMethod @logoutParams
     $logout | ConvertTo-Json -Depth 5
 } catch {
-    Write-Host "FAILED:" -ForegroundColor Red
-    Write-Host $_.ErrorDetails.Message
+    Show-Error $_
 }
 
 # 4. Me while logged out (should fail with 401)
@@ -102,30 +150,35 @@ try {
     $meParams2 = @{
         Uri = "$base/api/v1/auth/me"
         WebSession = $session
-        Headers = @{ "Accept" = "application/json" }
+        Headers = $commonHeaders
     }
     Invoke-RestMethod @meParams2
 } catch {
-    Write-Host "Correctly rejected: $($_.Exception.Response.StatusCode.value__)" -ForegroundColor Green
+    if ($_.Exception.Response -and $_.Exception.Response.StatusCode.value__ -eq 401) {
+        Write-Host "Correctly rejected: 401" -ForegroundColor Green
+    } else {
+        Show-Error $_
+    }
 }
 
 # 5. Login again
 Show-Step "5. POST /api/v1/auth/login"
 $loginBody = @{ email = $email; password = $password } | ConvertTo-Json
 try {
+    $headers5 = $commonHeaders.Clone()
+    $headers5["X-XSRF-TOKEN"] = Get-XsrfToken
     $loginParams = @{
         Uri = "$base/api/v1/auth/login"
         Method = "Post"
         WebSession = $session
-        Headers = @{ "X-XSRF-TOKEN" = (Get-XsrfToken); "Accept" = "application/json" }
+        Headers = $headers5
         ContentType = "application/json"
         Body = $loginBody
     }
     $login = Invoke-RestMethod @loginParams
     $login | ConvertTo-Json -Depth 5
 } catch {
-    Write-Host "FAILED:" -ForegroundColor Red
-    Write-Host $_.ErrorDetails.Message
+    Show-Error $_
 }
 
 # 6. Me again (should work now)
@@ -134,13 +187,12 @@ try {
     $meParams3 = @{
         Uri = "$base/api/v1/auth/me"
         WebSession = $session
-        Headers = @{ "Accept" = "application/json" }
+        Headers = $commonHeaders
     }
     $me2 = Invoke-RestMethod @meParams3
     $me2 | ConvertTo-Json -Depth 5
 } catch {
-    Write-Host "FAILED:" -ForegroundColor Red
-    Write-Host $_.ErrorDetails.Message
+    Show-Error $_
 }
 
 Write-Host ""
