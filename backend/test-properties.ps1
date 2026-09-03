@@ -180,13 +180,13 @@ try {
 Show-Step "6. GET /api/v1/properties (should now include it)"
 try {
     $index2 = Invoke-Api -Method Get -Path "/api/v1/properties" -NoAuth
-    Write-Host "Raw response:"
-    Write-Host ($index2 | ConvertTo-Json -Depth 10)
     $found2 = $index2.data | Where-Object { $_.id -eq $propertyId }
     if ($found2) {
         Write-Host "Correct: published property appears in the public index." -ForegroundColor Green
     } else {
         Write-Host "UNEXPECTED: published property is missing from the index!" -ForegroundColor Red
+        Write-Host "Raw response:"
+        Write-Host ($index2 | ConvertTo-Json -Depth 10)
     }
 } catch {
     Show-Error $_

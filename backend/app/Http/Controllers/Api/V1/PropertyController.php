@@ -25,9 +25,12 @@ class PropertyController extends Controller
     {
         $perPage = min((int) $request->integer('per_page', 15), 50);
 
-        return response()->json(
-            PropertyResource::collection($this->properties->listPublished($perPage))
-        );
+        // ->response() (not response()->json()) so Laravel wraps the
+        // paginated collection in the standard {"data": [...], "links":
+        // {...}, "meta": {...}} envelope. Passing the collection straight
+        // to response()->json() skips that wrapping entirely.
+        return PropertyResource::collection($this->properties->listPublished($perPage))
+            ->response();
     }
 
     /**
