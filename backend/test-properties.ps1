@@ -97,13 +97,16 @@ if (-not (Test-Path $logPath)) {
 } else {
     $raw = Get-Content -Raw $logPath
     # Undo quoted-printable soft line breaks / encoded '=' that Laravel's
-    # log mail driver may introduce so the URL isn't split across lines.
-    $decoded = $raw -replace "=\r?\n", "" -replace "=3D", "="
+    # log mail driver may introduce so the URL isn't split across lines,
+    # and undo HTML-entity escaping ('&amp;' -> '&') from the HTML part of
+    # the email so the query string (expires/signature) is reconstructed
+    # correctly - otherwise the signature check fails with 403.
+    $decoded = $raw -replace "=\r?\n", "" -replace "=3D", "=" -replace "&amp;", "&"
     $urlMatches = [regex]::Matches($decoded, 'https?://[^\s"<]+/api/v1/auth/email/verify/[^\s"<]+')
     if ($urlMatches.Count -eq 0) {
         Write-Host "Could not find a verification link in the log." -ForegroundColor Yellow
     } else {
-        $verifyUrl = $urlMatches[$urlMatches.Count - 1].Value.TrimEnd('.', ',', ')')
+        $verifyUrl = $urlMatches[0].Value.TrimEnd('.', ',', ')')
         try {
             $verify = Invoke-RestMethod -Uri $verifyUrl -WebSession $session -Headers $commonHeaders
             Write-Host ($verify | ConvertTo-Json -Depth 5)
