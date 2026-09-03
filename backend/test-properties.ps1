@@ -167,10 +167,21 @@ try {
     Show-Error $_
 }
 
+# 5b. Debug: fetch the property directly (authenticated) to see its real DB state
+Show-Step "5b. GET /api/v1/properties/$propertyId (authenticated, debug)"
+try {
+    $direct = Invoke-Api -Method Get -Path "/api/v1/properties/$propertyId"
+    Write-Host ($direct | ConvertTo-Json -Depth 10)
+} catch {
+    Show-Error $_
+}
+
 # 6. Public index SHOULD show it now
 Show-Step "6. GET /api/v1/properties (should now include it)"
 try {
     $index2 = Invoke-Api -Method Get -Path "/api/v1/properties" -NoAuth
+    Write-Host "Raw response:"
+    Write-Host ($index2 | ConvertTo-Json -Depth 10)
     $found2 = $index2.data | Where-Object { $_.id -eq $propertyId }
     if ($found2) {
         Write-Host "Correct: published property appears in the public index." -ForegroundColor Green
