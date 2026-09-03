@@ -27,7 +27,7 @@ Route::prefix('v1')->group(function () {
         ]);
     });
 
-    // require __DIR__.'/api/auth.php';         // added in Phase 4
+    require __DIR__.'/api/auth.php';
     // require __DIR__.'/api/properties.php';    // added in Phase 5
     // require __DIR__.'/api/reservations.php';  // added in Phase 8
     // require __DIR__.'/api/reviews.php';       // added in Phase 9
