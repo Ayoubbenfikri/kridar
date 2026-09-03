@@ -102,11 +102,17 @@ if (-not (Test-Path $logPath)) {
     # the email so the query string (expires/signature) is reconstructed
     # correctly - otherwise the signature check fails with 403.
     $decoded = $raw -replace "=\r?\n", "" -replace "=3D", "=" -replace "&amp;", "&"
-    $urlMatches = [regex]::Matches($decoded, 'https?://[^\s"<]+/api/v1/auth/email/verify/[^\s"<]+')
+    # The log file accumulates every past run's verification links, so we
+    # must only match links for the user we JUST registered (by id) -
+    # otherwise we'd grab a stale link for a different user and the
+    # EmailVerificationRequest id check would fail with 403.
+    $userId = $reg.user.id
+    $pattern = 'https?://[^\s"<]+/api/v1/auth/email/verify/' + $userId + '/[^\s"<]+'
+    $urlMatches = [regex]::Matches($decoded, $pattern)
     if ($urlMatches.Count -eq 0) {
-        Write-Host "Could not find a verification link in the log." -ForegroundColor Yellow
+        Write-Host "Could not find a verification link for user id $userId in the log." -ForegroundColor Yellow
     } else {
-        $verifyUrl = $urlMatches[0].Value.TrimEnd('.', ',', ')')
+        $verifyUrl = $urlMatches[$urlMatches.Count - 1].Value.TrimEnd('.', ',', ')')
         try {
             $verify = Invoke-RestMethod -Uri $verifyUrl -WebSession $session -Headers $commonHeaders
             Write-Host ($verify | ConvertTo-Json -Depth 5)
