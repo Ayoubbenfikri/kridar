@@ -29,7 +29,7 @@ Route::prefix('v1')->group(function () {
 
     require __DIR__.'/api/auth.php';
     require __DIR__.'/api/properties.php';
-    // require __DIR__.'/api/reservations.php';  // added in Phase 8
+    require __DIR__.'/api/reservations.php';
     // require __DIR__.'/api/reviews.php';       // added in Phase 9
     // require __DIR__.'/api/favorites.php';     // added in Phase 10
     // require __DIR__.'/api/notifications.php'; // added in Phase 11

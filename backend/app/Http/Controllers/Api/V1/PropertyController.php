@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Property\AvailabilityRequest;
 use App\Http\Requests\Property\PropertySearchRequest;
 use App\Http\Requests\Property\StorePropertyRequest;
 use App\Http\Requests\Property\UpdatePropertyRequest;
 use App\Http\Resources\PropertyResource;
 use App\Models\Property;
+use App\Services\AvailabilityService;
 use App\Services\PropertyService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,6 +19,7 @@ class PropertyController extends Controller
 {
     public function __construct(
         private readonly PropertyService $properties,
+        private readonly AvailabilityService $availability,
     ) {}
 
     /**
@@ -105,5 +109,22 @@ class PropertyController extends Controller
             'message' => 'Property moved back to draft.',
             'property' => new PropertyResource($property->load('owner:id,name')),
         ]);
+    }
+
+    /**
+     * GET /properties/{property}/availability?start=YYYY-MM-DD&end=YYYY-MM-DD
+     * Public — returns the booked/blocked date ranges in the window so
+     * the frontend can grey out a calendar. Read-only: whether a
+     * specific pair of dates can actually be booked is only guaranteed
+     * at the moment of POST /reservations (inside its locked transaction).
+     */
+    public function availability(AvailabilityRequest $request, Property $property): JsonResponse
+    {
+        $start = Carbon::parse($request->validated('start'))->startOfDay();
+        $end = Carbon::parse($request->validated('end'))->startOfDay();
+
+        return response()->json(
+            $this->availability->getUnavailableRanges($property, $start, $end)
+        );
     }
 }

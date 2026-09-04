@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/properties', [PropertyController::class, 'index']);
 Route::get('/properties/{property}', [PropertyController::class, 'show']);
+Route::get('/properties/{property}/availability', [PropertyController::class, 'availability']);
 
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('/properties', [PropertyController::class, 'store']);

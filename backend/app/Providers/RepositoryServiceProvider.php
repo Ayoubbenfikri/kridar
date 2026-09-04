@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Repositories\Contracts\PropertyRepositoryInterface;
+use App\Repositories\Contracts\ReservationRepositoryInterface;
 use App\Repositories\Eloquent\EloquentPropertyRepository;
+use App\Repositories\Eloquent\EloquentReservationRepository;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -13,12 +15,8 @@ use Illuminate\Support\ServiceProvider;
  * Why this exists: Services depend on the interface, never on the
  * concrete Eloquent class. That means PropertyService, for example, can
  * be unit-tested with a fake repository instead of hitting a real
- * database, and swapping the data source later never touches the
+ * database — and swapping the data source later never touches the
  * Services or Controllers.
- *
- * Filled in one repository at a time as each feature phase needs it:
- *
- *   ReservationRepositoryInterface::class => EloquentReservationRepository::class, (Phase 8)
  */
 class RepositoryServiceProvider extends ServiceProvider
 {
@@ -27,6 +25,7 @@ class RepositoryServiceProvider extends ServiceProvider
      */
     public array $bindings = [
         PropertyRepositoryInterface::class => EloquentPropertyRepository::class,
+        ReservationRepositoryInterface::class => EloquentReservationRepository::class,
     ];
 
     public function register(): void
