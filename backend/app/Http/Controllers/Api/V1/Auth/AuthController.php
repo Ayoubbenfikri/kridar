@@ -29,11 +29,14 @@ class AuthController extends Controller
             'status' => UserStatus::Active,
         ]);
 
-        // Sends Laravel's built-in VerifyEmail notification. MAIL_MAILER=log
-        // in .env, so during development the email (with its verify link)
-        // is written to storage/logs/laravel.log instead of actually sent.
-        $user->sendEmailVerificationNotification();
-
+        // Firing this event is enough to send the verification email —
+        // Laravel's built-in SendEmailVerificationNotification listener is
+        // wired to the Registered event automatically (no manual
+        // registration needed). Calling $user->sendEmailVerificationNotification()
+        // here too would send the email TWICE per registration.
+        // MAIL_MAILER=log in .env, so during development the email (with
+        // its verify link) is written to storage/logs/laravel.log instead
+        // of actually sent.
         event(new Registered($user));
 
         Auth::login($user);
