@@ -4,7 +4,9 @@ namespace App\Repositories\Eloquent;
 
 use App\Enums\PropertyStatus;
 use App\Models\Property;
+use App\Models\PropertyImage;
 use App\Repositories\Contracts\PropertyRepositoryInterface;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class EloquentPropertyRepository implements PropertyRepositoryInterface
@@ -54,5 +56,15 @@ class EloquentPropertyRepository implements PropertyRepositoryInterface
     public function syncAmenities(Property $property, array $amenityIds): void
     {
         $property->amenities()->sync($amenityIds);
+    }
+
+    public function createImages(Property $property, array $rows): Collection
+    {
+        return $property->images()->createMany($rows);
+    }
+
+    public function deleteImage(PropertyImage $image): bool
+    {
+        return (bool) $image->delete();
     }
 }

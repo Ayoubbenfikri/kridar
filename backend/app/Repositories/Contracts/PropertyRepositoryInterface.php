@@ -3,6 +3,8 @@
 namespace App\Repositories\Contracts;
 
 use App\Models\Property;
+use App\Models\PropertyImage;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 interface PropertyRepositoryInterface
@@ -27,4 +29,15 @@ interface PropertyRepositoryInterface
     public function slugExists(string $slug, ?int $ignoreId = null): bool;
 
     public function syncAmenities(Property $property, array $amenityIds): void;
+
+    /**
+     * Bulk-insert image rows for a property. Each row must already contain
+     * 'path', 'is_cover' and 'sort_order'.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return Collection<int, PropertyImage>
+     */
+    public function createImages(Property $property, array $rows): Collection;
+
+    public function deleteImage(PropertyImage $image): bool;
 }

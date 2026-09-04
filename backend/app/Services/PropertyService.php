@@ -44,7 +44,7 @@ class PropertyService
             $this->properties->syncAmenities($property, $amenityIds);
         }
 
-        return $property->load('amenities');
+        return $property->load(['amenities', 'images']);
     }
 
     /**
@@ -68,7 +68,7 @@ class PropertyService
             $this->properties->syncAmenities($property, $amenityIds);
         }
 
-        return $property->load('amenities');
+        return $property->load(['amenities', 'images']);
     }
 
     public function delete(Property $property): bool

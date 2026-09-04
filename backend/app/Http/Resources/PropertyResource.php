@@ -45,6 +45,7 @@ class PropertyResource extends JsonResource
 
             'owner' => new UserResource($this->whenLoaded('owner')),
             'amenities' => AmenityResource::collection($this->whenLoaded('amenities')),
+            'images' => PropertyImageResource::collection($this->whenLoaded('images')),
 
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

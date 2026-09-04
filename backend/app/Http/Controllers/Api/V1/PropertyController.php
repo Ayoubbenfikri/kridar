@@ -42,7 +42,7 @@ class PropertyController extends Controller
         $this->authorize('view', $property);
 
         return response()->json([
-            'property' => new PropertyResource($property->load(['owner:id,name', 'amenities'])),
+            'property' => new PropertyResource($property->load(['owner:id,name', 'amenities', 'images'])),
         ]);
     }
 
@@ -67,7 +67,7 @@ class PropertyController extends Controller
         $property = $this->properties->update($property, $request->validated());
 
         return response()->json([
-            'property' => new PropertyResource($property->load(['owner:id,name', 'amenities'])),
+            'property' => new PropertyResource($property->load(['owner:id,name', 'amenities', 'images'])),
         ]);
     }
 
