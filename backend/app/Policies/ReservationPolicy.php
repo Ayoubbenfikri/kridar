@@ -40,4 +40,12 @@ class ReservationPolicy
     {
         return $user->id === $reservation->property->owner_id || $user->isAdmin();
     }
+
+    /**
+     * Only the guest who made the reservation can pay for it.
+     */
+    public function initiatePayment(User $user, Reservation $reservation): bool
+    {
+        return $user->id === $reservation->guest_id;
+    }
 }
