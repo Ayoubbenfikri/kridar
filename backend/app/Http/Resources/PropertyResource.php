@@ -43,6 +43,13 @@ class PropertyResource extends JsonResource
             'is_featured' => $this->is_featured,
             'published_at' => $this->published_at,
 
+            // Only populated when the query added withAvg/withCount (see
+            // EloquentPropertyRepository::paginatePublished() and
+            // PropertyController::show()) — null/0 elsewhere rather than
+            // an error, since these are plain magic attributes.
+            'average_rating' => $this->reviews_avg_rating !== null ? round((float) $this->reviews_avg_rating, 1) : null,
+            'reviews_count' => $this->reviews_count ?? 0,
+
             'owner' => new UserResource($this->whenLoaded('owner')),
             'amenities' => AmenityResource::collection($this->whenLoaded('amenities')),
             'images' => PropertyImageResource::collection($this->whenLoaded('images')),

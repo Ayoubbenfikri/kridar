@@ -75,6 +75,8 @@ class EloquentPropertyRepository implements PropertyRepositoryInterface
                 // strict Builder type-hint throws a TypeError.
                 'images' => fn ($query) => $query->where('is_cover', true),
             ])
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
             ->latest('published_at')
             ->paginate($perPage);
     }

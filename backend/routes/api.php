@@ -31,7 +31,7 @@ Route::prefix('v1')->group(function () {
     require __DIR__.'/api/properties.php';
     require __DIR__.'/api/reservations.php';
     require __DIR__.'/api/payments.php';
-    // require __DIR__.'/api/reviews.php';       // added in Phase 9
+    require __DIR__.'/api/reviews.php';
     // require __DIR__.'/api/favorites.php';     // added in Phase 10
     // require __DIR__.'/api/notifications.php'; // added in Phase 11
     // require __DIR__.'/api/owner.php';         // added in Phase 12

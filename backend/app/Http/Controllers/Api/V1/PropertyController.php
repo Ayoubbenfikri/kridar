@@ -48,8 +48,12 @@ class PropertyController extends Controller
     {
         $this->authorize('view', $property);
 
+        $property->load(['owner:id,name', 'amenities', 'images']);
+        $property->loadAvg('reviews', 'rating');
+        $property->loadCount('reviews');
+
         return response()->json([
-            'property' => new PropertyResource($property->load(['owner:id,name', 'amenities', 'images'])),
+            'property' => new PropertyResource($property),
         ]);
     }
 
