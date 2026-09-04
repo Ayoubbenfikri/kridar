@@ -64,7 +64,13 @@ class EloquentPropertyRepository implements PropertyRepositoryInterface
                     $query->whereHas('amenities', fn (Builder $sub) => $sub->where('amenities.id', $amenityId));
                 }
             })
-            ->with(['owner:id,name'])
+            ->with([
+                'owner:id,name',
+                // Only the cover image, not the full gallery — list cards
+                // just need one thumbnail. The full gallery is loaded
+                // separately in show() for the property details page.
+                'images' => fn (Builder $query) => $query->where('is_cover', true),
+            ])
             ->latest('published_at')
             ->paginate($perPage);
     }

@@ -10,7 +10,7 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -96,17 +96,35 @@ class AuthController extends Controller
     }
 
     /**
-     * Hit from the link inside the verification email. EmailVerificationRequest
-     * (built into Laravel) already checks the signed URL and the id/hash
-     * match before this method runs.
+     * Hit from the link inside the verification email — no auth:sanctum
+     * (see routes/api/auth.php), so we can't rely on $request->user().
+     * The 'signed' middleware already guarantees the URL (id + hash)
+     * wasn't tampered with since Laravel generated it; the hash_equals
+     * check below confirms that hash really matches this user's email
+     * (same check Laravel's built-in EmailVerificationRequest does).
      */
-    public function verifyEmail(EmailVerificationRequest $request): JsonResponse
+    public function verifyEmail(Request $request, int $id, string $hash): JsonResponse
     {
-        if ($request->user()->hasVerifiedEmail()) {
+        $user = User::findOrFail($id);
+
+        if (! hash_equals(sha1($user->getEmailForVerification()), $hash)) {
+            abort(403, 'Invalid verification link.');
+        }
+
+        if ($user->hasVerifiedEmail()) {
             return response()->json(['message' => 'Email already verified.']);
         }
 
-        $request->fulfill(); // marks email_verified_at + fires Verified event
+        $user->markEmailAsVerified();
+        event(new Verified($user));
+
+        // Whoever clicked the link is now logged in as this user, in
+        // whatever browser they clicked it in — reasonable UX (verify
+        // and land signed in), and it's also why the PowerShell test
+        // scripts keep working: they call authenticated endpoints right
+        // after hitting this route.
+        Auth::login($user);
+        $request->session()->regenerate();
 
         return response()->json(['message' => 'Email verified successfully.']);
     }
