@@ -69,7 +69,11 @@ class EloquentPropertyRepository implements PropertyRepositoryInterface
                 // Only the cover image, not the full gallery — list cards
                 // just need one thumbnail. The full gallery is loaded
                 // separately in show() for the property details page.
-                'images' => fn (Builder $query) => $query->where('is_cover', true),
+                // No Builder type-hint here on purpose: eager-load
+                // constraint closures for a hasMany relation receive a
+                // Relations\HasMany instance, not a plain Builder — a
+                // strict Builder type-hint throws a TypeError.
+                'images' => fn ($query) => $query->where('is_cover', true),
             ])
             ->latest('published_at')
             ->paginate($perPage);
