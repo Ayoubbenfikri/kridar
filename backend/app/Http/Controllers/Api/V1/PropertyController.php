@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Property\PropertySearchRequest;
 use App\Http\Requests\Property\StorePropertyRequest;
 use App\Http\Requests\Property\UpdatePropertyRequest;
 use App\Http\Resources\PropertyResource;
@@ -18,18 +19,20 @@ class PropertyController extends Controller
     ) {}
 
     /**
-     * GET /properties — public, published listings only.
-     * Plain pagination for now; search/filters are built in Phase 7.
+     * GET /properties — public, published listings only. Every filter in
+     * PropertySearchRequest is optional, so this also serves the plain
+     * "newest first, no filters" listing from Phase 5.
      */
-    public function index(Request $request): JsonResponse
+    public function index(PropertySearchRequest $request): JsonResponse
     {
-        $perPage = min((int) $request->integer('per_page', 15), 50);
+        $filters = $request->safe()->except('per_page');
+        $perPage = (int) ($request->validated('per_page') ?? 15);
 
         // ->response() (not response()->json()) so Laravel wraps the
         // paginated collection in the standard {"data": [...], "links":
         // {...}, "meta": {...}} envelope. Passing the collection straight
         // to response()->json() skips that wrapping entirely.
-        return PropertyResource::collection($this->properties->listPublished($perPage))
+        return PropertyResource::collection($this->properties->listPublished($filters, $perPage))
             ->response();
     }
 

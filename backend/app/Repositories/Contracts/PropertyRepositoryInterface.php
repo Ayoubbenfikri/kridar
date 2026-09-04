@@ -10,9 +10,14 @@ use Illuminate\Pagination\LengthAwarePaginator;
 interface PropertyRepositoryInterface
 {
     /**
-     * Published properties only, newest first — what the public listing shows.
+     * Published properties only, newest first, narrowed by whichever
+     * filters are present (see PropertySearchRequest for the accepted
+     * keys). Every filter is optional — an empty array behaves exactly
+     * like the unfiltered Phase 5 listing.
+     *
+     * @param  array<string, mixed>  $filters
      */
-    public function paginatePublished(int $perPage = 15): LengthAwarePaginator;
+    public function paginatePublished(array $filters = [], int $perPage = 15): LengthAwarePaginator;
 
     /**
      * All properties owned by a given user, any status — for the owner's

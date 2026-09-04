@@ -15,9 +15,12 @@ class PropertyService
         private readonly PropertyRepositoryInterface $properties,
     ) {}
 
-    public function listPublished(int $perPage = 15): LengthAwarePaginator
+    /**
+     * @param  array<string, mixed>  $filters  validated PropertySearchRequest data
+     */
+    public function listPublished(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        return $this->properties->paginatePublished($perPage);
+        return $this->properties->paginatePublished($filters, $perPage);
     }
 
     public function listForOwner(User $owner, int $perPage = 15): LengthAwarePaginator
