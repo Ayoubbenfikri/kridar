@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand tokens - fresh palette for this rebuild (not the old Sprint F1 one) */
+  --color-brand-50: #eef4ff;
+  --color-brand-100: #d9e6ff;
+  --color-brand-200: #b3ccff;
+  --color-brand-300: #80a8ff;
+  --color-brand-400: #4d7fff;
+  --color-brand-500: #2657f2;
+  --color-brand-600: #1c40c4;
+  --color-brand-700: #172f92;
+  --color-brand-800: #14266f;
+  --color-brand-900: #0f1c52;
+
+  --font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--color-brand-900);
+  background: #fafafa;
+}
