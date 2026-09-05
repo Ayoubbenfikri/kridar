@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/features/auth/useAuth'
+import NotificationBell from '@/components/notifications/NotificationBell'
 
 export default function Navbar() {
   const { user, isAuthenticated, isLoadingUser, logout } = useAuth()
@@ -19,6 +20,7 @@ export default function Navbar() {
         <nav className="flex items-center gap-4 text-sm">
           {isLoadingUser ? null : isAuthenticated ? (
             <>
+              <NotificationBell />
               <Link to="/favorites" className="text-gray-600 hover:text-brand-700">
                 Mes favoris
               </Link>

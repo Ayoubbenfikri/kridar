@@ -9,6 +9,7 @@ import PropertyDetailsPage from '@/pages/PropertyDetailsPage'
 import LeaveReviewPage from '@/pages/LeaveReviewPage'
 import OwnerReplyPage from '@/pages/OwnerReplyPage'
 import FavoritesPage from '@/pages/FavoritesPage'
+import NotificationsPage from '@/pages/NotificationsPage'
 
 /**
  * Route definitions. AppLayout wraps every page with the Navbar + the
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
           { path: 'reservations/:reservationId/review', element: <LeaveReviewPage /> },
           { path: 'reviews/:reviewId/reply', element: <OwnerReplyPage /> },
           { path: 'favorites', element: <FavoritesPage /> },
+          { path: 'notifications', element: <NotificationsPage /> },
         ],
       },
     ],
