@@ -2,10 +2,12 @@
 
 namespace App\Providers;
 
+use App\Repositories\Contracts\FavoriteRepositoryInterface;
 use App\Repositories\Contracts\PaymentRepositoryInterface;
 use App\Repositories\Contracts\PropertyRepositoryInterface;
 use App\Repositories\Contracts\ReservationRepositoryInterface;
 use App\Repositories\Contracts\ReviewRepositoryInterface;
+use App\Repositories\Eloquent\EloquentFavoriteRepository;
 use App\Repositories\Eloquent\EloquentPaymentRepository;
 use App\Repositories\Eloquent\EloquentPropertyRepository;
 use App\Repositories\Eloquent\EloquentReservationRepository;
@@ -39,6 +41,7 @@ class RepositoryServiceProvider extends ServiceProvider
         ReservationRepositoryInterface::class => EloquentReservationRepository::class,
         PaymentRepositoryInterface::class => EloquentPaymentRepository::class,
         ReviewRepositoryInterface::class => EloquentReviewRepository::class,
+        FavoriteRepositoryInterface::class => EloquentFavoriteRepository::class,
         PaymentGatewayInterface::class => FakeCmiGateway::class, // TODO: swap for CmiGateway::class once real CMI credentials exist
     ];
 
