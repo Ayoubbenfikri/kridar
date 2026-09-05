@@ -91,7 +91,7 @@ class ReservationController extends Controller
     {
         $this->authorize('cancel', $reservation);
 
-        $reservation = $this->reservations->cancel($reservation, $request->input('reason'));
+        $reservation = $this->reservations->cancel($reservation, $request->user(), $request->input('reason'));
 
         return response()->json([
             'message' => 'Reservation cancelled.',

@@ -7,6 +7,8 @@ use App\Exceptions\ReviewNotAllowedException;
 use App\Models\Property;
 use App\Models\Reservation;
 use App\Models\Review;
+use App\Notifications\ReviewRepliedNotification;
+use App\Notifications\ReviewSubmittedNotification;
 use App\Repositories\Contracts\ReviewRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -36,13 +38,17 @@ class ReviewService
             throw new ReviewNotAllowedException('This reservation has already been reviewed.');
         }
 
-        return $this->reviews->create([
+        $review = $this->reviews->create([
             'reservation_id' => $reservation->id,
             'property_id' => $reservation->property_id,
             'guest_id' => $reservation->guest_id,
             'rating' => $data['rating'],
             'comment' => $data['comment'],
         ]);
+
+        $review->property->owner->notify(new ReviewSubmittedNotification($review));
+
+        return $review;
     }
 
     /**
@@ -54,9 +60,13 @@ class ReviewService
             throw new ReviewNotAllowedException('This review already has a reply.');
         }
 
-        return $this->reviews->update($review, [
+        $review = $this->reviews->update($review, [
             'owner_reply' => $data['owner_reply'],
             'owner_replied_at' => now(),
         ]);
+
+        $review->guest->notify(new ReviewRepliedNotification($review));
+
+        return $review;
     }
 }

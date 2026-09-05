@@ -9,6 +9,10 @@ use App\Exceptions\PropertyNotAvailableException;
 use App\Models\Property;
 use App\Models\Reservation;
 use App\Models\User;
+use App\Notifications\ReservationCancelledNotification;
+use App\Notifications\ReservationConfirmedNotification;
+use App\Notifications\ReservationRejectedNotification;
+use App\Notifications\ReservationRequestedNotification;
 use App\Repositories\Contracts\ReservationRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -27,7 +31,7 @@ class ReservationService
      */
     public function create(array $data, Property $property, User $guest): Reservation
     {
-        return DB::transaction(function () use ($data, $property, $guest) {
+        $reservation = DB::transaction(function () use ($data, $property, $guest) {
             // Row-lock the property for the rest of this transaction. If a
             // second request for overlapping dates is already waiting on
             // this same lock, it only proceeds (and re-checks
@@ -58,23 +62,41 @@ class ReservationService
                 'status' => ReservationStatus::Pending,
             ]);
         });
+
+        // Outside the transaction — a notification is a side effect, not
+        // part of the atomic booking write, and there's no need to hold
+        // the row lock open for it.
+        $reservation->property->owner->notify(new ReservationRequestedNotification($reservation));
+
+        return $reservation;
     }
 
     public function confirm(Reservation $reservation): Reservation
     {
         $this->ensureStatus($reservation, ReservationStatus::Pending, 'confirmed');
 
-        return $this->reservations->update($reservation, ['status' => ReservationStatus::Confirmed]);
+        $reservation = $this->reservations->update($reservation, ['status' => ReservationStatus::Confirmed]);
+        $reservation->guest->notify(new ReservationConfirmedNotification($reservation));
+
+        return $reservation;
     }
 
     public function reject(Reservation $reservation): Reservation
     {
         $this->ensureStatus($reservation, ReservationStatus::Pending, 'rejected');
 
-        return $this->reservations->update($reservation, ['status' => ReservationStatus::Rejected]);
+        $reservation = $this->reservations->update($reservation, ['status' => ReservationStatus::Rejected]);
+        $reservation->guest->notify(new ReservationRejectedNotification($reservation));
+
+        return $reservation;
     }
 
-    public function cancel(Reservation $reservation, ?string $reason = null): Reservation
+    /**
+     * @param  User  $actor  whoever is cancelling — either side can, per
+     *                       ReservationPolicy::cancel() — so we know who the
+     *                       "other party" to notify is.
+     */
+    public function cancel(Reservation $reservation, User $actor, ?string $reason = null): Reservation
     {
         if (! in_array($reservation->status, [ReservationStatus::Pending, ReservationStatus::Confirmed], true)) {
             throw new InvalidReservationStatusException(
@@ -82,11 +104,17 @@ class ReservationService
             );
         }
 
-        return $this->reservations->update($reservation, [
+        $reservation = $this->reservations->update($reservation, [
             'status' => ReservationStatus::Cancelled,
             'cancellation_reason' => $reason,
             'cancelled_at' => now(),
         ]);
+
+        $cancelledByGuest = $actor->id === $reservation->guest_id;
+        $recipient = $cancelledByGuest ? $reservation->property->owner : $reservation->guest;
+        $recipient->notify(new ReservationCancelledNotification($reservation, $cancelledByGuest));
+
+        return $reservation;
     }
 
     public function listForGuest(User $guest, int $perPage = 15): LengthAwarePaginator
