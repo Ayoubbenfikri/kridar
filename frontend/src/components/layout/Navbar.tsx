@@ -19,6 +19,9 @@ export default function Navbar() {
         <nav className="flex items-center gap-4 text-sm">
           {isLoadingUser ? null : isAuthenticated ? (
             <>
+              <Link to="/favorites" className="text-gray-600 hover:text-brand-700">
+                Mes favoris
+              </Link>
               <span className="text-gray-700">{user?.name}</span>
               <button
                 onClick={() => logout.mutate()}

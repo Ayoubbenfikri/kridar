@@ -3,6 +3,7 @@ import { useProperty } from '@/features/properties/useProperties'
 import { formatMad, primaryPrice } from '@/lib/formatPrice'
 import ReviewsSection from '@/components/reviews/ReviewsSection'
 import StarRating from '@/components/reviews/StarRating'
+import FavoriteButton from '@/components/properties/FavoriteButton'
 
 const PROPERTY_TYPE_LABELS: Record<string, string> = {
   apartment: 'Appartement',
@@ -51,11 +52,16 @@ export default function PropertyDetailsPage() {
         ← Retour aux propriétés
       </Link>
 
-      <h1 className="mt-2 text-3xl font-semibold text-brand-700">{property.title}</h1>
-      <p className="text-gray-500">
-        {property.address}, {property.city}
-        {property.region ? `, ${property.region}` : ''}
-      </p>
+      <div className="mt-2 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-semibold text-brand-700">{property.title}</h1>
+          <p className="text-gray-500">
+            {property.address}, {property.city}
+            {property.region ? `, ${property.region}` : ''}
+          </p>
+        </div>
+        <FavoriteButton propertyId={property.id} />
+      </div>
 
       {property.reviews_count > 0 && (
         <div className="mt-2 flex items-center gap-2">
