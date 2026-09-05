@@ -85,6 +85,13 @@ class EloquentPropertyRepository implements PropertyRepositoryInterface
     {
         return Property::query()
             ->where('owner_id', $ownerId)
+            // Same eager-loading as paginatePublished(), minus the owner
+            // relation - the owner already knows it's them.
+            ->with([
+                'images' => fn ($query) => $query->where('is_cover', true),
+            ])
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
             ->latest()
             ->paginate($perPage);
     }

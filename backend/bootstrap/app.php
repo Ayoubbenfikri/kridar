@@ -21,6 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [
             \Illuminate\Http\Middleware\HandleCors::class,
         ]);
+
+        // 'owner' gates the /owner/* dashboard routes (Phase 12) - see
+        // App\Http\Middleware\EnsureUserOwnsAProperty for what it checks.
+        $middleware->alias([
+            'owner' => \App\Http\Middleware\EnsureUserOwnsAProperty::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

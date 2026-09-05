@@ -28,4 +28,16 @@ class EloquentReservationRepository implements ReservationRepositoryInterface
             ->latest()
             ->paginate($perPage);
     }
+
+    public function paginateForOwner(int $ownerId, int $perPage = 15): LengthAwarePaginator
+    {
+        return Reservation::query()
+            ->whereHas('property', fn ($query) => $query->where('owner_id', $ownerId))
+            ->with([
+                'property:id,title,slug,city,price_per_night,price_per_month',
+                'guest:id,name',
+            ])
+            ->latest()
+            ->paginate($perPage);
+    }
 }
