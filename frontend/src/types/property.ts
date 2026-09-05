@@ -61,6 +61,11 @@ export interface Property {
   is_featured: boolean
   published_at: string | null
 
+  // Only populated when the backend query added withAvg/withCount
+  // (published listing + property details) - null/0 otherwise.
+  average_rating: number | null
+  reviews_count: number
+
   owner: PropertyOwner
   amenities: Amenity[]
   images: PropertyImage[]

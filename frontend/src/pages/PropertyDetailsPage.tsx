@@ -1,6 +1,8 @@
 import { Link, useParams } from 'react-router-dom'
 import { useProperty } from '@/features/properties/useProperties'
 import { formatMad, primaryPrice } from '@/lib/formatPrice'
+import ReviewsSection from '@/components/reviews/ReviewsSection'
+import StarRating from '@/components/reviews/StarRating'
 
 const PROPERTY_TYPE_LABELS: Record<string, string> = {
   apartment: 'Appartement',
@@ -54,6 +56,15 @@ export default function PropertyDetailsPage() {
         {property.address}, {property.city}
         {property.region ? `, ${property.region}` : ''}
       </p>
+
+      {property.reviews_count > 0 && (
+        <div className="mt-2 flex items-center gap-2">
+          <StarRating value={Math.round(property.average_rating ?? 0)} size="sm" />
+          <span className="text-sm text-gray-600">
+            {property.average_rating} / 5 ({property.reviews_count} avis)
+          </span>
+        </div>
+      )}
 
       {property.images.length > 0 ? (
         <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -110,6 +121,8 @@ export default function PropertyDetailsPage() {
       )}
 
       <p className="mt-6 text-sm text-gray-500">Proposé par {property.owner.name}</p>
+
+      <ReviewsSection propertyId={property.id.toString()} />
     </main>
   )
 }
