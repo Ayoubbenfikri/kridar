@@ -19,12 +19,18 @@ class FavoriteController extends Controller
      * GET /favorites — the current user's saved properties, most
      * recently favorited first. Shaped exactly like GET /properties
      * (PropertyResource) so the frontend can reuse the same property
-     * card component.
+     * card component. Same ?per_page bounds as GET /properties, for
+     * the same reason (see PropertySearchRequest).
      */
     public function index(Request $request): JsonResponse
     {
-        return PropertyResource::collection($this->favorites->listForUser($request->user()))
-            ->response();
+        $validated = $request->validate([
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:50'],
+        ]);
+
+        return PropertyResource::collection(
+            $this->favorites->listForUser($request->user(), (int) ($validated['per_page'] ?? 15))
+        )->response();
     }
 
     /**
