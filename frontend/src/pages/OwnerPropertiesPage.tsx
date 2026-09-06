@@ -41,7 +41,15 @@ export default function OwnerPropertiesPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-semibold text-brand-700">Mes proprietes</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-brand-700">Mes proprietes</h1>
+        <Link
+          to="/owner/properties/new"
+          className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white hover:bg-brand-700"
+        >
+          Ajouter une propriete
+        </Link>
+      </div>
 
       {isLoading && <p className="text-gray-500">Chargement...</p>}
 
@@ -86,6 +94,13 @@ export default function OwnerPropertiesPage() {
                   <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${STATUS_CLASSES[property.status]}`}>
                     {STATUS_LABELS[property.status]}
                   </span>
+
+                  <Link
+                    to={`/owner/properties/${property.id}/edit`}
+                    className="shrink-0 rounded-lg border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50"
+                  >
+                    Modifier
+                  </Link>
 
                   {property.status === 'suspended' ? (
                     <span className="shrink-0 text-xs text-gray-400">Suspendue par un admin</span>

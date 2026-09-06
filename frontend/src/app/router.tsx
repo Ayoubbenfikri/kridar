@@ -16,6 +16,8 @@ import AccountSettingsPage from '@/pages/AccountSettingsPage'
 import OwnerDashboardPage from '@/pages/OwnerDashboardPage'
 import OwnerPropertiesPage from '@/pages/OwnerPropertiesPage'
 import OwnerReservationsPage from '@/pages/OwnerReservationsPage'
+import PropertyCreatePage from '@/pages/PropertyCreatePage'
+import PropertyEditPage from '@/pages/PropertyEditPage'
 
 /**
  * Route definitions. AppLayout wraps every page with the Navbar + the
@@ -46,6 +48,8 @@ export const router = createBrowserRouter([
           { path: 'owner', element: <OwnerDashboardPage /> },
           { path: 'owner/properties', element: <OwnerPropertiesPage /> },
           { path: 'owner/reservations', element: <OwnerReservationsPage /> },
+          { path: 'owner/properties/new', element: <PropertyCreatePage /> },
+          { path: 'owner/properties/:id/edit', element: <PropertyEditPage /> },
         ],
       },
     ],
