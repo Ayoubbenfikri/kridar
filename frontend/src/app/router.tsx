@@ -18,6 +18,7 @@ import OwnerPropertiesPage from '@/pages/OwnerPropertiesPage'
 import OwnerReservationsPage from '@/pages/OwnerReservationsPage'
 import PropertyCreatePage from '@/pages/PropertyCreatePage'
 import PropertyEditPage from '@/pages/PropertyEditPage'
+import UiKitPage from '@/pages/UiKitPage'
 
 /**
  * Route definitions. AppLayout wraps every page with the Navbar + the
@@ -34,6 +35,7 @@ export const router = createBrowserRouter([
       { path: 'login', element: <LoginPage /> },
       { path: 'register', element: <RegisterPage /> },
       { path: 'properties', element: <PropertiesPage /> },
+      { path: 'ui', element: <UiKitPage /> },
       { path: 'properties/:id', element: <PropertyDetailsPage /> },
       {
         element: <ProtectedRoute />,

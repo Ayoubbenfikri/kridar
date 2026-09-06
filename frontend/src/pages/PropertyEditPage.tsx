@@ -93,7 +93,7 @@ export default function PropertyEditPage() {
                 type="button"
                 onClick={handleDelete}
                 disabled={deleteMutation.isPending}
-                className="rounded-xl bg-gradient-to-br from-red-500 to-red-700 px-3 py-1.5 text-sm text-white font-semibold shadow-lg shadow-red-900/30 transition hover:-translate-y-0.5 hover:scale-[1.03] hover:shadow-xl hover:shadow-red-900/40 active:scale-[0.97] active:translate-y-0 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:translate-y-0"
+                className="rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white font-semibold transition hover:-translate-y-px hover:bg-red-700 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
               >
                 {deleteMutation.isPending ? 'Suppression...' : 'Oui, supprimer'}
               </button>

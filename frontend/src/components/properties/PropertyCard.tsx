@@ -8,7 +8,7 @@ export default function PropertyCard({ property }: { property: Property }) {
   const price = primaryPrice(property)
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-brand-100 bg-white shadow-lg shadow-brand-900/10 transition hover:-translate-y-1.5 hover:border-brand-300 hover:shadow-2xl hover:shadow-brand-900/25">
+    <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-gray-300 hover:shadow-lg">
       <div className="h-1 w-full bg-gradient-to-r from-brand-500 to-brand-300" />
 
       {/* Outside the <Link> below on purpose - a <button> can't legally

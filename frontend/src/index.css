@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Inter, installee en local via @fontsource (pas de requete Google Fonts,
+   marche hors-ligne). On ne charge que les 4 graisses utilisees. */
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+
 /* By default Tailwind v4 wraps every `hover:` utility in
    @media (hover: hover), so browsers that report "no mouse" (Windows
    tablet mode, touchscreen laptops, some embedded browsers) silently
@@ -9,19 +16,56 @@
 @custom-variant hover (&:hover);
 
 @theme {
-  /* Brand tokens - fresh palette for this rebuild (not the old Sprint F1 one) */
-  --color-brand-50: #eef4ff;
-  --color-brand-100: #d9e6ff;
-  --color-brand-200: #b3ccff;
-  --color-brand-300: #80a8ff;
-  --color-brand-400: #4d7fff;
-  --color-brand-500: #2657f2;
-  --color-brand-600: #1c40c4;
-  --color-brand-700: #172f92;
-  --color-brand-800: #14266f;
-  --color-brand-900: #0f1c52;
+  /* ---------------------------------------------------------------
+     BRAND — teal. brand-600 est la couleur principale (#0F766E),
+     brand-700 sa version foncee pour les survols, brand-500 la version
+     claire (#14B8A6). Tout le code existant utilise deja brand-600 /
+     brand-700, donc changer ces tokens repeint toute l'application.
+     --------------------------------------------------------------- */
+  --color-brand-50: #f0fdfa;
+  --color-brand-100: #ccfbf1;
+  --color-brand-200: #99f6e4;
+  --color-brand-300: #5eead4;
+  --color-brand-400: #2dd4bf;
+  --color-brand-500: #14b8a6;
+  --color-brand-600: #0f766e;
+  --color-brand-700: #0b5a54;
+  --color-brand-800: #134e4a;
+  --color-brand-900: #042f2e;
 
-  --font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
+  /* Accent — utilise avec parcimonie : notes/etoiles, pastilles. */
+  --color-accent: #f59e0b;
+
+  /* ---------------------------------------------------------------
+     GRIS — on remplace l'echelle `gray` de Tailwind par l'echelle
+     slate demandee. Consequence : chaque `text-gray-500`,
+     `border-gray-200`, `bg-gray-50` deja ecrit dans le projet prend
+     automatiquement les bonnes valeurs, sans toucher aux fichiers.
+       gray-50  #F8FAFC  fond de page      gray-200 #E2E8F0  bordures
+       gray-500 #64748B  texte secondaire  gray-900 #0F172A  texte principal
+     --------------------------------------------------------------- */
+  --color-gray-50: #f8fafc;
+  --color-gray-100: #f1f5f9;
+  --color-gray-200: #e2e8f0;
+  --color-gray-300: #cbd5e1;
+  --color-gray-400: #94a3b8;
+  --color-gray-500: #64748b;
+  --color-gray-600: #475569;
+  --color-gray-700: #334155;
+  --color-gray-800: #1e293b;
+  --color-gray-900: #0f172a;
+  --color-gray-950: #020617;
+
+  /* Ombres tres douces, en deux couches. Elles remplacent les ombres
+     par defaut de Tailwind : `shadow-sm`, `shadow-md`... deviennent
+     automatiquement plus discretes partout. */
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.05);
+  --shadow-md: 0 2px 4px -1px rgb(15 23 42 / 0.05), 0 6px 12px -4px rgb(15 23 42 / 0.08);
+  --shadow-lg: 0 4px 6px -2px rgb(15 23 42 / 0.05), 0 12px 20px -8px rgb(15 23 42 / 0.1);
+  --shadow-xl: 0 8px 12px -4px rgb(15 23 42 / 0.06), 0 20px 32px -12px rgb(15 23 42 / 0.16);
+  --shadow-2xl: 0 12px 20px -8px rgb(15 23 42 / 0.08), 0 32px 48px -16px rgb(15 23 42 / 0.2);
+
+  --font-sans: Inter, system-ui, "Segoe UI", Roboto, sans-serif;
 }
 
 html,
@@ -33,6 +77,55 @@ body,
 body {
   margin: 0;
   font-family: var(--font-sans);
-  color: var(--color-brand-900);
-  background: #fafafa;
+  color: var(--color-gray-900);
+  background: var(--color-gray-50);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Chargement : bloc gris qui "balaye". Utilise par <Skeleton />. */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-gray-100) 25%,
+    var(--color-gray-50) 37%,
+    var(--color-gray-100) 63%
+  );
+  background-size: 400% 100%;
+  animation: skeleton-sweep 1.3s ease infinite;
+}
+
+@keyframes skeleton-sweep {
+  from {
+    background-position: 100% 50%;
+  }
+  to {
+    background-position: 0 50%;
+  }
+}
+
+/* Apparition douce. IMPORTANT : visible par defaut. On ne masque que si
+   le JS tourne (la classe `js` est posee sur <html> dans main.tsx), pour
+   qu'un script casse ne puisse jamais laisser une page vide. */
+.reveal {
+  transition:
+    opacity 0.5s cubic-bezier(0.2, 0.6, 0.3, 1),
+    transform 0.5s cubic-bezier(0.2, 0.6, 0.3, 1);
+}
+
+html.js .reveal:not(.reveal-in) {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+/* Respecte le reglage systeme "reduire les animations". */
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .skeleton {
+    transition: none;
+    animation: none;
+  }
+  html.js .reveal:not(.reveal-in) {
+    opacity: 1;
+    transform: none;
+  }
 }

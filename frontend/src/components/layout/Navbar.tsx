@@ -69,7 +69,7 @@ export default function Navbar() {
               </Link>
               <Link
                 to="/register"
-                className="rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 px-3 py-1.5 font-semibold text-white shadow-lg shadow-brand-900/30 transition hover:-translate-y-0.5 hover:scale-[1.03] hover:shadow-xl hover:shadow-brand-900/40 active:scale-[0.97] active:translate-y-0"
+                className="rounded-lg bg-brand-600 px-3 py-1.5 font-semibold text-white transition hover:-translate-y-px hover:bg-brand-700 hover:shadow-md"
               >
                 S'inscrire
               </Link>
@@ -138,7 +138,7 @@ export default function Navbar() {
               </Link>
               <Link
                 to="/register"
-                className="mt-1 w-fit rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 px-3 py-1.5 font-semibold text-white shadow-lg shadow-brand-900/30 transition hover:-translate-y-0.5 hover:scale-[1.03] hover:shadow-xl hover:shadow-brand-900/40 active:scale-[0.97] active:translate-y-0"
+                className="mt-1 w-fit rounded-lg bg-brand-600 px-3 py-1.5 font-semibold text-white transition hover:-translate-y-px hover:bg-brand-700 hover:shadow-md"
               >
                 S'inscrire
               </Link>
