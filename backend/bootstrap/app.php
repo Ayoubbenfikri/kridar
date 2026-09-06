@@ -24,8 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // 'owner' gates the /owner/* dashboard routes (Phase 12) - see
         // App\Http\Middleware\EnsureUserOwnsAProperty for what it checks.
+        // 'admin' gates /admin/* the same way (Phase 13, role=admin).
         $middleware->alias([
             'owner' => \App\Http\Middleware\EnsureUserOwnsAProperty::class,
+            'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

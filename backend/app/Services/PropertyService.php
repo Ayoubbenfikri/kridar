@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\PropertyStatus;
+use App\Exceptions\PropertySuspendedException;
 use App\Models\Property;
 use App\Models\User;
 use App\Repositories\Contracts\PropertyRepositoryInterface;
@@ -81,6 +82,15 @@ class PropertyService
 
     public function publish(Property $property): Property
     {
+        // A suspension is an admin-only lock (Phase 13) - the owner's own
+        // publish button can't lift it, only AdminService::approveProperty()
+        // can. Otherwise suspending a listing would have no real effect.
+        if ($property->status === PropertyStatus::Suspended) {
+            throw new PropertySuspendedException(
+                'This property was suspended by an administrator and can only be republished by one.'
+            );
+        }
+
         return $this->properties->update($property, [
             'status' => PropertyStatus::Published,
             'published_at' => now(),

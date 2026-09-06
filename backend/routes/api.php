@@ -35,5 +35,5 @@ Route::prefix('v1')->group(function () {
     require __DIR__.'/api/favorites.php';
     require __DIR__.'/api/notifications.php';
     require __DIR__.'/api/owner.php';
-    // require __DIR__.'/api/admin.php';         // added in Phase 13
+    require __DIR__.'/api/admin.php';
 });
