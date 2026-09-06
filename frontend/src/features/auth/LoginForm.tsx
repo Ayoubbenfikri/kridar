@@ -56,14 +56,14 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={login.isPending}
-        className="rounded-lg bg-brand-600 px-4 py-2 font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+        className="rounded-lg bg-brand-600 px-4 py-2 font-medium text-white transition hover:bg-brand-700 disabled:opacity-50"
       >
         {login.isPending ? 'Connexion...' : 'Se connecter'}
       </button>
 
       <p className="text-center text-sm text-gray-600">
         Pas encore de compte ?{' '}
-        <Link to="/register" className="text-brand-600 hover:underline">
+        <Link to="/register" className="text-brand-600 transition hover:underline">
           S'inscrire
         </Link>
       </p>

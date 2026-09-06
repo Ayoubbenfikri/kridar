@@ -39,7 +39,7 @@ export default function BookingPanel({ property }: BookingPanelProps) {
   if (!isAuthenticated) {
     return (
       <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
-        <Link to="/login" className="text-brand-600 hover:underline">
+        <Link to="/login" className="text-brand-600 transition hover:underline">
           Connectez-vous
         </Link>{' '}
         pour reserver cette propriete.
@@ -86,7 +86,7 @@ export default function BookingPanel({ property }: BookingPanelProps) {
         <p className="mt-1 text-sm">
           Total : {formatMad(reservation.total_price)} - en attente de confirmation du proprietaire (48h max).
         </p>
-        <Link to="/reservations" className="mt-2 inline-block text-sm text-brand-600 hover:underline">
+        <Link to="/reservations" className="mt-2 inline-block text-sm text-brand-600 transition hover:underline">
           Voir mes reservations →
         </Link>
       </div>
@@ -175,7 +175,7 @@ export default function BookingPanel({ property }: BookingPanelProps) {
         <button
           type="submit"
           disabled={!startDate || !endDate || createReservation.isPending}
-          className="w-full rounded-lg bg-brand-600 px-4 py-2 text-white hover:bg-brand-700 disabled:opacity-50"
+          className="w-full rounded-lg bg-brand-600 px-4 py-2 text-white transition hover:bg-brand-700 disabled:opacity-50"
         >
           {createReservation.isPending ? 'Envoi...' : 'Demander a reserver'}
         </button>

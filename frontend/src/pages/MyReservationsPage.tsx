@@ -81,7 +81,7 @@ export default function MyReservationsPage() {
       {data && data.data.length === 0 && (
         <p className="text-gray-500">
           Vous n'avez pas encore de reservation.{' '}
-          <Link to="/properties" className="text-brand-600 hover:underline">
+          <Link to="/properties" className="text-brand-600 transition hover:underline">
             Parcourir les proprietes
           </Link>
         </p>
@@ -96,7 +96,7 @@ export default function MyReservationsPage() {
                   <div>
                     <Link
                       to={`/properties/${reservation.property.id}`}
-                      className="font-medium text-brand-700 hover:underline"
+                      className="font-medium text-brand-700 transition hover:underline"
                     >
                       {reservation.property.title}
                     </Link>
@@ -125,7 +125,7 @@ export default function MyReservationsPage() {
                       type="button"
                       onClick={() => handlePay(reservation.id)}
                       disabled={payReservation.isPending}
-                      className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white hover:bg-brand-700 disabled:opacity-50"
+                      className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white transition hover:bg-brand-700 disabled:opacity-50"
                     >
                       {payReservation.isPending && payReservation.variables === reservation.id
                         ? 'Paiement...'
@@ -140,7 +140,7 @@ export default function MyReservationsPage() {
                   {reservation.status === 'completed' && (
                     <Link
                       to={`/reservations/${reservation.id}/review`}
-                      className="text-sm text-brand-600 hover:underline"
+                      className="text-sm text-brand-600 transition hover:underline"
                     >
                       Laisser un avis
                     </Link>
@@ -150,7 +150,7 @@ export default function MyReservationsPage() {
                     <button
                       type="button"
                       onClick={() => startCancelling(reservation.id)}
-                      className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                      className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition hover:bg-gray-50"
                     >
                       Annuler
                     </button>
@@ -174,14 +174,14 @@ export default function MyReservationsPage() {
                         type="button"
                         onClick={() => confirmCancel(reservation.id)}
                         disabled={cancelReservation.isPending}
-                        className="rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700 disabled:opacity-50"
+                        className="rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white transition hover:bg-red-700 disabled:opacity-50"
                       >
                         {cancelReservation.isPending ? 'Annulation...' : "Confirmer l'annulation"}
                       </button>
                       <button
                         type="button"
                         onClick={() => setCancellingId(null)}
-                        className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                        className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition hover:bg-gray-50"
                       >
                         Retour
                       </button>

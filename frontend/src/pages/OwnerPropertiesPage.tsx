@@ -45,7 +45,7 @@ export default function OwnerPropertiesPage() {
         <h1 className="text-2xl font-semibold text-brand-700">Mes proprietes</h1>
         <Link
           to="/owner/properties/new"
-          className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white hover:bg-brand-700"
+          className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white transition hover:bg-brand-700"
         >
           Ajouter une propriete
         </Link>
@@ -80,7 +80,7 @@ export default function OwnerPropertiesPage() {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <Link to={`/properties/${property.id}`} className="truncate font-medium text-gray-800 hover:text-brand-700">
+                    <Link to={`/properties/${property.id}`} className="truncate font-medium text-gray-800 transition hover:text-brand-700">
                       {property.title}
                     </Link>
                     <p className="text-sm text-gray-500">{property.city}</p>
@@ -97,7 +97,7 @@ export default function OwnerPropertiesPage() {
 
                   <Link
                     to={`/owner/properties/${property.id}/edit`}
-                    className="shrink-0 rounded-lg border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50"
+                    className="shrink-0 rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition hover:bg-gray-50"
                   >
                     Modifier
                   </Link>
@@ -109,7 +109,7 @@ export default function OwnerPropertiesPage() {
                       type="button"
                       onClick={() => unpublishMutation.mutate(property.id)}
                       disabled={isMutatingThis}
-                      className="shrink-0 rounded-lg border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50 disabled:opacity-50"
+                      className="shrink-0 rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition hover:bg-gray-50 disabled:opacity-50"
                     >
                       {isMutatingThis ? '...' : 'Depublier'}
                     </button>
@@ -118,7 +118,7 @@ export default function OwnerPropertiesPage() {
                       type="button"
                       onClick={() => publishMutation.mutate(property.id)}
                       disabled={isMutatingThis}
-                      className="shrink-0 rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white hover:bg-brand-700 disabled:opacity-50"
+                      className="shrink-0 rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white transition hover:bg-brand-700 disabled:opacity-50"
                     >
                       {isMutatingThis ? '...' : 'Publier'}
                     </button>

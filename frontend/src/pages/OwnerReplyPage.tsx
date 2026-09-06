@@ -56,7 +56,7 @@ export default function OwnerReplyPage() {
         <button
           type="submit"
           disabled={replyToReview.isPending || ownerReply.trim().length === 0}
-          className="w-full rounded-lg bg-brand-600 px-4 py-2 text-white hover:bg-brand-700 disabled:opacity-50"
+          className="w-full rounded-lg bg-brand-600 px-4 py-2 text-white transition hover:bg-brand-700 disabled:opacity-50"
         >
           {replyToReview.isPending ? 'Envoi...' : 'Répondre'}
         </button>

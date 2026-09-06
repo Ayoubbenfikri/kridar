@@ -38,7 +38,7 @@ export default function PropertyDetailsPage() {
         <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-red-700">
           Cette propriété est introuvable ou n'est plus disponible.
         </div>
-        <Link to="/properties" className="mt-4 inline-block text-brand-600 hover:underline">
+        <Link to="/properties" className="mt-4 inline-block text-brand-600 transition hover:underline">
           ← Retour aux propriétés
         </Link>
       </div>
@@ -49,7 +49,7 @@ export default function PropertyDetailsPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
-      <Link to="/properties" className="text-sm text-brand-600 hover:underline">
+      <Link to="/properties" className="text-sm text-brand-600 transition hover:underline">
         ← Retour aux propriétés
       </Link>
 

@@ -55,7 +55,7 @@ export default function AccountPage() {
       <div className="mt-8">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-semibold text-brand-700">Prochaines reservations</h2>
-          <Link to="/reservations" className="text-sm text-brand-600 hover:underline">
+          <Link to="/reservations" className="text-sm text-brand-600 transition hover:underline">
             Voir tout
           </Link>
         </div>
@@ -84,7 +84,7 @@ export default function AccountPage() {
       </div>
 
       <div className="mt-8 border-t border-gray-100 pt-4">
-        <Link to="/account/settings" className="text-sm text-brand-600 hover:underline">
+        <Link to="/account/settings" className="text-sm text-brand-600 transition hover:underline">
           Parametres du compte →
         </Link>
       </div>

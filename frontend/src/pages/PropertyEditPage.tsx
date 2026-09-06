@@ -79,7 +79,7 @@ export default function PropertyEditPage() {
           <button
             type="button"
             onClick={() => setConfirmingDelete(true)}
-            className="rounded-lg border border-red-300 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50"
+            className="rounded-lg border border-red-300 px-3 py-1.5 text-sm text-red-700 transition hover:bg-red-50"
           >
             Supprimer cette propriete
           </button>
@@ -93,14 +93,14 @@ export default function PropertyEditPage() {
                 type="button"
                 onClick={handleDelete}
                 disabled={deleteMutation.isPending}
-                className="rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700 disabled:opacity-50"
+                className="rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white transition hover:bg-red-700 disabled:opacity-50"
               >
                 {deleteMutation.isPending ? 'Suppression...' : 'Oui, supprimer'}
               </button>
               <button
                 type="button"
                 onClick={() => setConfirmingDelete(false)}
-                className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition hover:bg-gray-50"
               >
                 Annuler
               </button>

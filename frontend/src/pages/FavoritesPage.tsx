@@ -33,7 +33,7 @@ export default function FavoritesPage() {
       {data && data.data.length === 0 && (
         <p className="text-gray-500">
           Vous n'avez pas encore de favoris.{' '}
-          <Link to="/properties" className="text-brand-600 hover:underline">
+          <Link to="/properties" className="text-brand-600 transition hover:underline">
             Parcourir les propriétés
           </Link>
         </p>

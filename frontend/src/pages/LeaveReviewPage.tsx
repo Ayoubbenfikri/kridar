@@ -28,7 +28,7 @@ export default function LeaveReviewPage() {
         <div className="rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-green-700">
           Merci pour votre avis !
         </div>
-        <Link to={`/properties/${review.property_id}`} className="mt-4 inline-block text-brand-600 hover:underline">
+        <Link to={`/properties/${review.property_id}`} className="mt-4 inline-block text-brand-600 transition hover:underline">
           Voir la propriété
         </Link>
       </main>
@@ -68,7 +68,7 @@ export default function LeaveReviewPage() {
         <button
           type="submit"
           disabled={submitReview.isPending || rating === 0}
-          className="w-full rounded-lg bg-brand-600 px-4 py-2 text-white hover:bg-brand-700 disabled:opacity-50"
+          className="w-full rounded-lg bg-brand-600 px-4 py-2 text-white transition hover:bg-brand-700 disabled:opacity-50"
         >
           {submitReview.isPending ? 'Envoi...' : 'Envoyer mon avis'}
         </button>

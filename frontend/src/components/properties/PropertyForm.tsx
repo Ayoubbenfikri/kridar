@@ -448,7 +448,7 @@ export default function PropertyForm({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="rounded-lg bg-brand-600 px-4 py-2 text-white hover:bg-brand-700 disabled:opacity-50"
+        className="rounded-lg bg-brand-600 px-4 py-2 text-white transition hover:bg-brand-700 disabled:opacity-50"
       >
         {isSubmitting ? 'Enregistrement...' : submitLabel}
       </button>

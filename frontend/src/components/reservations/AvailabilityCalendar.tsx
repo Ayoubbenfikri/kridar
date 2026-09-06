@@ -144,7 +144,7 @@ export default function AvailabilityCalendar({
           type="button"
           onClick={() => setViewedMonth((month) => addMonths(month, -1))}
           disabled={!canGoPrev}
-          className="rounded px-2 py-1 text-gray-500 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
+          className="rounded px-2 py-1 text-gray-500 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
           aria-label="Mois precedent"
         >
           ←
@@ -156,7 +156,7 @@ export default function AvailabilityCalendar({
           type="button"
           onClick={() => setViewedMonth((month) => addMonths(month, 1))}
           disabled={!canGoNext}
-          className="rounded px-2 py-1 text-gray-500 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
+          className="rounded px-2 py-1 text-gray-500 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
           aria-label="Mois suivant"
         >
           →
@@ -194,7 +194,7 @@ export default function AvailabilityCalendar({
                   type="button"
                   disabled={isDisabled}
                   onClick={() => handleDayClick(iso)}
-                  className={`aspect-square rounded text-sm ${
+                  className={`aspect-square rounded text-sm transition ${
                     isDisabled
                       ? 'cursor-not-allowed text-gray-300 line-through'
                       : isStart || isEnd

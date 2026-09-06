@@ -87,7 +87,7 @@ export default function OwnerReservationsPage() {
                   <div>
                     <Link
                       to={`/properties/${reservation.property.id}`}
-                      className="font-medium text-brand-700 hover:underline"
+                      className="font-medium text-brand-700 transition hover:underline"
                     >
                       {reservation.property.title}
                     </Link>
@@ -116,7 +116,7 @@ export default function OwnerReservationsPage() {
                       type="button"
                       onClick={() => confirmMutation.mutate(reservation.id)}
                       disabled={confirmMutation.isPending || rejectMutation.isPending}
-                      className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white hover:bg-brand-700 disabled:opacity-50"
+                      className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white transition hover:bg-brand-700 disabled:opacity-50"
                     >
                       {confirmMutation.isPending && confirmMutation.variables === reservation.id
                         ? 'Confirmation...'
@@ -126,7 +126,7 @@ export default function OwnerReservationsPage() {
                       type="button"
                       onClick={() => rejectMutation.mutate(reservation.id)}
                       disabled={confirmMutation.isPending || rejectMutation.isPending}
-                      className="rounded-lg border border-red-300 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50 disabled:opacity-50"
+                      className="rounded-lg border border-red-300 px-3 py-1.5 text-sm text-red-700 transition hover:bg-red-50 disabled:opacity-50"
                     >
                       {rejectMutation.isPending && rejectMutation.variables === reservation.id
                         ? 'Refus...'
@@ -140,7 +140,7 @@ export default function OwnerReservationsPage() {
                     <button
                       type="button"
                       onClick={() => startCancelling(reservation.id)}
-                      className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                      className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition hover:bg-gray-50"
                     >
                       Annuler
                     </button>
@@ -164,14 +164,14 @@ export default function OwnerReservationsPage() {
                         type="button"
                         onClick={() => confirmCancel(reservation.id)}
                         disabled={cancelMutation.isPending}
-                        className="rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700 disabled:opacity-50"
+                        className="rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white transition hover:bg-red-700 disabled:opacity-50"
                       >
                         {cancelMutation.isPending ? 'Annulation...' : "Confirmer l'annulation"}
                       </button>
                       <button
                         type="button"
                         onClick={() => setCancellingId(null)}
-                        className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                        className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition hover:bg-gray-50"
                       >
                         Retour
                       </button>

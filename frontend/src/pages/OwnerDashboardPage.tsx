@@ -86,7 +86,7 @@ export default function OwnerDashboardPage() {
       <div className="mt-8">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-semibold text-brand-700">Demandes en attente</h2>
-          <Link to="/owner/reservations" className="text-sm text-brand-600 hover:underline">
+          <Link to="/owner/reservations" className="text-sm text-brand-600 transition hover:underline">
             Voir tout
           </Link>
         </div>
@@ -115,7 +115,7 @@ export default function OwnerDashboardPage() {
       </div>
 
       <div className="mt-8 border-t border-gray-100 pt-4">
-        <Link to="/owner/properties" className="text-sm text-brand-600 hover:underline">
+        <Link to="/owner/properties" className="text-sm text-brand-600 transition hover:underline">
           Gerer mes proprietes →
         </Link>
       </div>

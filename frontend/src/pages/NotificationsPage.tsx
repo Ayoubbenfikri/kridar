@@ -28,7 +28,7 @@ export default function NotificationsPage() {
             type="button"
             onClick={() => markAllAsRead.mutate()}
             disabled={markAllAsRead.isPending}
-            className="text-sm text-brand-600 hover:underline disabled:opacity-50"
+            className="text-sm text-brand-600 transition hover:underline disabled:opacity-50"
           >
             Tout marquer comme lu
           </button>
@@ -67,7 +67,7 @@ export default function NotificationsPage() {
                       type="button"
                       onClick={() => markAsRead.mutate(notification.id)}
                       disabled={markAsRead.isPending}
-                      className="text-xs text-brand-600 hover:underline disabled:opacity-50"
+                      className="text-xs text-brand-600 transition hover:underline disabled:opacity-50"
                     >
                       Marquer comme lu
                     </button>

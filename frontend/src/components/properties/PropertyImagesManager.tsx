@@ -59,7 +59,7 @@ export default function PropertyImagesManager({
                 type="button"
                 onClick={() => handleDelete(image.id)}
                 disabled={deletingId === image.id}
-                className="absolute bottom-1 right-1 rounded bg-white/90 px-2 py-1 text-xs text-red-700 hover:bg-white disabled:opacity-50"
+                className="absolute bottom-1 right-1 rounded bg-white/90 px-2 py-1 text-xs text-red-700 transition hover:bg-white disabled:opacity-50"
               >
                 {deletingId === image.id ? '...' : 'Supprimer'}
               </button>
@@ -68,7 +68,7 @@ export default function PropertyImagesManager({
         </div>
       )}
 
-      <label className="inline-block cursor-pointer rounded-lg border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50">
+      <label className="inline-block cursor-pointer rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition hover:bg-gray-50">
         {uploadMutation.isPending ? 'Envoi...' : 'Ajouter des photos'}
         <input
           ref={fileInputRef}
