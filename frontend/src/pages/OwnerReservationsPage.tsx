@@ -82,7 +82,7 @@ export default function OwnerReservationsPage() {
         <>
           <div className="space-y-4">
             {data.data.map((reservation) => (
-              <div key={reservation.id} className="rounded-lg border border-gray-200 p-4 shadow-sm transition hover:-translate-y-1.5 hover:shadow-xl">
+              <div key={reservation.id} className="rounded-xl border border-brand-100 p-4 shadow-lg shadow-brand-900/10 transition hover:-translate-y-1.5 hover:border-brand-300 hover:shadow-2xl hover:shadow-brand-900/25">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <Link
@@ -116,7 +116,7 @@ export default function OwnerReservationsPage() {
                       type="button"
                       onClick={() => confirmMutation.mutate(reservation.id)}
                       disabled={confirmMutation.isPending || rejectMutation.isPending}
-                      className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white transition hover:scale-[1.05] hover:bg-brand-700 active:scale-[0.97] disabled:opacity-50 disabled:hover:scale-100"
+                      className="rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 px-3 py-1.5 text-sm text-white font-semibold shadow-lg shadow-brand-900/30 transition hover:-translate-y-0.5 hover:scale-[1.03] hover:shadow-xl hover:shadow-brand-900/40 active:scale-[0.97] active:translate-y-0 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:translate-y-0"
                     >
                       {confirmMutation.isPending && confirmMutation.variables === reservation.id
                         ? 'Confirmation...'
@@ -164,7 +164,7 @@ export default function OwnerReservationsPage() {
                         type="button"
                         onClick={() => confirmCancel(reservation.id)}
                         disabled={cancelMutation.isPending}
-                        className="rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white transition hover:scale-[1.05] hover:bg-red-700 active:scale-[0.97] disabled:opacity-50 disabled:hover:scale-100"
+                        className="rounded-xl bg-gradient-to-br from-red-500 to-red-700 px-3 py-1.5 text-sm text-white font-semibold shadow-lg shadow-red-900/30 transition hover:-translate-y-0.5 hover:scale-[1.03] hover:shadow-xl hover:shadow-red-900/40 active:scale-[0.97] active:translate-y-0 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:translate-y-0"
                       >
                         {cancelMutation.isPending ? 'Annulation...' : "Confirmer l'annulation"}
                       </button>

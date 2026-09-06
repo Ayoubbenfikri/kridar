@@ -91,7 +91,7 @@ export default function AccountSettingsPage() {
           <button
             type="submit"
             disabled={updateProfile.isPending}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-white transition hover:scale-[1.05] hover:bg-brand-700 active:scale-[0.97] disabled:opacity-50 disabled:hover:scale-100"
+            className="rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 px-4 py-2 text-white font-semibold shadow-lg shadow-brand-900/30 transition hover:-translate-y-0.5 hover:scale-[1.03] hover:shadow-xl hover:shadow-brand-900/40 active:scale-[0.97] active:translate-y-0 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:translate-y-0"
           >
             {updateProfile.isPending ? 'Enregistrement...' : 'Enregistrer'}
           </button>
@@ -158,7 +158,7 @@ export default function AccountSettingsPage() {
           <button
             type="submit"
             disabled={updatePassword.isPending}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-white transition hover:scale-[1.05] hover:bg-brand-700 active:scale-[0.97] disabled:opacity-50 disabled:hover:scale-100"
+            className="rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 px-4 py-2 text-white font-semibold shadow-lg shadow-brand-900/30 transition hover:-translate-y-0.5 hover:scale-[1.03] hover:shadow-xl hover:shadow-brand-900/40 active:scale-[0.97] active:translate-y-0 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:translate-y-0"
           >
             {updatePassword.isPending ? 'Enregistrement...' : 'Changer le mot de passe'}
           </button>

@@ -68,7 +68,7 @@ export default function LeaveReviewPage() {
         <button
           type="submit"
           disabled={submitReview.isPending || rating === 0}
-          className="w-full rounded-lg bg-brand-600 px-4 py-2 text-white transition hover:scale-[1.05] hover:bg-brand-700 active:scale-[0.97] disabled:opacity-50 disabled:hover:scale-100"
+          className="w-full rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 px-4 py-2 text-white font-semibold shadow-lg shadow-brand-900/30 transition hover:-translate-y-0.5 hover:scale-[1.03] hover:shadow-xl hover:shadow-brand-900/40 active:scale-[0.97] active:translate-y-0 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:translate-y-0"
         >
           {submitReview.isPending ? 'Envoi...' : 'Envoyer mon avis'}
         </button>

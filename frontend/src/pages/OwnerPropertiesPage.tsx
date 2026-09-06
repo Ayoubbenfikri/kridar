@@ -45,7 +45,7 @@ export default function OwnerPropertiesPage() {
         <h1 className="text-2xl font-semibold text-brand-700">Mes proprietes</h1>
         <Link
           to="/owner/properties/new"
-          className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white transition hover:scale-[1.05] hover:bg-brand-700 active:scale-[0.97]"
+          className="rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 px-3 py-1.5 text-sm font-semibold text-white shadow-lg shadow-brand-900/30 transition hover:-translate-y-0.5 hover:scale-[1.03] hover:shadow-xl hover:shadow-brand-900/40 active:scale-[0.97] active:translate-y-0"
         >
           Ajouter une propriete
         </Link>
@@ -72,7 +72,7 @@ export default function OwnerPropertiesPage() {
                 (unpublishMutation.isPending && unpublishMutation.variables === property.id)
 
               return (
-                <div key={property.id} className="flex flex-wrap items-center gap-4 rounded-lg border border-gray-200 p-4 shadow-sm transition hover:-translate-y-1.5 hover:shadow-xl">
+                <div key={property.id} className="flex flex-wrap items-center gap-4 rounded-xl border border-brand-100 p-4 shadow-lg shadow-brand-900/10 transition hover:-translate-y-1.5 hover:border-brand-300 hover:shadow-2xl hover:shadow-brand-900/25">
                   <div className="h-16 w-20 shrink-0 overflow-hidden rounded bg-gray-100">
                     {cover ? (
                       <img src={cover} alt={property.title} className="h-full w-full object-cover" />
@@ -118,7 +118,7 @@ export default function OwnerPropertiesPage() {
                       type="button"
                       onClick={() => publishMutation.mutate(property.id)}
                       disabled={isMutatingThis}
-                      className="shrink-0 rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white transition hover:scale-[1.05] hover:bg-brand-700 active:scale-[0.97] disabled:opacity-50 disabled:hover:scale-100"
+                      className="shrink-0 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 px-3 py-1.5 text-sm text-white font-semibold shadow-lg shadow-brand-900/30 transition hover:-translate-y-0.5 hover:scale-[1.03] hover:shadow-xl hover:shadow-brand-900/40 active:scale-[0.97] active:translate-y-0 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:translate-y-0"
                     >
                       {isMutatingThis ? '...' : 'Publier'}
                     </button>
