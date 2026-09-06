@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/features/auth/useAuth'
 import NotificationBell from '@/components/notifications/NotificationBell'
 
-const LINK_CLASS = 'text-gray-600 transition-colors duration-150 hover:text-brand-700'
+const LINK_CLASS = 'text-gray-600 transition hover:text-brand-700'
 const MOBILE_LINK_CLASS = `py-2 ${LINK_CLASS}`
 
 /**
@@ -51,25 +51,25 @@ export default function Navbar() {
               <Link to="/owner" className={LINK_CLASS}>
                 Espace proprietaire
               </Link>
-              <Link to="/account" className="text-gray-700 transition-colors duration-150 hover:text-brand-700">
+              <Link to="/account" className="text-gray-700 transition hover:text-brand-700">
                 {user?.name}
               </Link>
               <button
                 onClick={() => logout.mutate()}
                 disabled={logout.isPending}
-                className="rounded-lg border border-gray-300 px-3 py-1.5 transition-colors duration-150 hover:bg-gray-50 disabled:opacity-50"
+                className="rounded-lg border border-gray-300 px-3 py-1.5 transition hover:bg-gray-50 disabled:opacity-50"
               >
                 Se deconnecter
               </button>
             </>
           ) : (
             <>
-              <Link to="/login" className="text-brand-600 transition-colors duration-150 hover:underline">
+              <Link to="/login" className="text-brand-600 transition hover:underline">
                 Connexion
               </Link>
               <Link
                 to="/register"
-                className="rounded-lg bg-brand-600 px-3 py-1.5 text-white transition-colors duration-150 hover:bg-brand-700"
+                className="rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 px-3 py-1.5 font-semibold text-white shadow-lg shadow-brand-900/30 transition hover:-translate-y-0.5 hover:scale-[1.03] hover:shadow-xl hover:shadow-brand-900/40 active:scale-[0.97] active:translate-y-0"
               >
                 S'inscrire
               </Link>
@@ -82,7 +82,7 @@ export default function Navbar() {
           onClick={() => setIsMenuOpen((open) => !open)}
           aria-label={isMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
           aria-expanded={isMenuOpen}
-          className="rounded-lg px-2 py-1 text-xl text-gray-600 transition-colors duration-150 hover:bg-gray-100 md:hidden"
+          className="rounded-lg px-2 py-1 text-xl text-gray-600 transition hover:bg-gray-100 md:hidden"
         >
           {isMenuOpen ? '✕' : '☰'}
         </button>
@@ -116,14 +116,14 @@ export default function Navbar() {
               </Link>
               <Link
                 to="/account"
-                className="py-2 text-gray-700 transition-colors duration-150 hover:text-brand-700"
+                className="py-2 text-gray-700 transition hover:text-brand-700"
               >
                 {user?.name}
               </Link>
               <button
                 onClick={() => logout.mutate()}
                 disabled={logout.isPending}
-                className="mt-1 w-fit rounded-lg border border-gray-300 px-3 py-1.5 text-left transition-colors duration-150 hover:bg-gray-50 disabled:opacity-50"
+                className="mt-1 w-fit rounded-lg border border-gray-300 px-3 py-1.5 text-left transition hover:bg-gray-50 disabled:opacity-50"
               >
                 Se deconnecter
               </button>
@@ -132,13 +132,13 @@ export default function Navbar() {
             <>
               <Link
                 to="/login"
-                className="py-2 text-brand-600 transition-colors duration-150 hover:underline"
+                className="py-2 text-brand-600 transition hover:underline"
               >
                 Connexion
               </Link>
               <Link
                 to="/register"
-                className="mt-1 w-fit rounded-lg bg-brand-600 px-3 py-1.5 text-white transition-colors duration-150 hover:bg-brand-700"
+                className="mt-1 w-fit rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 px-3 py-1.5 font-semibold text-white shadow-lg shadow-brand-900/30 transition hover:-translate-y-0.5 hover:scale-[1.03] hover:shadow-xl hover:shadow-brand-900/40 active:scale-[0.97] active:translate-y-0"
               >
                 S'inscrire
               </Link>

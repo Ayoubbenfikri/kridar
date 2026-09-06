@@ -14,7 +14,7 @@ export default function NotificationBell({ showLabel = false }: { showLabel?: bo
   return (
     <Link
       to="/notifications"
-      className="flex items-center gap-2 text-gray-600 transition-colors duration-150 hover:text-brand-700"
+      className="flex items-center gap-2 text-gray-600 transition hover:text-brand-700"
       aria-label="Notifications"
     >
       <span className="relative text-lg">
