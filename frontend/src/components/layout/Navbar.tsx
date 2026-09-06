@@ -27,6 +27,9 @@ export default function Navbar() {
               <Link to="/reservations" className="text-gray-600 hover:text-brand-700">
                 Mes réservations
               </Link>
+              <Link to="/owner" className="text-gray-600 hover:text-brand-700">
+                Espace proprietaire
+              </Link>
               <Link to="/account" className="text-gray-700 hover:text-brand-700">
                 {user?.name}
               </Link>
