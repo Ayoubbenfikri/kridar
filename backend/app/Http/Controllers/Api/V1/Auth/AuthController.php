@@ -7,6 +7,8 @@ use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\UpdatePasswordRequest;
+use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
@@ -138,5 +140,35 @@ class AuthController extends Controller
         $request->user()->sendEmailVerificationNotification();
 
         return response()->json(['message' => 'Verification link sent.']);
+    }
+
+    /**
+     * PUT /auth/profile — the current user edits their own name/phone.
+     */
+    public function updateProfile(UpdateProfileRequest $request): JsonResponse
+    {
+        $user = $request->user();
+        $user->update($request->validated());
+
+        return response()->json([
+            'message' => 'Profile updated.',
+            'user' => new UserResource($user->fresh()),
+        ]);
+    }
+
+    /**
+     * PUT /auth/password — the current user changes their own password.
+     * UpdatePasswordRequest already confirmed current_password matches
+     * before this runs.
+     */
+    public function updatePassword(UpdatePasswordRequest $request): JsonResponse
+    {
+        $request->user()->update([
+            'password' => Hash::make($request->validated('password')),
+        ]);
+
+        return response()->json([
+            'message' => 'Password updated.',
+        ]);
     }
 }

@@ -30,4 +30,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/auth/email/verification-notification', [AuthController::class, 'resendVerificationEmail'])
         ->middleware('throttle:6,1');
+
+    // Account settings (Phase 19) - deliberately not behind 'verified' too,
+    // so a not-yet-verified user can still fix a typo'd name/phone or
+    // change their password.
+    Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
+    Route::put('/auth/password', [AuthController::class, 'updatePassword']);
 });

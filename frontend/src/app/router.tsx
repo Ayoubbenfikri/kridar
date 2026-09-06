@@ -11,6 +11,8 @@ import OwnerReplyPage from '@/pages/OwnerReplyPage'
 import FavoritesPage from '@/pages/FavoritesPage'
 import NotificationsPage from '@/pages/NotificationsPage'
 import MyReservationsPage from '@/pages/MyReservationsPage'
+import AccountPage from '@/pages/AccountPage'
+import AccountSettingsPage from '@/pages/AccountSettingsPage'
 
 /**
  * Route definitions. AppLayout wraps every page with the Navbar + the
@@ -36,6 +38,8 @@ export const router = createBrowserRouter([
           { path: 'favorites', element: <FavoritesPage /> },
           { path: 'reservations', element: <MyReservationsPage /> },
           { path: 'notifications', element: <NotificationsPage /> },
+          { path: 'account', element: <AccountPage /> },
+          { path: 'account/settings', element: <AccountSettingsPage /> },
         ],
       },
     ],

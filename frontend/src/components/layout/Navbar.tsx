@@ -27,7 +27,9 @@ export default function Navbar() {
               <Link to="/reservations" className="text-gray-600 hover:text-brand-700">
                 Mes réservations
               </Link>
-              <span className="text-gray-700">{user?.name}</span>
+              <Link to="/account" className="text-gray-700 hover:text-brand-700">
+                {user?.name}
+              </Link>
               <button
                 onClick={() => logout.mutate()}
                 disabled={logout.isPending}

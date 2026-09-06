@@ -48,3 +48,24 @@ export async function resendVerificationEmail(): Promise<{ message: string }> {
   const { data } = await axiosClient.post('/api/v1/auth/email/verification-notification')
   return data
 }
+
+export interface UpdateProfilePayload {
+  name: string
+  phone?: string
+}
+
+export interface UpdatePasswordPayload {
+  current_password: string
+  password: string
+  password_confirmation: string
+}
+
+export async function updateProfile(payload: UpdateProfilePayload): Promise<{ message: string; user: User }> {
+  const { data } = await axiosClient.put('/api/v1/auth/profile', payload)
+  return data
+}
+
+export async function updatePassword(payload: UpdatePasswordPayload): Promise<{ message: string }> {
+  const { data } = await axiosClient.put('/api/v1/auth/password', payload)
+  return data
+}
