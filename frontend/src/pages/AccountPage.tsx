@@ -31,21 +31,21 @@ export default function AccountPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Link
           to="/reservations"
-          className="rounded-lg border border-gray-200 p-4 transition hover:border-brand-300"
+          className="rounded-lg border border-gray-200 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md"
         >
           <p className="text-2xl font-semibold text-brand-700">{reservationsData?.meta.total ?? 0}</p>
           <p className="text-sm text-gray-500">Reservation(s)</p>
         </Link>
         <Link
           to="/favorites"
-          className="rounded-lg border border-gray-200 p-4 transition hover:border-brand-300"
+          className="rounded-lg border border-gray-200 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md"
         >
           <p className="text-2xl font-semibold text-brand-700">{favoritesData?.meta.total ?? 0}</p>
           <p className="text-sm text-gray-500">Favori(s)</p>
         </Link>
         <Link
           to="/notifications"
-          className="rounded-lg border border-gray-200 p-4 transition hover:border-brand-300"
+          className="rounded-lg border border-gray-200 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md"
         >
           <p className="text-2xl font-semibold text-brand-700">{unreadCount}</p>
           <p className="text-sm text-gray-500">Notification(s) non lue(s)</p>
@@ -68,7 +68,7 @@ export default function AccountPage() {
               <Link
                 key={reservation.id}
                 to="/reservations"
-                className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 transition hover:border-brand-300"
+                className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md"
               >
                 <div>
                   <p className="font-medium text-gray-800">{reservation.property.title}</p>

@@ -91,7 +91,7 @@ export default function MyReservationsPage() {
         <>
           <div className="space-y-4">
             {data.data.map((reservation) => (
-              <div key={reservation.id} className="rounded-lg border border-gray-200 p-4">
+              <div key={reservation.id} className="rounded-lg border border-gray-200 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <Link
@@ -125,7 +125,7 @@ export default function MyReservationsPage() {
                       type="button"
                       onClick={() => handlePay(reservation.id)}
                       disabled={payReservation.isPending}
-                      className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white transition hover:bg-brand-700 disabled:opacity-50"
+                      className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white transition hover:scale-[1.02] hover:bg-brand-700 active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100"
                     >
                       {payReservation.isPending && payReservation.variables === reservation.id
                         ? 'Paiement...'
@@ -174,7 +174,7 @@ export default function MyReservationsPage() {
                         type="button"
                         onClick={() => confirmCancel(reservation.id)}
                         disabled={cancelReservation.isPending}
-                        className="rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white transition hover:bg-red-700 disabled:opacity-50"
+                        className="rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white transition hover:scale-[1.02] hover:bg-red-700 active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100"
                       >
                         {cancelReservation.isPending ? 'Annulation...' : "Confirmer l'annulation"}
                       </button>

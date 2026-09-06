@@ -42,38 +42,38 @@ export default function OwnerDashboardPage() {
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <Link
               to="/owner/properties"
-              className="rounded-lg border border-gray-200 p-4 transition hover:border-brand-300"
+              className="rounded-lg border border-gray-200 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md"
             >
               <p className="text-2xl font-semibold text-brand-700">{stats.properties_count}</p>
               <p className="text-sm text-gray-500">Propriete(s)</p>
             </Link>
-            <div className="rounded-lg border border-gray-200 p-4">
+            <div className="rounded-lg border border-gray-200 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
               <p className="text-2xl font-semibold text-brand-700">{stats.published_properties_count}</p>
               <p className="text-sm text-gray-500">Publiee(s)</p>
             </div>
             <Link
               to="/owner/reservations"
-              className="rounded-lg border border-gray-200 p-4 transition hover:border-brand-300"
+              className="rounded-lg border border-gray-200 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md"
             >
               <p className="text-2xl font-semibold text-brand-700">{stats.pending_reservations_count}</p>
               <p className="text-sm text-gray-500">Demande(s) en attente</p>
             </Link>
-            <div className="rounded-lg border border-gray-200 p-4">
+            <div className="rounded-lg border border-gray-200 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
               <p className="text-2xl font-semibold text-brand-700">{formatMad(stats.total_revenue)}</p>
               <p className="text-sm text-gray-500">Revenu total</p>
             </div>
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <div className="rounded-lg border border-gray-200 p-4">
+            <div className="rounded-lg border border-gray-200 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
               <p className="text-lg font-medium text-gray-800">{stats.reservations_count}</p>
               <p className="text-sm text-gray-500">Reservation(s) au total</p>
             </div>
-            <div className="rounded-lg border border-gray-200 p-4">
+            <div className="rounded-lg border border-gray-200 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
               <p className="text-lg font-medium text-gray-800">{stats.completed_reservations_count}</p>
               <p className="text-sm text-gray-500">Sejour(s) termine(s)</p>
             </div>
-            <div className="rounded-lg border border-gray-200 p-4">
+            <div className="rounded-lg border border-gray-200 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
               <p className="text-lg font-medium text-gray-800">
                 {stats.average_rating !== null ? `${stats.average_rating} / 5` : '-'}
               </p>
@@ -99,7 +99,7 @@ export default function OwnerDashboardPage() {
               <Link
                 key={reservation.id}
                 to="/owner/reservations"
-                className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 transition hover:border-brand-300"
+                className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md"
               >
                 <div>
                   <p className="font-medium text-gray-800">{reservation.property.title}</p>

@@ -8,7 +8,7 @@ export default function PropertyCard({ property }: { property: Property }) {
   const price = primaryPrice(property)
 
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md">
+    <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       {/* Outside the <Link> below on purpose - a <button> can't legally
           nest inside an <a>, so the heart sits as a sibling, absolutely
           positioned over the image instead. */}
