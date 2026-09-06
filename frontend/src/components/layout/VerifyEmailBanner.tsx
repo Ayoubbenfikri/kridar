@@ -22,7 +22,7 @@ export default function VerifyEmailBanner() {
         <button
           onClick={() => resendVerification.mutate(undefined, { onSuccess: () => setSent(true) })}
           disabled={resendVerification.isPending}
-          className="font-medium underline hover:no-underline disabled:opacity-50"
+          className="font-medium underline transition-opacity duration-150 hover:no-underline disabled:opacity-50"
         >
           Renvoyer l'email de verification
         </button>
