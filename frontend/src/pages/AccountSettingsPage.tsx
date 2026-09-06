@@ -91,7 +91,7 @@ export default function AccountSettingsPage() {
           <button
             type="submit"
             disabled={updateProfile.isPending}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-white transition hover:scale-[1.02] hover:bg-brand-700 active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100"
+            className="rounded-lg bg-brand-600 px-4 py-2 text-white transition hover:scale-[1.05] hover:bg-brand-700 active:scale-[0.97] disabled:opacity-50 disabled:hover:scale-100"
           >
             {updateProfile.isPending ? 'Enregistrement...' : 'Enregistrer'}
           </button>
@@ -158,7 +158,7 @@ export default function AccountSettingsPage() {
           <button
             type="submit"
             disabled={updatePassword.isPending}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-white transition hover:scale-[1.02] hover:bg-brand-700 active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100"
+            className="rounded-lg bg-brand-600 px-4 py-2 text-white transition hover:scale-[1.05] hover:bg-brand-700 active:scale-[0.97] disabled:opacity-50 disabled:hover:scale-100"
           >
             {updatePassword.isPending ? 'Enregistrement...' : 'Changer le mot de passe'}
           </button>

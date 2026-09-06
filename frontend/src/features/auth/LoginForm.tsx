@@ -56,7 +56,7 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={login.isPending}
-        className="rounded-lg bg-brand-600 px-4 py-2 font-medium text-white transition hover:scale-[1.02] hover:bg-brand-700 active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100"
+        className="rounded-lg bg-brand-600 px-4 py-2 font-medium text-white transition hover:scale-[1.05] hover:bg-brand-700 active:scale-[0.97] disabled:opacity-50 disabled:hover:scale-100"
       >
         {login.isPending ? 'Connexion...' : 'Se connecter'}
       </button>

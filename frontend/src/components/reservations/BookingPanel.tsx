@@ -175,7 +175,7 @@ export default function BookingPanel({ property }: BookingPanelProps) {
         <button
           type="submit"
           disabled={!startDate || !endDate || createReservation.isPending}
-          className="w-full rounded-lg bg-brand-600 px-4 py-2 text-white transition hover:scale-[1.02] hover:bg-brand-700 active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100"
+          className="w-full rounded-lg bg-brand-600 px-4 py-2 text-white transition hover:scale-[1.05] hover:bg-brand-700 active:scale-[0.97] disabled:opacity-50 disabled:hover:scale-100"
         >
           {createReservation.isPending ? 'Envoi...' : 'Demander a reserver'}
         </button>
