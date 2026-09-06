@@ -24,6 +24,9 @@ export default function Navbar() {
               <Link to="/favorites" className="text-gray-600 hover:text-brand-700">
                 Mes favoris
               </Link>
+              <Link to="/reservations" className="text-gray-600 hover:text-brand-700">
+                Mes réservations
+              </Link>
               <span className="text-gray-700">{user?.name}</span>
               <button
                 onClick={() => logout.mutate()}

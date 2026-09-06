@@ -4,6 +4,7 @@ import { formatMad, primaryPrice } from '@/lib/formatPrice'
 import ReviewsSection from '@/components/reviews/ReviewsSection'
 import StarRating from '@/components/reviews/StarRating'
 import FavoriteButton from '@/components/properties/FavoriteButton'
+import BookingPanel from '@/components/reservations/BookingPanel'
 
 const PROPERTY_TYPE_LABELS: Record<string, string> = {
   apartment: 'Appartement',
@@ -127,6 +128,8 @@ export default function PropertyDetailsPage() {
       )}
 
       <p className="mt-6 text-sm text-gray-500">Proposé par {property.owner.name}</p>
+
+      <BookingPanel property={property} />
 
       <ReviewsSection propertyId={property.id.toString()} />
     </main>
