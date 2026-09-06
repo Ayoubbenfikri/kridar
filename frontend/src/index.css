@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* By default Tailwind v4 wraps every `hover:` utility in
+   @media (hover: hover), so browsers that report "no mouse" (Windows
+   tablet mode, touchscreen laptops, some embedded browsers) silently
+   drop ALL hover styles. Kridar is a desktop-first site and we want the
+   hover effects to always apply, so we redefine the variant without
+   that media condition. */
+@custom-variant hover (&:hover);
+
 @theme {
   /* Brand tokens - fresh palette for this rebuild (not the old Sprint F1 one) */
   --color-brand-50: #eef4ff;
