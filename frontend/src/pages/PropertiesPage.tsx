@@ -12,7 +12,7 @@ export default function PropertiesPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Number(searchParams.get('page') ?? '1')
 
-  const { data, isLoading, isError, isFetching } = useProperties(page)
+  const { data, isLoading, isError, isFetching } = useProperties({ page })
 
   function goToPage(nextPage: number) {
     setSearchParams(nextPage === 1 ? {} : { page: String(nextPage) })

@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { propertiesApi } from './propertiesApi'
-import type { PropertyFormPayload } from './propertiesApi'
+import type { FetchPropertiesParams, PropertyFormPayload } from './propertiesApi'
 
 /**
  * List of published properties, one page at a time. keepPreviousData
@@ -8,10 +8,12 @@ import type { PropertyFormPayload } from './propertiesApi'
  * page stays visible (slightly dimmed by isFetching in the UI) until
  * the new one is ready.
  */
-export function useProperties(page: number) {
+export function useProperties(params: FetchPropertiesParams = {}) {
   return useQuery({
-    queryKey: ['properties', { page }],
-    queryFn: () => propertiesApi.fetchProperties({ page }),
+    // The params object IS the cache key, so two different searches are
+    // two different cache entries and never overwrite each other.
+    queryKey: ['properties', params],
+    queryFn: () => propertiesApi.fetchProperties(params),
     placeholderData: keepPreviousData,
   })
 }

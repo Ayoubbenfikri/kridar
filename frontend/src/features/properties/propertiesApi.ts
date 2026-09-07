@@ -1,8 +1,24 @@
 import axiosClient from '@/api/axiosClient'
 import type { PaginatedResponse, Property, PropertyImage, PropertyType, RentalType } from '@/types/property'
 
+/**
+ * Mirrors backend PropertySearchRequest exactly - every key below is a
+ * rule in that request class. Nothing else is accepted server-side, so
+ * nothing else belongs here.
+ */
 export interface FetchPropertiesParams {
   page?: number
+  per_page?: number
+  q?: string
+  city?: string
+  property_type?: PropertyType
+  rental_type?: RentalType
+  min_price?: number
+  max_price?: number
+  bedrooms?: number
+  bathrooms?: number
+  max_guests?: number
+  amenities?: number[]
 }
 
 async function fetchProperties(params: FetchPropertiesParams = {}): Promise<PaginatedResponse<Property>> {
