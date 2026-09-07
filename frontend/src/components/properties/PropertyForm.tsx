@@ -1,5 +1,7 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
+import { AlertCircle, Banknote, Building2, MapPin, Sparkles, Users } from 'lucide-react'
 import { useAmenities } from '@/features/amenities/useAmenities'
+import { Button, Card, Input, Select, Skeleton, Textarea } from '@/components/ui'
 import type { PropertyFormPayload } from '@/features/properties/propertiesApi'
 import type { ValidationErrors } from '@/lib/apiErrors'
 import type { Property, PropertyType, RentalType } from '@/types/property'
@@ -115,6 +117,34 @@ function buildPayload(form: FormState): PropertyFormPayload {
   }
 }
 
+/** One titled block of the form. */
+function Section({
+  icon,
+  title,
+  description,
+  children,
+}: {
+  icon: ReactNode
+  title: string
+  description?: string
+  children: ReactNode
+}) {
+  return (
+    <Card className="p-5 sm:p-6">
+      <div className="mb-5 flex items-start gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+          {icon}
+        </span>
+        <div>
+          <h2 className="font-semibold text-gray-900">{title}</h2>
+          {description && <p className="text-sm text-gray-500">{description}</p>}
+        </div>
+      </div>
+      {children}
+    </Card>
+  )
+}
+
 interface PropertyFormProps {
   initialProperty?: Property
   onSubmit: (payload: PropertyFormPayload) => void
@@ -135,8 +165,12 @@ export default function PropertyForm({
   const [form, setForm] = useState<FormState>(
     initialProperty ? formStateFromProperty(initialProperty) : EMPTY_FORM,
   )
-  const { data: amenities, isLoading: amenitiesLoading } = useAmenities()
+  const { data: amenities } = useAmenities()
 
+  // Mirrors StorePropertyRequest: a nightly price (and max_guests) is
+  // required as soon as the property is rented by the night, a monthly
+  // price as soon as it is rented by the month. The backend enforces
+  // it either way - this only keeps the form honest about it.
   const needsNightly = form.rental_type === 'short_term' || form.rental_type === 'both'
   const needsMonthly = form.rental_type === 'long_term' || form.rental_type === 'both'
 
@@ -163,50 +197,44 @@ export default function PropertyForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="sm:col-span-2">
-          <label htmlFor="title" className="mb-1 block text-sm font-medium text-gray-700">
-            Titre
-          </label>
-          <input
-            id="title"
-            value={form.title}
-            onChange={(event) => update('title', event.target.value)}
-            required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
-          />
-          {fieldError('title') && <p className="mt-1 text-sm text-red-600">{fieldError('title')}</p>}
-        </div>
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <Section
+        icon={<Building2 className="size-4.5" />}
+        title="Informations"
+        description="Ce que le voyageur voit en premier"
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Input
+              label="Titre"
+              required
+              placeholder="Villa avec piscine privee"
+              value={form.title}
+              onChange={(event) => update('title', event.target.value)}
+              error={fieldError('title')}
+            />
+          </div>
 
-        <div className="sm:col-span-2">
-          <label htmlFor="description" className="mb-1 block text-sm font-medium text-gray-700">
-            Description
-          </label>
-          <textarea
-            id="description"
-            value={form.description}
-            onChange={(event) => update('description', event.target.value)}
-            required
-            minLength={20}
-            rows={4}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
-          />
-          {fieldError('description') && (
-            <p className="mt-1 text-sm text-red-600">{fieldError('description')}</p>
-          )}
-        </div>
+          <div className="sm:col-span-2">
+            <Textarea
+              label="Description"
+              required
+              minLength={20}
+              rows={5}
+              placeholder="Decrivez le logement, le quartier, ce qui le rend agreable..."
+              value={form.description}
+              onChange={(event) => update('description', event.target.value)}
+              error={fieldError('description')}
+              hint="20 caracteres minimum"
+            />
+          </div>
 
-        <div>
-          <label htmlFor="property_type" className="mb-1 block text-sm font-medium text-gray-700">
-            Type de bien
-          </label>
-          <select
-            id="property_type"
+          <Select
+            label="Type de bien"
+            required
             value={form.property_type}
             onChange={(event) => update('property_type', event.target.value as PropertyType)}
-            required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
+            error={fieldError('property_type')}
           >
             <option value="" disabled>
               Choisir...
@@ -216,22 +244,14 @@ export default function PropertyForm({
                 {label}
               </option>
             ))}
-          </select>
-          {fieldError('property_type') && (
-            <p className="mt-1 text-sm text-red-600">{fieldError('property_type')}</p>
-          )}
-        </div>
+          </Select>
 
-        <div>
-          <label htmlFor="rental_type" className="mb-1 block text-sm font-medium text-gray-700">
-            Type de location
-          </label>
-          <select
-            id="rental_type"
+          <Select
+            label="Type de location"
+            required
             value={form.rental_type}
             onChange={(event) => update('rental_type', event.target.value as RentalType)}
-            required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
+            error={fieldError('rental_type')}
           >
             <option value="" disabled>
               Choisir...
@@ -241,217 +261,186 @@ export default function PropertyForm({
                 {label}
               </option>
             ))}
-          </select>
-          {fieldError('rental_type') && (
-            <p className="mt-1 text-sm text-red-600">{fieldError('rental_type')}</p>
-          )}
+          </Select>
         </div>
+      </Section>
 
-        <div className="sm:col-span-2">
-          <label htmlFor="address" className="mb-1 block text-sm font-medium text-gray-700">
-            Adresse
-          </label>
-          <input
-            id="address"
-            value={form.address}
-            onChange={(event) => update('address', event.target.value)}
+      <Section icon={<MapPin className="size-4.5" />} title="Localisation">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Input
+              label="Adresse"
+              required
+              value={form.address}
+              onChange={(event) => update('address', event.target.value)}
+              error={fieldError('address')}
+            />
+          </div>
+
+          <Input
+            label="Ville"
             required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
-          />
-          {fieldError('address') && <p className="mt-1 text-sm text-red-600">{fieldError('address')}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="city" className="mb-1 block text-sm font-medium text-gray-700">
-            Ville
-          </label>
-          <input
-            id="city"
             value={form.city}
             onChange={(event) => update('city', event.target.value)}
-            required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
+            error={fieldError('city')}
           />
-          {fieldError('city') && <p className="mt-1 text-sm text-red-600">{fieldError('city')}</p>}
-        </div>
 
-        <div>
-          <label htmlFor="region" className="mb-1 block text-sm font-medium text-gray-700">
-            Region (optionnel)
-          </label>
-          <input
-            id="region"
+          <Input
+            label="Region (optionnel)"
             value={form.region}
             onChange={(event) => update('region', event.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
+            error={fieldError('region')}
           />
-        </div>
 
-        <div>
-          <label htmlFor="latitude" className="mb-1 block text-sm font-medium text-gray-700">
-            Latitude (optionnel)
-          </label>
-          <input
-            id="latitude"
+          <Input
+            label="Latitude (optionnel)"
             type="number"
             step="any"
             value={form.latitude}
             onChange={(event) => update('latitude', event.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
+            error={fieldError('latitude')}
           />
-        </div>
 
-        <div>
-          <label htmlFor="longitude" className="mb-1 block text-sm font-medium text-gray-700">
-            Longitude (optionnel)
-          </label>
-          <input
-            id="longitude"
+          <Input
+            label="Longitude (optionnel)"
             type="number"
             step="any"
             value={form.longitude}
             onChange={(event) => update('longitude', event.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
+            error={fieldError('longitude')}
           />
         </div>
+      </Section>
 
-        <div>
-          <label htmlFor="bedrooms" className="mb-1 block text-sm font-medium text-gray-700">
-            Chambres
-          </label>
-          <input
-            id="bedrooms"
+      <Section icon={<Users className="size-4.5" />} title="Capacite">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Input
+            label="Chambres"
             type="number"
             min={0}
+            required
             value={form.bedrooms}
             onChange={(event) => update('bedrooms', event.target.value)}
-            required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
+            error={fieldError('bedrooms')}
           />
-          {fieldError('bedrooms') && <p className="mt-1 text-sm text-red-600">{fieldError('bedrooms')}</p>}
-        </div>
 
-        <div>
-          <label htmlFor="bathrooms" className="mb-1 block text-sm font-medium text-gray-700">
-            Salles de bain
-          </label>
-          <input
-            id="bathrooms"
+          <Input
+            label="Salles de bain"
             type="number"
             min={0}
+            required
             value={form.bathrooms}
             onChange={(event) => update('bathrooms', event.target.value)}
-            required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
+            error={fieldError('bathrooms')}
           />
-          {fieldError('bathrooms') && <p className="mt-1 text-sm text-red-600">{fieldError('bathrooms')}</p>}
-        </div>
 
-        <div>
-          <label htmlFor="max_guests" className="mb-1 block text-sm font-medium text-gray-700">
-            Voyageurs max {needsNightly && <span className="text-red-500">*</span>}
-          </label>
-          <input
-            id="max_guests"
+          <Input
+            label={needsNightly ? 'Voyageurs max *' : 'Voyageurs max (optionnel)'}
             type="number"
             min={1}
+            required={needsNightly}
             value={form.max_guests}
             onChange={(event) => update('max_guests', event.target.value)}
-            required={needsNightly}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
+            error={fieldError('max_guests')}
           />
-          {fieldError('max_guests') && (
-            <p className="mt-1 text-sm text-red-600">{fieldError('max_guests')}</p>
-          )}
-        </div>
 
-        <div>
-          <label htmlFor="area_sqm" className="mb-1 block text-sm font-medium text-gray-700">
-            Surface m2 (optionnel)
-          </label>
-          <input
-            id="area_sqm"
+          <Input
+            label="Surface m2 (optionnel)"
             type="number"
             min={0}
             step="any"
             value={form.area_sqm}
             onChange={(event) => update('area_sqm', event.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
+            error={fieldError('area_sqm')}
           />
         </div>
+      </Section>
 
-        <div>
-          <label htmlFor="price_per_night" className="mb-1 block text-sm font-medium text-gray-700">
-            Prix / nuit (MAD) {needsNightly && <span className="text-red-500">*</span>}
-          </label>
-          <input
-            id="price_per_night"
+      <Section
+        icon={<Banknote className="size-4.5" />}
+        title="Tarifs"
+        description={
+          form.rental_type === ''
+            ? 'Choisissez d abord un type de location ci-dessus'
+            : 'Les champs marques * sont obligatoires pour ce type de location'
+        }
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input
+            label={needsNightly ? 'Prix par nuit (MAD) *' : 'Prix par nuit (MAD)'}
             type="number"
             min={0}
             step="any"
+            required={needsNightly}
             value={form.price_per_night}
             onChange={(event) => update('price_per_night', event.target.value)}
-            required={needsNightly}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
+            error={fieldError('price_per_night')}
           />
-          {fieldError('price_per_night') && (
-            <p className="mt-1 text-sm text-red-600">{fieldError('price_per_night')}</p>
-          )}
-        </div>
 
-        <div>
-          <label htmlFor="price_per_month" className="mb-1 block text-sm font-medium text-gray-700">
-            Prix / mois (MAD) {needsMonthly && <span className="text-red-500">*</span>}
-          </label>
-          <input
-            id="price_per_month"
+          <Input
+            label={needsMonthly ? 'Prix par mois (MAD) *' : 'Prix par mois (MAD)'}
             type="number"
             min={0}
             step="any"
+            required={needsMonthly}
             value={form.price_per_month}
             onChange={(event) => update('price_per_month', event.target.value)}
-            required={needsMonthly}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
+            error={fieldError('price_per_month')}
           />
-          {fieldError('price_per_month') && (
-            <p className="mt-1 text-sm text-red-600">{fieldError('price_per_month')}</p>
-          )}
         </div>
-      </div>
+      </Section>
 
-      <div>
-        <p className="mb-2 text-sm font-medium text-gray-700">Equipements</p>
-        {amenitiesLoading && <p className="text-sm text-gray-500">Chargement...</p>}
-        {amenities && (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {amenities.map((amenity) => (
-              <label key={amenity.id} className="flex items-center gap-2 text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  checked={form.amenity_ids.includes(amenity.id)}
-                  onChange={() => toggleAmenity(amenity.id)}
-                  className="rounded border-gray-300"
-                />
-                {amenity.name}
-              </label>
+      <Section
+        icon={<Sparkles className="size-4.5" />}
+        title="Equipements"
+        description="Ce qui est inclus dans le logement"
+      >
+        {!amenities ? (
+          <div className="flex flex-wrap gap-2">
+            {[0, 1, 2, 3, 4, 5].map((index) => (
+              <Skeleton key={index} className="h-9 w-28 rounded-full" />
             ))}
           </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {amenities.map((amenity) => {
+              const checked = form.amenity_ids.includes(amenity.id)
+              return (
+                <label
+                  key={amenity.id}
+                  className={
+                    'cursor-pointer rounded-full border px-3.5 py-2 text-sm transition ' +
+                    (checked
+                      ? 'border-brand-500 bg-brand-50 font-medium text-brand-700'
+                      : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50')
+                  }
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleAmenity(amenity.id)}
+                    className="sr-only"
+                  />
+                  {amenity.name}
+                </label>
+              )
+            })}
+          </div>
         )}
-      </div>
+      </Section>
 
       {generalError && (
-        <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
           {generalError}
         </div>
       )}
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="rounded-lg bg-brand-600 px-4 py-2 text-white font-semibold transition hover:-translate-y-px hover:bg-brand-700 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
-      >
-        {isSubmitting ? 'Enregistrement...' : submitLabel}
-      </button>
+      <div className="flex justify-end">
+        <Button type="submit" isLoading={isSubmitting}>
+          {isSubmitting ? 'Enregistrement...' : submitLabel}
+        </Button>
+      </div>
     </form>
   )
 }

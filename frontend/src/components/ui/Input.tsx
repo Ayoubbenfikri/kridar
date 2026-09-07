@@ -11,6 +11,9 @@ interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id'> {
   error?: string
   /** Grey helper text, hidden while an error is shown. */
   hint?: string
+  /** Interactive element pinned to the right inside the field (e.g. a
+      show/hide password toggle). Unlike `icon`, it stays clickable. */
+  trailing?: ReactNode
 }
 
 /**
@@ -19,7 +22,7 @@ interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id'> {
  * tied to the input - that is what makes clicking the label focus the
  * field, and what screen readers rely on.
  */
-export default function Input({ label, icon, error, hint, className, ...rest }: InputProps) {
+export default function Input({ label, icon, error, hint, trailing, className, ...rest }: InputProps) {
   const id = useId()
 
   return (
@@ -45,6 +48,7 @@ export default function Input({ label, icon, error, hint, className, ...rest }: 
             'focus:outline-none focus:ring-[3px]',
             'disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400',
             icon && 'pl-10.5',
+            trailing && 'pr-11',
             error
               ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
               : 'border-gray-200 focus:border-brand-500 focus:ring-brand-500/20',
@@ -52,6 +56,7 @@ export default function Input({ label, icon, error, hint, className, ...rest }: 
           )}
           {...rest}
         />
+        {trailing && <span className="absolute right-1.5 flex items-center">{trailing}</span>}
       </div>
 
       {error ? (
