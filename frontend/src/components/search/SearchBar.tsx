@@ -37,7 +37,11 @@ export default function SearchBar() {
     // Only send what the user actually filled - an empty `city=` would
     // otherwise be sent to the API as a real (empty) filter.
     const params = new URLSearchParams()
-    if (city.trim()) params.set('city', city.trim())
+    // `q` and not `city`: the backend matches `city` exactly, so a
+    // partial word typed here would return nothing. `q` is the partial
+    // search (title OR city). The city chips on the home page use the
+    // exact `city` filter instead.
+    if (city.trim()) params.set('q', city.trim())
     if (propertyType) params.set('property_type', propertyType)
     if (guests) params.set('max_guests', guests)
 
