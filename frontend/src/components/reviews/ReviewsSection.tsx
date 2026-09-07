@@ -1,31 +1,43 @@
+import { MessageSquare } from 'lucide-react'
 import { usePropertyReviews } from '@/features/reviews/useReviews'
+import { Skeleton } from '@/components/ui'
 import ReviewCard from './ReviewCard'
 
 /**
- * Read-only for now — no "leave a review" button here, since that needs
- * a completed reservation and there's no "my reservations" page yet
- * (Phase 19). The form exists as a standalone page reachable by its
- * reservation id in the meantime (LeaveReviewPage).
+ * Read-only: leaving a review requires a completed reservation, so the
+ * form lives on its own page reached from "Mes reservations"
+ * (LeaveReviewPage), not here.
  */
 export default function ReviewsSection({ propertyId }: { propertyId: string }) {
-  const { data, isLoading, isError } = usePropertyReviews(propertyId)
+  const { data, isError } = usePropertyReviews(propertyId)
 
   return (
-    <div className="mt-8 border-t border-gray-200 pt-6">
-      <h2 className="mb-4 font-semibold text-brand-700">Avis</h2>
+    <section className="mt-8 border-t border-gray-200 pt-8">
+      <h2 className="text-xl font-semibold tracking-tight text-gray-900">
+        Avis {data && data.data.length > 0 && <span className="text-gray-400">({data.data.length})</span>}
+      </h2>
 
-      {isLoading && <p className="text-sm text-gray-500">Chargement des avis...</p>}
-      {isError && <p className="text-sm text-red-600">Impossible de charger les avis.</p>}
-
-      {data && data.data.length === 0 && <p className="text-sm text-gray-500">Aucun avis pour le moment.</p>}
-
-      {data && data.data.length > 0 && (
-        <div>
+      {/* Exhaustive: error -> not loaded yet -> empty -> list. */}
+      {isError ? (
+        <p className="mt-3 text-sm text-red-600">Impossible de charger les avis.</p>
+      ) : !data ? (
+        <div className="mt-4 space-y-4">
+          <Skeleton className="h-4 w-1/3" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-4/5" />
+        </div>
+      ) : data.data.length === 0 ? (
+        <div className="mt-4 flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-500">
+          <MessageSquare className="size-5 shrink-0 text-gray-400" aria-hidden />
+          Aucun avis pour le moment. Les avis apparaissent apres un sejour termine.
+        </div>
+      ) : (
+        <div className="mt-2">
           {data.data.map((review) => (
             <ReviewCard key={review.id} review={review} />
           ))}
         </div>
       )}
-    </div>
+    </section>
   )
 }

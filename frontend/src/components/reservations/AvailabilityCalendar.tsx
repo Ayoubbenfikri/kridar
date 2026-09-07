@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAvailability } from '@/features/reservations/useReservations'
 
 const WEEKDAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
@@ -147,7 +148,7 @@ export default function AvailabilityCalendar({
           className="rounded px-2 py-1 text-gray-500 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
           aria-label="Mois precedent"
         >
-          ←
+          <ChevronLeft className="size-4" aria-hidden />
         </button>
         <span className="font-medium text-gray-800">
           {MONTH_LABELS[viewedMonth.getMonth()]} {viewedMonth.getFullYear()}
@@ -159,7 +160,7 @@ export default function AvailabilityCalendar({
           className="rounded px-2 py-1 text-gray-500 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
           aria-label="Mois suivant"
         >
-          →
+          <ChevronRight className="size-4" aria-hidden />
         </button>
       </div>
 
@@ -194,7 +195,7 @@ export default function AvailabilityCalendar({
                   type="button"
                   disabled={isDisabled}
                   onClick={() => handleDayClick(iso)}
-                  className={`aspect-square rounded text-sm transition ${
+                  className={`aspect-square rounded-lg text-sm transition ${
                     isDisabled
                       ? 'cursor-not-allowed text-gray-300 line-through'
                       : isStart || isEnd
