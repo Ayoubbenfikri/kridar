@@ -63,7 +63,8 @@ export default function OwnerReservationsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8">
+    // Layout (padding, max width) now comes from OwnerLayout.
+    <>
       <h1 className="mb-6 text-2xl font-semibold text-brand-700">Reservations recues</h1>
 
       {isLoading && <p className="text-gray-500">Chargement...</p>}
@@ -215,6 +216,6 @@ export default function OwnerReservationsPage() {
           </div>
         </>
       )}
-    </main>
+    </>
   )
 }

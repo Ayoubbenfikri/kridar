@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom'
 import AppLayout from '@/components/layout/AppLayout'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
+import OwnerLayout from '@/components/layout/OwnerLayout'
 import HomePage from '@/pages/HomePage'
 import LoginPage from '@/pages/LoginPage'
 import RegisterPage from '@/pages/RegisterPage'
@@ -47,11 +48,19 @@ export const router = createBrowserRouter([
           { path: 'notifications', element: <NotificationsPage /> },
           { path: 'account', element: <AccountPage /> },
           { path: 'account/settings', element: <AccountSettingsPage /> },
-          { path: 'owner', element: <OwnerDashboardPage /> },
-          { path: 'owner/properties', element: <OwnerPropertiesPage /> },
-          { path: 'owner/reservations', element: <OwnerReservationsPage /> },
-          { path: 'owner/properties/new', element: <PropertyCreatePage /> },
-          { path: 'owner/properties/:id/edit', element: <PropertyEditPage /> },
+          {
+            // Every /owner page shares the same sidebar shell, so it is
+            // mounted once here instead of being repeated per page.
+            path: 'owner',
+            element: <OwnerLayout />,
+            children: [
+              { index: true, element: <OwnerDashboardPage /> },
+              { path: 'properties', element: <OwnerPropertiesPage /> },
+              { path: 'reservations', element: <OwnerReservationsPage /> },
+              { path: 'properties/new', element: <PropertyCreatePage /> },
+              { path: 'properties/:id/edit', element: <PropertyEditPage /> },
+            ],
+          },
         ],
       },
     ],

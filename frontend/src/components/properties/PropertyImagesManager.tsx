@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
+import { ImagePlus, Loader2, Trash2, TriangleAlert } from 'lucide-react'
 import { useDeletePropertyImage, useUploadPropertyImages } from '@/features/properties/useProperties'
 import { getErrorMessage } from '@/lib/apiErrors'
+import { Card } from '@/components/ui'
 import type { PropertyImage } from '@/types/property'
 
 /**
@@ -40,54 +42,87 @@ export default function PropertyImagesManager({
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 p-4">
-      <h2 className="mb-4 font-semibold text-gray-800">Photos</h2>
-
-      {images.length === 0 && <p className="mb-4 text-sm text-gray-500">Aucune photo pour le moment.</p>}
-
-      {images.length > 0 && (
-        <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {images.map((image) => (
-            <div key={image.id} className="relative overflow-hidden rounded-lg border border-gray-200">
-              <img src={image.url} alt="" className="aspect-square w-full object-cover" />
-              {image.is_cover && (
-                <span className="absolute left-1 top-1 rounded bg-brand-600 px-2 py-0.5 text-xs text-white">
-                  Couverture
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={() => handleDelete(image.id)}
-                disabled={deletingId === image.id}
-                className="absolute bottom-1 right-1 rounded bg-white/90 px-2 py-1 text-xs text-red-700 transition hover:bg-white disabled:opacity-50"
-              >
-                {deletingId === image.id ? '...' : 'Supprimer'}
-              </button>
-            </div>
-          ))}
+    <Card className="p-5 sm:p-6">
+      <div className="mb-5 flex items-start gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+          <ImagePlus className="size-4.5" aria-hidden />
+        </span>
+        <div>
+          <h2 className="font-semibold text-gray-900">Photos</h2>
+          <p className="text-sm text-gray-500">
+            La première photo ajoutée devient automatiquement la couverture.
+          </p>
         </div>
-      )}
+      </div>
 
-      <label className="inline-block cursor-pointer rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition hover:bg-gray-50">
-        {uploadMutation.isPending ? 'Envoi...' : 'Ajouter des photos'}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          multiple
-          onChange={handleFilesSelected}
-          disabled={uploadMutation.isPending}
-          className="hidden"
-        />
-      </label>
-      <p className="mt-1 text-xs text-gray-500">JPEG/PNG/WebP, 5 Mo max par photo, 10 photos max au total.</p>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {images.map((image) => (
+          <div
+            key={image.id}
+            className="group relative overflow-hidden rounded-lg border border-gray-200 bg-gray-100"
+          >
+            <img src={image.url} alt="" className="aspect-square w-full object-cover" />
 
-      {uploadMutation.isError && (
-        <p className="mt-2 text-sm text-red-600">{getErrorMessage(uploadMutation.error)}</p>
+            {image.is_cover && (
+              <span className="absolute top-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-semibold text-gray-900 backdrop-blur-sm">
+                Couverture
+              </span>
+            )}
+
+            <button
+              type="button"
+              onClick={() => handleDelete(image.id)}
+              disabled={deletingId === image.id}
+              aria-label="Supprimer cette photo"
+              className="absolute right-2 bottom-2 flex size-8 items-center justify-center rounded-lg bg-white/90 text-red-600 shadow-sm backdrop-blur-sm transition hover:bg-white hover:text-red-700 disabled:opacity-50"
+            >
+              {deletingId === image.id ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : (
+                <Trash2 className="size-4" aria-hidden />
+              )}
+            </button>
+          </div>
+        ))}
+
+        {/* The upload control sits in the grid as the next "tile", so
+            adding a photo happens where the photos already are. */}
+        <label
+          className={
+            'flex aspect-square cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 text-gray-500 transition hover:border-brand-500 hover:bg-brand-50 hover:text-brand-700' +
+            (uploadMutation.isPending ? ' pointer-events-none opacity-60' : '')
+          }
+        >
+          {uploadMutation.isPending ? (
+            <Loader2 className="size-5 animate-spin" aria-hidden />
+          ) : (
+            <ImagePlus className="size-5" aria-hidden />
+          )}
+          <span className="text-xs font-medium">
+            {uploadMutation.isPending ? 'Envoi...' : 'Ajouter'}
+          </span>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            onChange={handleFilesSelected}
+            disabled={uploadMutation.isPending}
+            className="sr-only"
+          />
+        </label>
+      </div>
+
+      <p className="mt-3 text-xs text-gray-500">
+        JPEG/PNG/WebP, 5 Mo maximum par photo, 10 photos au total.
+      </p>
+
+      {(uploadMutation.isError || deleteMutation.isError) && (
+        <p className="mt-3 flex items-start gap-2 text-sm text-red-600">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
+          {getErrorMessage(uploadMutation.error ?? deleteMutation.error)}
+        </p>
       )}
-      {deleteMutation.isError && (
-        <p className="mt-2 text-sm text-red-600">{getErrorMessage(deleteMutation.error)}</p>
-      )}
-    </div>
+    </Card>
   )
 }
