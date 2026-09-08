@@ -50,9 +50,13 @@ export default function OwnerPropertiesPage() {
   }
 
   /** The publish/unpublish control for one property. */
-  function StatusAction({ property }: { property: Property }) {
+  function StatusAction({ property, compact }: { property: Property; compact?: boolean }) {
     if (property.status === 'suspended') {
-      return <span className="text-xs text-gray-400">Suspendue par un admin</span>
+      return (
+        <span className="text-xs text-gray-400" title="Seul un administrateur peut lever une suspension">
+          {compact ? 'Suspendue' : 'Suspendue par un admin'}
+        </span>
+      )
     }
 
     return property.status === 'published' ? (
@@ -138,9 +142,19 @@ export default function OwnerPropertiesPage() {
           <>
             {/* Desktop: a real table. Mobile: the same rows stacked as
                 cards, because a 5-column table cannot shrink honestly. */}
-            <Card className="hidden p-0 md:block">
-              <div className="overflow-x-auto">
-                <table className="w-full">
+            <Card className="hidden overflow-hidden p-0 lg:block">
+              {/* table-fixed + fixed column widths: columns no longer size
+                  themselves to their content, so a long title is truncated
+                  with an ellipsis instead of widening the table and forcing
+                  a horizontal scrollbar. */}
+              <table className="w-full table-fixed">
+                <colgroup>
+                  <col />
+                  <col className="w-28" />
+                  <col className="w-36" />
+                  <col className="w-28" />
+                  <col className="w-32" />
+                </colgroup>
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/60">
                     {['Propriété', 'Ville', 'Prix', 'Statut', ''].map((heading) => (
@@ -167,6 +181,7 @@ export default function OwnerPropertiesPage() {
                             <div className="min-w-0">
                               <Link
                                 to={`/properties/${property.id}`}
+                                title={property.title}
                                 className="block truncate font-medium text-gray-900 transition hover:text-brand-600"
                               >
                                 {property.title}
@@ -177,37 +192,40 @@ export default function OwnerPropertiesPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-600">{property.city}</td>
+                        <td className="truncate px-4 py-3 text-sm text-gray-600">{property.city}</td>
                         <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-600">
                           {price ? `${formatMad(price.amount)} / ${price.unit}` : '—'}
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
+                        <td className="px-4 py-3">
                           <Badge tone={STATUS_TONES[property.status]}>
                             {STATUS_LABELS[property.status]}
                           </Badge>
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-1.5">
                             <Link
                               to={`/owner/properties/${property.id}/edit`}
                               aria-label={`Modifier ${property.title}`}
                               title="Modifier"
-                              className={buttonClasses({ variant: 'secondary', size: 'sm', className: 'px-2.5' })}
+                              className={buttonClasses({
+                                variant: 'secondary',
+                                size: 'sm',
+                                className: 'px-2.5',
+                              })}
                             >
                               <Pencil className="size-4" aria-hidden />
                             </Link>
-                            <StatusAction property={property} />
+                            <StatusAction property={property} compact />
                           </div>
                         </td>
                       </tr>
                     )
                   })}
                 </tbody>
-                </table>
-              </div>
+              </table>
             </Card>
 
-            <div className="space-y-3 md:hidden">
+            <div className="space-y-3 lg:hidden">
               {data.data.map((property) => {
                 const price = primaryPrice(property)
                 return (
