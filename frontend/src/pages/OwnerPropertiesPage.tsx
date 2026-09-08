@@ -138,8 +138,9 @@ export default function OwnerPropertiesPage() {
           <>
             {/* Desktop: a real table. Mobile: the same rows stacked as
                 cards, because a 5-column table cannot shrink honestly. */}
-            <Card className="hidden overflow-hidden p-0 md:block">
-              <table className="w-full">
+            <Card className="hidden p-0 md:block">
+              <div className="overflow-x-auto">
+                <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/60">
                     {['Propriété', 'Ville', 'Prix', 'Statut', ''].map((heading) => (
@@ -176,23 +177,24 @@ export default function OwnerPropertiesPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{property.city}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
+                        <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-600">{property.city}</td>
+                        <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-600">
                           {price ? `${formatMad(price.amount)} / ${price.unit}` : '—'}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <Badge tone={STATUS_TONES[property.status]}>
                             {STATUS_LABELS[property.status]}
                           </Badge>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <div className="flex items-center justify-end gap-2">
                             <Link
                               to={`/owner/properties/${property.id}/edit`}
-                              className={buttonClasses({ variant: 'secondary', size: 'sm' })}
+                              aria-label={`Modifier ${property.title}`}
+                              title="Modifier"
+                              className={buttonClasses({ variant: 'secondary', size: 'sm', className: 'px-2.5' })}
                             >
                               <Pencil className="size-4" aria-hidden />
-                              Modifier
                             </Link>
                             <StatusAction property={property} />
                           </div>
@@ -201,7 +203,8 @@ export default function OwnerPropertiesPage() {
                     )
                   })}
                 </tbody>
-              </table>
+                </table>
+              </div>
             </Card>
 
             <div className="space-y-3 md:hidden">
