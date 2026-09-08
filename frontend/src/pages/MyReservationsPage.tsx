@@ -1,38 +1,36 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useCancelReservation, useMyReservations, usePayReservation } from '@/features/reservations/useReservations'
+import {
+  AlertCircle,
+  CalendarX,
+  CheckCircle2,
+  CreditCard,
+  MapPin,
+  Star,
+  TriangleAlert,
+} from 'lucide-react'
+import {
+  useCancelReservation,
+  useMyReservations,
+  usePayReservation,
+} from '@/features/reservations/useReservations'
 import { getErrorMessage } from '@/lib/apiErrors'
 import { formatMad } from '@/lib/formatPrice'
-import type { Reservation, ReservationStatusValue } from '@/types/reservation'
-
-const STATUS_LABELS: Record<ReservationStatusValue, string> = {
-  pending: 'En attente',
-  confirmed: 'Confirmee',
-  rejected: 'Refusee',
-  cancelled: 'Annulee',
-  completed: 'Terminee',
-}
-
-const STATUS_CLASSES: Record<ReservationStatusValue, string> = {
-  pending: 'bg-amber-100 text-amber-800',
-  confirmed: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  cancelled: 'bg-gray-100 text-gray-600',
-  completed: 'bg-brand-100 text-brand-700',
-}
+import ReservationStatusBadge from '@/components/reservations/ReservationStatusBadge'
+import { Button, Card, EmptyState, Pagination, Skeleton, Textarea, buttonClasses } from '@/components/ui'
+import type { Reservation } from '@/types/reservation'
 
 /**
- * "My reservations" - the guest's own bookings (GET /reservations only
- * ever returns the current user's own, see backend
- * ReservationController::index). Owner-side actions (confirm/reject a
- * request) are NOT here on purpose - that's Phase 20's owner dashboard,
- * which already has GET /owner/reservations built for it.
+ * "Mes reservations" - the guest's own bookings (GET /reservations only
+ * ever returns the current user's own, see ReservationController::index).
+ * Owner-side actions (confirm / reject a request) live on
+ * /owner/reservations, not here.
  */
 export default function MyReservationsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Number(searchParams.get('page') ?? '1')
 
-  const { data, isLoading, isError } = useMyReservations(page)
+  const { data, isError, isFetching } = useMyReservations(page)
   const cancelReservation = useCancelReservation()
   const payReservation = usePayReservation()
 
@@ -42,6 +40,7 @@ export default function MyReservationsPage() {
 
   function goToPage(nextPage: number) {
     setSearchParams(nextPage === 1 ? {} : { page: String(nextPage) })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function startCancelling(reservationId: number) {
@@ -67,161 +66,171 @@ export default function MyReservationsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-semibold text-brand-700">Mes reservations</h1>
-
-      {isLoading && <p className="text-gray-500">Chargement...</p>}
-
-      {isError && (
-        <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-red-700">
-          Impossible de charger vos reservations.
-        </div>
-      )}
-
-      {data && data.data.length === 0 && (
-        <p className="text-gray-500">
-          Vous n'avez pas encore de reservation.{' '}
-          <Link to="/properties" className="text-brand-600 transition hover:underline">
-            Parcourir les proprietes
-          </Link>
+    <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
+      <h1 className="text-2xl font-bold tracking-tight text-gray-900">Mes réservations</h1>
+      {data && (
+        <p className="mt-1 text-sm text-gray-500">
+          {data.meta.total} réservation{data.meta.total > 1 ? 's' : ''}
         </p>
       )}
 
-      {data && data.data.length > 0 && (
-        <>
+      <div className="mt-6">
+        {isError ? (
+          <Card className="flex items-start gap-3 border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            <TriangleAlert className="mt-0.5 size-4.5 shrink-0" aria-hidden />
+            Impossible de charger vos réservations.
+          </Card>
+        ) : !data ? (
           <div className="space-y-4">
-            {data.data.map((reservation) => (
-              <div key={reservation.id} className="rounded-xl border border-gray-200 p-4 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-gray-300 hover:shadow-lg">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <Link
-                      to={`/properties/${reservation.property.id}`}
-                      className="font-medium text-brand-700 transition hover:underline"
-                    >
-                      {reservation.property.title}
-                    </Link>
-                    <p className="text-sm text-gray-500">{reservation.property.city}</p>
-                  </div>
-                  <span
-                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${STATUS_CLASSES[reservation.status]}`}
-                  >
-                    {STATUS_LABELS[reservation.status]}
-                  </span>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-600">
-                  <span>Arrivee : {reservation.start_date}</span>
-                  <span>Depart : {reservation.end_date}</span>
-                  <span>Total : {formatMad(reservation.total_price)}</span>
-                </div>
-
-                {reservation.cancellation_reason && (
-                  <p className="mt-2 text-sm text-gray-500">Motif d'annulation : {reservation.cancellation_reason}</p>
-                )}
-
-                <div className="mt-3 flex flex-wrap items-center gap-3">
-                  {reservation.status === 'confirmed' && !justPaidIds.has(reservation.id) && (
-                    <button
-                      type="button"
-                      onClick={() => handlePay(reservation.id)}
-                      disabled={payReservation.isPending}
-                      className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white font-semibold transition hover:-translate-y-px hover:bg-brand-700 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
-                    >
-                      {payReservation.isPending && payReservation.variables === reservation.id
-                        ? 'Paiement...'
-                        : 'Payer (simulation CMI)'}
-                    </button>
-                  )}
-
-                  {justPaidIds.has(reservation.id) && (
-                    <span className="text-sm font-medium text-green-700">Paye ✓</span>
-                  )}
-
-                  {reservation.status === 'completed' && (
-                    <Link
-                      to={`/reservations/${reservation.id}/review`}
-                      className="text-sm text-brand-600 transition hover:underline"
-                    >
-                      Laisser un avis
-                    </Link>
-                  )}
-
-                  {canCancel(reservation) && cancellingId !== reservation.id && (
-                    <button
-                      type="button"
-                      onClick={() => startCancelling(reservation.id)}
-                      className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition hover:bg-gray-50"
-                    >
-                      Annuler
-                    </button>
-                  )}
-                </div>
-
-                {cancellingId === reservation.id && (
-                  <div className="mt-3 rounded-lg bg-gray-50 p-3">
-                    <label htmlFor={`reason-${reservation.id}`} className="mb-1 block text-sm font-medium text-gray-700">
-                      Motif (optionnel)
-                    </label>
-                    <textarea
-                      id={`reason-${reservation.id}`}
-                      value={cancelReason}
-                      onChange={(event) => setCancelReason(event.target.value)}
-                      rows={2}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                    />
-                    <div className="mt-2 flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => confirmCancel(reservation.id)}
-                        disabled={cancelReservation.isPending}
-                        className="rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white font-semibold transition hover:-translate-y-px hover:bg-red-700 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
-                      >
-                        {cancelReservation.isPending ? 'Annulation...' : "Confirmer l'annulation"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCancellingId(null)}
-                        className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition hover:bg-gray-50"
-                      >
-                        Retour
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {payReservation.isError && payReservation.variables === reservation.id && (
-                  <p className="mt-2 text-sm text-red-600">{getErrorMessage(payReservation.error)}</p>
-                )}
-                {cancelReservation.isError && cancellingId === reservation.id && (
-                  <p className="mt-2 text-sm text-red-600">{getErrorMessage(cancelReservation.error)}</p>
-                )}
-              </div>
+            {[0, 1, 2].map((index) => (
+              <Skeleton key={index} className="h-40 w-full rounded-xl" />
             ))}
           </div>
+        ) : data.data.length === 0 ? (
+          <EmptyState
+            icon={<CalendarX className="size-6" />}
+            title="Aucune réservation"
+            description="Vos demandes et séjours apparaîtront ici une fois une réservation envoyée."
+            action={
+              <Link to="/properties" className={buttonClasses()}>
+                Parcourir les propriétés
+              </Link>
+            }
+          />
+        ) : (
+          <>
+            <div className={`space-y-4 transition-opacity ${isFetching ? 'opacity-60' : ''}`}>
+              {data.data.map((reservation) => (
+                <Card key={reservation.id} className="p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <Link
+                        to={`/properties/${reservation.property.id}`}
+                        className="block truncate font-semibold text-gray-900 transition hover:text-brand-600"
+                      >
+                        {reservation.property.title}
+                      </Link>
+                      <p className="mt-1 flex items-center gap-1.5 text-sm text-gray-500">
+                        <MapPin className="size-3.5 shrink-0" aria-hidden />
+                        {reservation.property.city}
+                      </p>
+                    </div>
+                    <ReservationStatusBadge status={reservation.status} />
+                  </div>
 
-          <div className="mt-8 flex items-center justify-center gap-4">
-            <button
-              type="button"
-              onClick={() => goToPage(page - 1)}
-              disabled={page <= 1}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Precedent
-            </button>
-            <span className="text-sm text-gray-500">
-              Page {data.meta.current_page} / {data.meta.last_page}
-            </span>
-            <button
-              type="button"
-              onClick={() => goToPage(page + 1)}
-              disabled={page >= data.meta.last_page}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Suivant
-            </button>
-          </div>
-        </>
-      )}
+                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    <div className="rounded-lg border border-gray-200 px-3 py-2">
+                      <p className="text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
+                        Arrivée
+                      </p>
+                      <p className="text-sm font-medium text-gray-900">{reservation.start_date}</p>
+                    </div>
+                    <div className="rounded-lg border border-gray-200 px-3 py-2">
+                      <p className="text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
+                        Départ
+                      </p>
+                      <p className="text-sm font-medium text-gray-900">{reservation.end_date}</p>
+                    </div>
+                    <div className="col-span-2 rounded-lg border border-gray-200 px-3 py-2 sm:col-span-1">
+                      <p className="text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
+                        Total
+                      </p>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {formatMad(reservation.total_price)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {reservation.cancellation_reason && (
+                    <p className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-600">
+                      Motif d'annulation : {reservation.cancellation_reason}
+                    </p>
+                  )}
+
+                  <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-4">
+                    {reservation.status === 'confirmed' && !justPaidIds.has(reservation.id) && (
+                      <Button
+                        size="sm"
+                        icon={<CreditCard className="size-4" />}
+                        isLoading={payReservation.isPending && payReservation.variables === reservation.id}
+                        onClick={() => handlePay(reservation.id)}
+                      >
+                        Payer (simulation CMI)
+                      </Button>
+                    )}
+
+                    {justPaidIds.has(reservation.id) && (
+                      <span className="flex items-center gap-1.5 text-sm font-semibold text-green-700">
+                        <CheckCircle2 className="size-4" aria-hidden />
+                        Payé
+                      </span>
+                    )}
+
+                    {reservation.status === 'completed' && (
+                      <Link
+                        to={`/reservations/${reservation.id}/review`}
+                        className={buttonClasses({ variant: 'secondary', size: 'sm' })}
+                      >
+                        <Star className="size-4" aria-hidden />
+                        Laisser un avis
+                      </Link>
+                    )}
+
+                    {canCancel(reservation) && cancellingId !== reservation.id && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => startCancelling(reservation.id)}
+                      >
+                        Annuler
+                      </Button>
+                    )}
+                  </div>
+
+                  {cancellingId === reservation.id && (
+                    <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                      <Textarea
+                        label="Motif de l'annulation (optionnel)"
+                        rows={2}
+                        value={cancelReason}
+                        onChange={(event) => setCancelReason(event.target.value)}
+                      />
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          isLoading={cancelReservation.isPending}
+                          onClick={() => confirmCancel(reservation.id)}
+                        >
+                          Confirmer l'annulation
+                        </Button>
+                        <Button size="sm" variant="secondary" onClick={() => setCancellingId(null)}>
+                          Retour
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {payReservation.isError && payReservation.variables === reservation.id && (
+                    <p className="mt-3 flex items-start gap-2 text-sm text-red-600">
+                      <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+                      {getErrorMessage(payReservation.error)}
+                    </p>
+                  )}
+                  {cancelReservation.isError && cancellingId === reservation.id && (
+                    <p className="mt-3 flex items-start gap-2 text-sm text-red-600">
+                      <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+                      {getErrorMessage(cancelReservation.error)}
+                    </p>
+                  )}
+                </Card>
+              ))}
+            </div>
+
+            <Pagination currentPage={page} lastPage={data.meta.last_page} onChange={goToPage} />
+          </>
+        )}
+      </div>
     </main>
   )
 }

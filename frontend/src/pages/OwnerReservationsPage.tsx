@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { AlertCircle, CalendarX, Check, MapPin, TriangleAlert, User, X } from 'lucide-react'
 import {
   useCancelReservationAsOwner,
   useConfirmReservation,
@@ -8,37 +9,21 @@ import {
 } from '@/features/owner/useOwner'
 import { getErrorMessage } from '@/lib/apiErrors'
 import { formatMad } from '@/lib/formatPrice'
-import type { ReservationStatusValue } from '@/types/reservation'
-
-const STATUS_LABELS: Record<ReservationStatusValue, string> = {
-  pending: 'En attente',
-  confirmed: 'Confirmee',
-  rejected: 'Refusee',
-  cancelled: 'Annulee',
-  completed: 'Terminee',
-}
-
-const STATUS_CLASSES: Record<ReservationStatusValue, string> = {
-  pending: 'bg-amber-100 text-amber-800',
-  confirmed: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  cancelled: 'bg-gray-100 text-gray-600',
-  completed: 'bg-brand-100 text-brand-700',
-}
+import ReservationStatusBadge from '@/components/reservations/ReservationStatusBadge'
+import { Button, Card, EmptyState, Pagination, Skeleton, Textarea } from '@/components/ui'
 
 /**
- * /owner/reservations — every booking request made on any of the
- * current user's properties (GET /owner/reservations, distinct from
- * GET /reservations which is the guest's own bookings). A pending
- * request can be confirmed or rejected (ReservationPolicy: owner or
- * admin only, ReservationService: only from "pending"); a confirmed
- * one can still be cancelled if the owner can no longer host.
+ * /owner/reservations - the requests received on the current user's
+ * properties. Confirm / reject apply to a pending request; cancelling a
+ * confirmed one asks for an optional reason, exactly as the guest side
+ * does. Every action goes through the same endpoints as before, with
+ * ReservationPolicy checking ownership server-side.
  */
 export default function OwnerReservationsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Number(searchParams.get('page') ?? '1')
 
-  const { data, isLoading, isError, error } = useOwnerReservations(page)
+  const { data, isError, error, isFetching } = useOwnerReservations(page)
   const confirmMutation = useConfirmReservation()
   const rejectMutation = useRejectReservation()
   const cancelMutation = useCancelReservationAsOwner()
@@ -48,6 +33,7 @@ export default function OwnerReservationsPage() {
 
   function goToPage(nextPage: number) {
     setSearchParams(nextPage === 1 ? {} : { page: String(nextPage) })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function startCancelling(reservationId: number) {
@@ -62,160 +48,174 @@ export default function OwnerReservationsPage() {
     )
   }
 
+  const isDeciding = confirmMutation.isPending || rejectMutation.isPending
+
   return (
-    // Layout (padding, max width) now comes from OwnerLayout.
     <>
-      <h1 className="mb-6 text-2xl font-semibold text-brand-700">Reservations recues</h1>
-
-      {isLoading && <p className="text-gray-500">Chargement...</p>}
-
-      {isError && (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-800">
-          {getErrorMessage(error)}
-        </div>
+      <h1 className="text-2xl font-bold tracking-tight text-gray-900">Réservations reçues</h1>
+      {data && (
+        <p className="mt-1 text-sm text-gray-500">
+          {data.meta.total} demande{data.meta.total > 1 ? 's' : ''}
+        </p>
       )}
 
-      {data && data.data.length === 0 && (
-        <p className="text-gray-500">Aucune reservation recue pour le moment.</p>
-      )}
-
-      {data && data.data.length > 0 && (
-        <>
+      <div className="mt-6">
+        {isError ? (
+          <Card className="flex items-start gap-3 border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            <TriangleAlert className="mt-0.5 size-4.5 shrink-0" aria-hidden />
+            {getErrorMessage(error)}
+          </Card>
+        ) : !data ? (
           <div className="space-y-4">
-            {data.data.map((reservation) => (
-              <div key={reservation.id} className="rounded-xl border border-gray-200 p-4 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-gray-300 hover:shadow-lg">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <Link
-                      to={`/properties/${reservation.property.id}`}
-                      className="font-medium text-brand-700 transition hover:underline"
-                    >
-                      {reservation.property.title}
-                    </Link>
-                    <p className="text-sm text-gray-500">{reservation.guest?.name ?? 'Client'}</p>
-                  </div>
-                  <span
-                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${STATUS_CLASSES[reservation.status]}`}
-                  >
-                    {STATUS_LABELS[reservation.status]}
-                  </span>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-600">
-                  <span>Arrivee : {reservation.start_date}</span>
-                  <span>Depart : {reservation.end_date}</span>
-                  <span>Total : {formatMad(reservation.total_price)}</span>
-                </div>
-
-                {reservation.cancellation_reason && (
-                  <p className="mt-2 text-sm text-gray-500">Motif d'annulation : {reservation.cancellation_reason}</p>
-                )}
-
-                {reservation.status === 'pending' && (
-                  <div className="mt-3 flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => confirmMutation.mutate(reservation.id)}
-                      disabled={confirmMutation.isPending || rejectMutation.isPending}
-                      className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white font-semibold transition hover:-translate-y-px hover:bg-brand-700 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
-                    >
-                      {confirmMutation.isPending && confirmMutation.variables === reservation.id
-                        ? 'Confirmation...'
-                        : 'Confirmer'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => rejectMutation.mutate(reservation.id)}
-                      disabled={confirmMutation.isPending || rejectMutation.isPending}
-                      className="rounded-lg border border-red-300 px-3 py-1.5 text-sm text-red-700 transition hover:bg-red-50 disabled:opacity-50"
-                    >
-                      {rejectMutation.isPending && rejectMutation.variables === reservation.id
-                        ? 'Refus...'
-                        : 'Rejeter'}
-                    </button>
-                  </div>
-                )}
-
-                {reservation.status === 'confirmed' && cancellingId !== reservation.id && (
-                  <div className="mt-3">
-                    <button
-                      type="button"
-                      onClick={() => startCancelling(reservation.id)}
-                      className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition hover:bg-gray-50"
-                    >
-                      Annuler
-                    </button>
-                  </div>
-                )}
-
-                {cancellingId === reservation.id && (
-                  <div className="mt-3 rounded-lg bg-gray-50 p-3">
-                    <label htmlFor={`reason-${reservation.id}`} className="mb-1 block text-sm font-medium text-gray-700">
-                      Motif (optionnel)
-                    </label>
-                    <textarea
-                      id={`reason-${reservation.id}`}
-                      value={cancelReason}
-                      onChange={(event) => setCancelReason(event.target.value)}
-                      rows={2}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                    />
-                    <div className="mt-2 flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => confirmCancel(reservation.id)}
-                        disabled={cancelMutation.isPending}
-                        className="rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white font-semibold transition hover:-translate-y-px hover:bg-red-700 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
-                      >
-                        {cancelMutation.isPending ? 'Annulation...' : "Confirmer l'annulation"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCancellingId(null)}
-                        className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition hover:bg-gray-50"
-                      >
-                        Retour
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {confirmMutation.isError && confirmMutation.variables === reservation.id && (
-                  <p className="mt-2 text-sm text-red-600">{getErrorMessage(confirmMutation.error)}</p>
-                )}
-                {rejectMutation.isError && rejectMutation.variables === reservation.id && (
-                  <p className="mt-2 text-sm text-red-600">{getErrorMessage(rejectMutation.error)}</p>
-                )}
-                {cancelMutation.isError && cancellingId === reservation.id && (
-                  <p className="mt-2 text-sm text-red-600">{getErrorMessage(cancelMutation.error)}</p>
-                )}
-              </div>
+            {[0, 1, 2].map((index) => (
+              <Skeleton key={index} className="h-40 w-full rounded-xl" />
             ))}
           </div>
+        ) : data.data.length === 0 ? (
+          <EmptyState
+            icon={<CalendarX className="size-6" />}
+            title="Aucune réservation reçue"
+            description="Les demandes de vos voyageurs apparaîtront ici dès qu'une réservation sera envoyée."
+          />
+        ) : (
+          <>
+            <div className={`space-y-4 transition-opacity ${isFetching ? 'opacity-60' : ''}`}>
+              {data.data.map((reservation) => (
+                <Card key={reservation.id} className="p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <Link
+                        to={`/properties/${reservation.property.id}`}
+                        className="block truncate font-semibold text-gray-900 transition hover:text-brand-600"
+                      >
+                        {reservation.property.title}
+                      </Link>
+                      <p className="mt-1 flex items-center gap-1.5 text-sm text-gray-500">
+                        <User className="size-3.5 shrink-0" aria-hidden />
+                        {reservation.guest?.name ?? 'Client'}
+                      </p>
+                      <p className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
+                        <MapPin className="size-3.5 shrink-0" aria-hidden />
+                        {reservation.property.city}
+                      </p>
+                    </div>
+                    <ReservationStatusBadge status={reservation.status} />
+                  </div>
 
-          <div className="mt-8 flex items-center justify-center gap-4">
-            <button
-              type="button"
-              onClick={() => goToPage(page - 1)}
-              disabled={page <= 1}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Precedent
-            </button>
-            <span className="text-sm text-gray-500">
-              Page {data.meta.current_page} / {data.meta.last_page}
-            </span>
-            <button
-              type="button"
-              onClick={() => goToPage(page + 1)}
-              disabled={page >= data.meta.last_page}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Suivant
-            </button>
-          </div>
-        </>
-      )}
+                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    <div className="rounded-lg border border-gray-200 px-3 py-2">
+                      <p className="text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
+                        Arrivée
+                      </p>
+                      <p className="text-sm font-medium text-gray-900">{reservation.start_date}</p>
+                    </div>
+                    <div className="rounded-lg border border-gray-200 px-3 py-2">
+                      <p className="text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
+                        Départ
+                      </p>
+                      <p className="text-sm font-medium text-gray-900">{reservation.end_date}</p>
+                    </div>
+                    <div className="col-span-2 rounded-lg border border-gray-200 px-3 py-2 sm:col-span-1">
+                      <p className="text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
+                        Total
+                      </p>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {formatMad(reservation.total_price)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {reservation.cancellation_reason && (
+                    <p className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-600">
+                      Motif d'annulation : {reservation.cancellation_reason}
+                    </p>
+                  )}
+
+                  {(reservation.status === 'pending' ||
+                    (reservation.status === 'confirmed' && cancellingId !== reservation.id)) && (
+                    <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-4">
+                      {reservation.status === 'pending' && (
+                        <>
+                          <Button
+                            size="sm"
+                            icon={<Check className="size-4" />}
+                            disabled={isDeciding}
+                            isLoading={
+                              confirmMutation.isPending && confirmMutation.variables === reservation.id
+                            }
+                            onClick={() => confirmMutation.mutate(reservation.id)}
+                          >
+                            Confirmer
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            icon={<X className="size-4" />}
+                            disabled={isDeciding}
+                            isLoading={
+                              rejectMutation.isPending && rejectMutation.variables === reservation.id
+                            }
+                            onClick={() => rejectMutation.mutate(reservation.id)}
+                          >
+                            Refuser
+                          </Button>
+                        </>
+                      )}
+
+                      {reservation.status === 'confirmed' && (
+                        <Button size="sm" variant="ghost" onClick={() => startCancelling(reservation.id)}>
+                          Annuler la réservation
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
+                  {cancellingId === reservation.id && (
+                    <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                      <Textarea
+                        label="Motif de l'annulation (optionnel)"
+                        rows={2}
+                        value={cancelReason}
+                        onChange={(event) => setCancelReason(event.target.value)}
+                      />
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          isLoading={cancelMutation.isPending}
+                          onClick={() => confirmCancel(reservation.id)}
+                        >
+                          Confirmer l'annulation
+                        </Button>
+                        <Button size="sm" variant="secondary" onClick={() => setCancellingId(null)}>
+                          Retour
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {(confirmMutation.isError || rejectMutation.isError) &&
+                    (confirmMutation.variables === reservation.id ||
+                      rejectMutation.variables === reservation.id) && (
+                      <p className="mt-3 flex items-start gap-2 text-sm text-red-600">
+                        <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+                        {getErrorMessage(confirmMutation.error ?? rejectMutation.error)}
+                      </p>
+                    )}
+                  {cancelMutation.isError && cancellingId === reservation.id && (
+                    <p className="mt-3 flex items-start gap-2 text-sm text-red-600">
+                      <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+                      {getErrorMessage(cancelMutation.error)}
+                    </p>
+                  )}
+                </Card>
+              ))}
+            </div>
+
+            <Pagination currentPage={page} lastPage={data.meta.last_page} onChange={goToPage} />
+          </>
+        )}
+      </div>
     </>
   )
 }

@@ -1,11 +1,14 @@
 import { useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
+import { AlertCircle, ArrowLeft, CheckCircle2, Lock, Phone, User } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
 import { getErrorMessage, getValidationErrors } from '@/lib/apiErrors'
+import { Button, Card, Input } from '@/components/ui'
 
 /**
- * Phase 19 - edit profile (name/phone) and change password. Two
- * independent forms/mutations so an error in one never blocks the
- * other. Email is not editable here - see UpdateProfileRequest.
+ * /account/settings - profile (name, phone) and password, as two
+ * independent forms: each submits on its own and reports its own
+ * result, so a failed password change never loses a typed name.
  */
 export default function AccountSettingsPage() {
   const { user, updateProfile, updatePassword } = useAuth()
@@ -16,6 +19,9 @@ export default function AccountSettingsPage() {
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [newPasswordConfirmation, setNewPasswordConfirmation] = useState('')
+
+  const profileErrors = getValidationErrors(updateProfile.error)
+  const passwordErrors = getValidationErrors(updatePassword.error)
 
   function handleProfileSubmit(event: FormEvent) {
     event.preventDefault()
@@ -40,130 +46,130 @@ export default function AccountSettingsPage() {
     )
   }
 
-  const profileErrors = getValidationErrors(updateProfile.error)
-  const passwordErrors = getValidationErrors(updatePassword.error)
-
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-semibold text-brand-700">Parametres du compte</h1>
+    <main className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6">
+      <Link
+        to="/account"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-brand-600"
+      >
+        <ArrowLeft className="size-4" aria-hidden />
+        Mon compte
+      </Link>
 
-      <section className="mb-8 rounded-lg border border-gray-200 p-4">
-        <h2 className="mb-4 font-semibold text-gray-800">Profil</h2>
+      <h1 className="mt-3 text-2xl font-bold tracking-tight text-gray-900">Paramètres</h1>
+      <p className="mt-1 text-sm text-gray-500">Vos informations et votre mot de passe</p>
+
+      {/* ---------------- Profile ---------------- */}
+      <Card className="mt-6 p-5 sm:p-6">
+        <h2 className="font-semibold text-gray-900">Profil</h2>
+        <p className="mt-0.5 mb-5 text-sm text-gray-500">
+          L'adresse email ne peut pas être modifiée ici.
+        </p>
+
         <form onSubmit={handleProfileSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="name" className="mb-1 block text-sm font-medium text-gray-700">
-              Nom
-            </label>
-            <input
-              id="name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2"
-            />
-          </div>
-          <div>
-            <label htmlFor="phone" className="mb-1 block text-sm font-medium text-gray-700">
-              Telephone
-            </label>
-            <input
-              id="phone"
-              value={phone}
-              onChange={(event) => setPhone(event.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2"
-            />
-          </div>
+          <Input
+            label="Nom complet"
+            required
+            icon={<User className="size-5" />}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            error={profileErrors?.name?.[0]}
+          />
 
-          {profileErrors && (
-            <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {Object.values(profileErrors)
-                .flat()
-                .map((message) => (
-                  <p key={message}>{message}</p>
-                ))}
-            </div>
-          )}
+          <Input
+            label="Téléphone (optionnel)"
+            type="tel"
+            icon={<Phone className="size-5" />}
+            value={phone}
+            onChange={(event) => setPhone(event.target.value)}
+            error={profileErrors?.phone?.[0]}
+          />
+
+          <Input label="Email" value={user?.email ?? ''} disabled />
+
           {updateProfile.isError && !profileErrors && (
-            <p className="text-sm text-red-600">{getErrorMessage(updateProfile.error)}</p>
+            <p className="flex items-start gap-2 text-sm text-red-600">
+              <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+              {getErrorMessage(updateProfile.error)}
+            </p>
           )}
-          {updateProfile.isSuccess && <p className="text-sm text-green-700">Profil mis a jour.</p>}
+          {updateProfile.isSuccess && (
+            <p className="flex items-center gap-2 text-sm text-green-700">
+              <CheckCircle2 className="size-4 shrink-0" aria-hidden />
+              Profil mis à jour.
+            </p>
+          )}
 
-          <button
-            type="submit"
-            disabled={updateProfile.isPending}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-white font-semibold transition hover:-translate-y-px hover:bg-brand-700 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
-          >
+          <Button type="submit" isLoading={updateProfile.isPending}>
             {updateProfile.isPending ? 'Enregistrement...' : 'Enregistrer'}
-          </button>
+          </Button>
         </form>
-      </section>
+      </Card>
 
-      <section className="rounded-lg border border-gray-200 p-4">
-        <h2 className="mb-4 font-semibold text-gray-800">Mot de passe</h2>
+      {/* ---------------- Password ---------------- */}
+      <Card className="mt-5 p-5 sm:p-6">
+        <h2 className="font-semibold text-gray-900">Mot de passe</h2>
+        <p className="mt-0.5 mb-5 text-sm text-gray-500">
+          Le mot de passe actuel est demandé pour confirmer que c'est bien vous.
+        </p>
+
         <form onSubmit={handlePasswordSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="current_password" className="mb-1 block text-sm font-medium text-gray-700">
-              Mot de passe actuel
-            </label>
-            <input
-              id="current_password"
-              type="password"
-              value={currentPassword}
-              onChange={(event) => setCurrentPassword(event.target.value)}
-              required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2"
-            />
-          </div>
-          <div>
-            <label htmlFor="new_password" className="mb-1 block text-sm font-medium text-gray-700">
-              Nouveau mot de passe
-            </label>
-            <input
-              id="new_password"
-              type="password"
-              value={newPassword}
-              onChange={(event) => setNewPassword(event.target.value)}
-              required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2"
-            />
-          </div>
-          <div>
-            <label htmlFor="new_password_confirmation" className="mb-1 block text-sm font-medium text-gray-700">
-              Confirmer le nouveau mot de passe
-            </label>
-            <input
-              id="new_password_confirmation"
-              type="password"
-              value={newPasswordConfirmation}
-              onChange={(event) => setNewPasswordConfirmation(event.target.value)}
-              required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2"
-            />
-          </div>
+          <Input
+            label="Mot de passe actuel"
+            type="password"
+            required
+            autoComplete="current-password"
+            icon={<Lock className="size-5" />}
+            value={currentPassword}
+            onChange={(event) => setCurrentPassword(event.target.value)}
+            error={passwordErrors?.current_password?.[0]}
+          />
 
-          {passwordErrors && (
-            <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {Object.values(passwordErrors)
-                .flat()
-                .map((message) => (
-                  <p key={message}>{message}</p>
-                ))}
-            </div>
-          )}
+          <Input
+            label="Nouveau mot de passe"
+            type="password"
+            required
+            autoComplete="new-password"
+            icon={<Lock className="size-5" />}
+            value={newPassword}
+            onChange={(event) => setNewPassword(event.target.value)}
+            error={passwordErrors?.password?.[0]}
+            hint="8 caracteres minimum"
+          />
+
+          <Input
+            label="Confirmer le nouveau mot de passe"
+            type="password"
+            required
+            autoComplete="new-password"
+            icon={<Lock className="size-5" />}
+            value={newPasswordConfirmation}
+            onChange={(event) => setNewPasswordConfirmation(event.target.value)}
+            error={
+              newPasswordConfirmation && newPasswordConfirmation !== newPassword
+                ? 'Les deux mots de passe ne correspondent pas.'
+                : undefined
+            }
+          />
+
           {updatePassword.isError && !passwordErrors && (
-            <p className="text-sm text-red-600">{getErrorMessage(updatePassword.error)}</p>
+            <p className="flex items-start gap-2 text-sm text-red-600">
+              <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+              {getErrorMessage(updatePassword.error)}
+            </p>
           )}
-          {updatePassword.isSuccess && <p className="text-sm text-green-700">Mot de passe mis a jour.</p>}
+          {updatePassword.isSuccess && (
+            <p className="flex items-center gap-2 text-sm text-green-700">
+              <CheckCircle2 className="size-4 shrink-0" aria-hidden />
+              Mot de passe mis à jour.
+            </p>
+          )}
 
-          <button
-            type="submit"
-            disabled={updatePassword.isPending}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-white font-semibold transition hover:-translate-y-px hover:bg-brand-700 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
-          >
+          <Button type="submit" isLoading={updatePassword.isPending}>
             {updatePassword.isPending ? 'Enregistrement...' : 'Changer le mot de passe'}
-          </button>
+          </Button>
         </form>
-      </section>
+      </Card>
     </main>
   )
 }
