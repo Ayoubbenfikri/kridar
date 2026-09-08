@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom'
 import { BellOff, CheckCheck, TriangleAlert } from 'lucide-react'
 import { useMarkAllAsRead, useMarkAsRead, useNotifications } from '@/features/notifications/useNotifications'
-import { Button, Card, EmptyState, Pagination, Skeleton } from '@/components/ui'
+import { Button, Card, EmptyState, Pagination, Skeleton, useToast } from '@/components/ui'
 import { cn } from '@/lib/cn'
 
 /**
@@ -12,6 +12,7 @@ export default function NotificationsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Number(searchParams.get('page') ?? '1')
 
+  const { showToast } = useToast()
   const { data, isError, isFetching } = useNotifications(page)
   const markAsRead = useMarkAsRead()
   const markAllAsRead = useMarkAllAsRead()
@@ -33,7 +34,11 @@ export default function NotificationsPage() {
             size="sm"
             icon={<CheckCheck className="size-4" />}
             isLoading={markAllAsRead.isPending}
-            onClick={() => markAllAsRead.mutate()}
+            onClick={() =>
+              markAllAsRead.mutate(undefined, {
+                onSuccess: () => showToast('success', 'Toutes les notifications sont marquees comme lues.'),
+              })
+            }
           >
             Tout marquer comme lu
           </Button>

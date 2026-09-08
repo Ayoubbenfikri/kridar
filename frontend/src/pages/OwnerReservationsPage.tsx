@@ -10,7 +10,7 @@ import {
 import { getErrorMessage } from '@/lib/apiErrors'
 import { formatMad } from '@/lib/formatPrice'
 import ReservationStatusBadge from '@/components/reservations/ReservationStatusBadge'
-import { Button, Card, EmptyState, Pagination, Skeleton, Textarea } from '@/components/ui'
+import { Button, Card, EmptyState, Pagination, Skeleton, Textarea, useToast } from '@/components/ui'
 
 /**
  * /owner/reservations - the requests received on the current user's
@@ -23,6 +23,7 @@ export default function OwnerReservationsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Number(searchParams.get('page') ?? '1')
 
+  const { showToast } = useToast()
   const { data, isError, error, isFetching } = useOwnerReservations(page)
   const confirmMutation = useConfirmReservation()
   const rejectMutation = useRejectReservation()
@@ -44,7 +45,12 @@ export default function OwnerReservationsPage() {
   function confirmCancel(reservationId: number) {
     cancelMutation.mutate(
       { reservationId, reason: cancelReason || undefined },
-      { onSuccess: () => setCancellingId(null) },
+      {
+        onSuccess: () => {
+          setCancellingId(null)
+          showToast('success', 'Reservation annulee. Le voyageur a ete notifie.')
+        },
+      },
     )
   }
 
@@ -143,7 +149,11 @@ export default function OwnerReservationsPage() {
                             isLoading={
                               confirmMutation.isPending && confirmMutation.variables === reservation.id
                             }
-                            onClick={() => confirmMutation.mutate(reservation.id)}
+                            onClick={() =>
+                              confirmMutation.mutate(reservation.id, {
+                                onSuccess: () => showToast('success', 'Reservation confirmee.'),
+                              })
+                            }
                           >
                             Confirmer
                           </Button>
@@ -155,7 +165,11 @@ export default function OwnerReservationsPage() {
                             isLoading={
                               rejectMutation.isPending && rejectMutation.variables === reservation.id
                             }
-                            onClick={() => rejectMutation.mutate(reservation.id)}
+                            onClick={() =>
+                              rejectMutation.mutate(reservation.id, {
+                                onSuccess: () => showToast('info', 'Demande refusee.'),
+                              })
+                            }
                           >
                             Refuser
                           </Button>

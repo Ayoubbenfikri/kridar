@@ -12,6 +12,7 @@ export { default as Pagination } from './Pagination'
 export { default as Select } from './Select'
 export { default as Skeleton } from './Skeleton'
 export { default as Textarea } from './Textarea'
+export { ToastProvider, useToast } from './Toast'
 
 export type { BadgeTone } from './Badge'
 export type { ButtonSize, ButtonVariant } from './Button'

@@ -3,7 +3,7 @@ import { Building2, ChevronLeft, ChevronRight, ImageOff, Pencil, Plus, TriangleA
 import { useOwnerProperties, usePublishProperty, useUnpublishProperty } from '@/features/owner/useOwner'
 import { formatMad, primaryPrice } from '@/lib/formatPrice'
 import { getErrorMessage } from '@/lib/apiErrors'
-import { Badge, Button, Card, EmptyState, Skeleton, buttonClasses } from '@/components/ui'
+import { Badge, Button, Card, EmptyState, Skeleton, buttonClasses, useToast } from '@/components/ui'
 import type { BadgeTone } from '@/components/ui'
 import type { Property, PropertyStatusValue } from '@/types/property'
 
@@ -34,6 +34,7 @@ export default function OwnerPropertiesPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Number(searchParams.get('page') ?? '1')
 
+  const { showToast } = useToast()
   const { data, isError, error } = useOwnerProperties(page)
   const publishMutation = usePublishProperty()
   const unpublishMutation = useUnpublishProperty()
@@ -64,12 +65,24 @@ export default function OwnerPropertiesPage() {
         size="sm"
         variant="secondary"
         disabled={isMutating(property)}
-        onClick={() => unpublishMutation.mutate(property.id)}
+        onClick={() =>
+          unpublishMutation.mutate(property.id, {
+            onSuccess: () => showToast('success', `"${property.title}" n'est plus visible publiquement.`),
+          })
+        }
       >
         {isMutating(property) ? '...' : 'Dépublier'}
       </Button>
     ) : (
-      <Button size="sm" disabled={isMutating(property)} onClick={() => publishMutation.mutate(property.id)}>
+      <Button
+        size="sm"
+        disabled={isMutating(property)}
+        onClick={() =>
+          publishMutation.mutate(property.id, {
+            onSuccess: () => showToast('success', `"${property.title}" est maintenant publiee.`),
+          })
+        }
+      >
         {isMutating(property) ? '...' : 'Publier'}
       </Button>
     )

@@ -1,14 +1,16 @@
 import { useState, type FormEvent } from 'react'
+import { ArrowLeft, ArrowRight, CheckCircle2, TriangleAlert } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { useSubmitReview } from '@/features/reviews/useReviews'
 import StarRating from '@/components/reviews/StarRating'
 import { getErrorMessage } from '@/lib/apiErrors'
+import { Button, Card, Textarea, buttonClasses } from '@/components/ui'
 
 /**
- * Standalone page reachable by URL (/reservations/:reservationId/review)
- * — not linked from anywhere in the UI yet, since there's no "my
- * reservations" page to put a button on (that's Phase 19). Proper
- * integration comes then; this unblocks testing the review flow now.
+ * /reservations/:reservationId/review - reached from "Mes reservations"
+ * on a completed stay. The backend decides whether the review is
+ * allowed (completed reservation, not already reviewed); this page just
+ * surfaces its answer.
  */
 export default function LeaveReviewPage() {
   const { reservationId } = useParams<{ reservationId: string }>()
@@ -24,55 +26,71 @@ export default function LeaveReviewPage() {
   if (submitReview.isSuccess) {
     const review = submitReview.data
     return (
-      <main className="mx-auto max-w-md px-4 py-12 text-center">
-        <div className="rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-green-700">
-          Merci pour votre avis !
-        </div>
-        <Link to={`/properties/${review.property_id}`} className="mt-4 inline-block text-brand-600 transition hover:underline">
-          Voir la propriété
-        </Link>
+      <main className="mx-auto w-full max-w-lg px-4 py-14 sm:px-6">
+        <Card className="p-8 text-center">
+          <span className="mx-auto flex size-12 items-center justify-center rounded-xl bg-green-50 text-green-700">
+            <CheckCircle2 className="size-6" aria-hidden />
+          </span>
+          <h1 className="mt-4 text-xl font-semibold text-gray-900">Merci pour votre avis</h1>
+          <p className="mt-1.5 text-sm text-gray-500">
+            Il est maintenant visible sur la page du logement.
+          </p>
+          <Link
+            to={`/properties/${review.property_id}`}
+            className={buttonClasses({ className: 'mt-6' })}
+          >
+            Voir la propriété
+            <ArrowRight className="size-4" aria-hidden />
+          </Link>
+        </Card>
       </main>
     )
   }
 
   return (
-    <main className="mx-auto max-w-md px-4 py-12">
-      <h1 className="mb-6 text-2xl font-semibold text-brand-700">Laisser un avis</h1>
+    <main className="mx-auto w-full max-w-lg px-4 py-10 sm:px-6">
+      <Link
+        to="/reservations"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-brand-600"
+      >
+        <ArrowLeft className="size-4" aria-hidden />
+        Mes réservations
+      </Link>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Note</label>
-          <StarRating value={rating} onChange={setRating} />
-        </div>
+      <h1 className="mt-3 text-2xl font-bold tracking-tight text-gray-900">Laisser un avis</h1>
+      <p className="mt-1 text-sm text-gray-500">Votre retour aide les prochains voyageurs.</p>
 
-        <div>
-          <label htmlFor="comment" className="mb-1 block text-sm font-medium text-gray-700">
-            Commentaire
-          </label>
-          <textarea
-            id="comment"
+      <Card className="mt-6 p-5 sm:p-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <span className="mb-2 block text-sm font-semibold text-gray-900">Note</span>
+            <StarRating value={rating} onChange={setRating} />
+            <p className="mt-2 text-xs text-gray-500">
+              {rating === 0 ? 'Choisissez une note pour continuer.' : `${rating} sur 5`}
+            </p>
+          </div>
+
+          <Textarea
+            label="Commentaire"
+            required
+            rows={5}
+            placeholder="Comment s'est passé votre séjour ?"
             value={comment}
             onChange={(event) => setComment(event.target.value)}
-            rows={4}
-            required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
           />
-        </div>
 
-        {submitReview.isError && (
-          <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {getErrorMessage(submitReview.error)}
-          </div>
-        )}
+          {submitReview.isError && (
+            <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
+              {getErrorMessage(submitReview.error)}
+            </div>
+          )}
 
-        <button
-          type="submit"
-          disabled={submitReview.isPending || rating === 0}
-          className="w-full rounded-lg bg-brand-600 px-4 py-2 text-white font-semibold transition hover:-translate-y-px hover:bg-brand-700 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
-        >
-          {submitReview.isPending ? 'Envoi...' : 'Envoyer mon avis'}
-        </button>
-      </form>
+          <Button type="submit" fullWidth disabled={rating === 0} isLoading={submitReview.isPending}>
+            {submitReview.isPending ? 'Envoi...' : 'Envoyer mon avis'}
+          </Button>
+        </form>
+      </Card>
     </main>
   )
 }

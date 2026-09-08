@@ -1,4 +1,5 @@
-import { Outlet } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
 import Navbar from './Navbar'
 import SiteFooter from './SiteFooter'
 import VerifyEmailBanner from './VerifyEmailBanner'
@@ -10,11 +11,22 @@ import VerifyEmailBanner from './VerifyEmailBanner'
  * flex-col + flex-1 keeps the footer at the bottom on short pages.
  */
 export default function AppLayout() {
+  const { pathname } = useLocation()
+
+  // A single-page app keeps the scroll position when the URL changes, so
+  // clicking a card near the bottom of a list would open the next page
+  // already scrolled down. This puts every new page back at the top.
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [pathname])
+
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <Navbar />
       <VerifyEmailBanner />
-      <div className="flex-1">
+      {/* key=pathname remounts on navigation, which is what replays the
+          entrance animation. */}
+      <div key={pathname} className="page-enter flex-1">
         <Outlet />
       </div>
       <SiteFooter />

@@ -129,3 +129,35 @@ html.js .reveal:not(.reveal-in) {
     transform: none;
   }
 }
+
+/* Entree d'un toast et d'une page : deux animations courtes, jouees une
+   seule fois. Pas d'etat masque par defaut ici (contrairement a .reveal) :
+   si l'animation ne se joue pas, le contenu est visible quand meme. */
+.toast-enter {
+  animation: toast-in 0.22s cubic-bezier(0.2, 0.6, 0.3, 1);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.page-enter {
+  animation: page-in 0.25s cubic-bezier(0.2, 0.6, 0.3, 1);
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-enter,
+  .page-enter {
+    animation: none;
+  }
+}
