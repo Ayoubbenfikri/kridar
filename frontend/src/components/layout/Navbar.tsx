@@ -1,6 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { Building2, CalendarCheck, Heart, KeyRound, LogOut, Menu, Settings, User, X } from 'lucide-react'
+import {
+  Building2,
+  CalendarCheck,
+  Heart,
+  KeyRound,
+  LogOut,
+  Menu,
+  Settings,
+  ShieldCheck,
+  User,
+  X,
+} from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
 import NotificationBell from '@/components/notifications/NotificationBell'
 import { buttonClasses } from '@/components/ui'
@@ -72,6 +83,10 @@ export default function Navbar() {
     }
   }, [isUserMenuOpen])
 
+  // The link is only rendered for an admin; the real gate is the
+  // backend 'admin' middleware, not this check.
+  const isAdmin = user?.role === 'admin'
+
   const initials = (user?.name ?? '')
     .split(' ')
     .slice(0, 2)
@@ -122,6 +137,11 @@ export default function Navbar() {
                   {link.label}
                 </NavLink>
               ))}
+            {isAdmin && (
+              <NavLink to="/admin" className={desktopLinkClass}>
+                Administration
+              </NavLink>
+            )}
           </nav>
         </div>
 
@@ -254,6 +274,11 @@ export default function Navbar() {
               <div className="rounded-lg px-3 py-2.5 transition hover:bg-gray-100">
                 <NotificationBell showLabel />
               </div>
+              {isAdmin && (
+                <NavLink to="/admin" className={mobileLinkClass}>
+                  <ShieldCheck className="size-4.5 text-gray-400" aria-hidden /> Administration
+                </NavLink>
+              )}
               <NavLink to="/account" className={mobileLinkClass}>
                 <User className="size-4.5 text-gray-400" aria-hidden /> Mon compte
               </NavLink>

@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom'
 import AppLayout from '@/components/layout/AppLayout'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
 import OwnerLayout from '@/components/layout/OwnerLayout'
+import AdminLayout from '@/components/layout/AdminLayout'
 import HomePage from '@/pages/HomePage'
 import LoginPage from '@/pages/LoginPage'
 import RegisterPage from '@/pages/RegisterPage'
@@ -20,6 +21,9 @@ import OwnerReservationsPage from '@/pages/OwnerReservationsPage'
 import PropertyCreatePage from '@/pages/PropertyCreatePage'
 import PropertyEditPage from '@/pages/PropertyEditPage'
 import UiKitPage from '@/pages/UiKitPage'
+import AdminDashboardPage from '@/pages/AdminDashboardPage'
+import AdminUsersPage from '@/pages/AdminUsersPage'
+import AdminPropertiesPage from '@/pages/AdminPropertiesPage'
 
 /**
  * Route definitions. AppLayout wraps every page with the Navbar + the
@@ -59,6 +63,18 @@ export const router = createBrowserRouter([
               { path: 'reservations', element: <OwnerReservationsPage /> },
               { path: 'properties/new', element: <PropertyCreatePage /> },
               { path: 'properties/:id/edit', element: <PropertyEditPage /> },
+            ],
+          },
+          {
+            // Same shape as the owner section. The 'admin' middleware
+            // (EnsureUserIsAdmin) is what really guards these endpoints;
+            // this route only decides what gets rendered.
+            path: 'admin',
+            element: <AdminLayout />,
+            children: [
+              { index: true, element: <AdminDashboardPage /> },
+              { path: 'users', element: <AdminUsersPage /> },
+              { path: 'properties', element: <AdminPropertiesPage /> },
             ],
           },
         ],
