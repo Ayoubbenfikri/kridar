@@ -1,5 +1,6 @@
 import axiosClient from '@/api/axiosClient'
 import type { PaginatedResponse, Property } from '@/types/property'
+import type { Payment } from '@/types/payment'
 import type { Reservation } from '@/types/reservation'
 import type { OwnerStats } from '@/types/owner'
 
@@ -42,6 +43,39 @@ async function unpublishProperty(propertyId: number): Promise<Property> {
   return data.property
 }
 
+/**
+ * Phase 22 (pricing) — the owner pays the one-off fee that lets a
+ * long-term listing go live. The AMOUNT is never sent: the backend
+ * reads it from SettingService, so it cannot be chosen from here.
+ *
+ * Same two-step shape as payReservation() in features/reservations:
+ * there is no real CMI merchant account yet (backend
+ * App\Services\Gateways\FakeCmiGateway), so "paying" means starting a
+ * Payment record then immediately simulating the gateway telling us it
+ * succeeded. When CmiGateway replaces the fake one, this becomes a
+ * single `window.location.href = redirect_url` and the second call
+ * disappears — the backend does not change at all.
+ *
+ * redirect_url comes back null when the admin has set the fee to 0: the
+ * backend already settled it, so there is nothing to confirm.
+ */
+async function payPublicationFee(propertyId: number): Promise<Property> {
+  const { data: initiated } = await axiosClient.post<{
+    message: string
+    payment: Payment
+    redirect_url: string | null
+  }>(`/api/v1/properties/${propertyId}/publication-payment`)
+
+  if (initiated.redirect_url !== null) {
+    await axiosClient.post(`/api/v1/payments/${initiated.payment.id}/callback`, { success: true })
+  }
+
+  // The callback is what publishes the listing server-side, so read the
+  // property back instead of guessing what it became.
+  const { data } = await axiosClient.get<{ property: Property }>(`/api/v1/properties/${propertyId}`)
+  return data.property
+}
+
 async function confirmReservation(reservationId: number): Promise<Reservation> {
   const { data } = await axiosClient.patch<{ message: string; reservation: Reservation }>(
     `/api/v1/reservations/${reservationId}/confirm`,
@@ -70,6 +104,7 @@ export const ownerApi = {
   fetchOwnerStats,
   publishProperty,
   unpublishProperty,
+  payPublicationFee,
   confirmReservation,
   rejectReservation,
   cancelReservationAsOwner,

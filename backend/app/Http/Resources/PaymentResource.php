@@ -17,7 +17,13 @@ class PaymentResource extends JsonResource
     {
         return [
             'id' => $this->id,
+
+            // Phase 22 (pricing): 'reservation' or 'listing_publication'.
+            // Exactly one of the two ids below is set, decided by this.
+            'type' => $this->type,
             'reservation_id' => $this->reservation_id,
+            'property_id' => $this->property_id,
+
             'amount' => $this->amount,
             'currency' => $this->currency,
             'provider' => $this->provider,

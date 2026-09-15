@@ -12,4 +12,8 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::patch('/properties/{property}/suspend', [AdminController::class, 'suspendProperty']);
 
     Route::get('/stats', [AdminController::class, 'stats']);
+
+    // Phase 22 (pricing). Reading the settings is public (GET /settings,
+    // routes/api/settings.php) — only writing them is admin-only.
+    Route::put('/settings', [AdminController::class, 'updateSettings']);
 });

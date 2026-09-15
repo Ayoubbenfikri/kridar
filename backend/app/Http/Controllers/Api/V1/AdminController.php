@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\UpdateSettingsRequest;
 use App\Http\Resources\PropertyResource;
 use App\Http\Resources\UserResource;
 use App\Models\Property;
 use App\Models\User;
 use App\Services\AdminService;
+use App\Services\SettingService;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -20,6 +22,7 @@ class AdminController extends Controller
 {
     public function __construct(
         private readonly AdminService $admin,
+        private readonly SettingService $settings,
     ) {}
 
     /**
@@ -84,6 +87,20 @@ class AdminController extends Controller
     {
         return response()->json([
             'stats' => $this->admin->getStats(),
+        ]);
+    }
+
+    /**
+     * PUT /admin/settings — Phase 22 (pricing). Changes the publication
+     * fee and the commission rate for FUTURE listings and bookings only:
+     * both values are snapshotted at the moment of payment/booking, so
+     * nothing already agreed is rewritten.
+     */
+    public function updateSettings(UpdateSettingsRequest $request): JsonResponse
+    {
+        return response()->json([
+            'message' => 'Settings updated.',
+            'settings' => $this->settings->update($request->validated()),
         ]);
     }
 }

@@ -54,6 +54,24 @@ export function useUnpublishProperty() {
   })
 }
 
+/**
+ * Phase 22 (pricing). Paying the fee also PUBLISHES the listing
+ * server-side (PaymentService::markPublicationPaid), so this invalidates
+ * exactly what a publish does — plus 'admin', because the platform
+ * revenue figures just changed.
+ */
+export function usePayPublicationFee() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (propertyId: number) => ownerApi.payPublicationFee(propertyId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['owner'] })
+      queryClient.invalidateQueries({ queryKey: ['properties'] })
+      queryClient.invalidateQueries({ queryKey: ['admin'] })
+    },
+  })
+}
+
 export function useConfirmReservation() {
   const queryClient = useQueryClient()
   return useMutation({

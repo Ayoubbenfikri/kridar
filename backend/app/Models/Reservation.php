@@ -22,6 +22,11 @@ class Reservation extends Model
         'end_date',
         'unit_price',
         'total_price',
+        // Phase 22 (pricing) — always written by ReservationService from
+        // PricingService, never from request input.
+        'commission_rate',
+        'commission_amount',
+        'owner_amount',
         'guests_count',
         'status',
         'cancellation_reason',
@@ -37,6 +42,9 @@ class Reservation extends Model
             'end_date' => 'date',
             'unit_price' => 'decimal:2',
             'total_price' => 'decimal:2',
+            'commission_rate' => 'decimal:2',
+            'commission_amount' => 'decimal:2',
+            'owner_amount' => 'decimal:2',
             'cancelled_at' => 'datetime',
         ];
     }

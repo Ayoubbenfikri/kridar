@@ -25,6 +25,22 @@ return new class extends Migration
             $table->decimal('unit_price', 10, 2);
             $table->decimal('total_price', 10, 2);
 
+            // ---- Phase 22 (pricing): Kridar's commission ------------
+            // Snapshotted for the same reason as the prices above: the
+            // admin can change the rate at any time, and that must not
+            // rewrite what was already agreed on past bookings.
+            //
+            // total_price is what the guest pays. owner_amount is what
+            // the owner receives. commission_amount is Kridar's cut:
+            //     commission_amount = total_price * commission_rate / 100
+            //     owner_amount      = total_price - commission_amount
+            //
+            // All three stay 0 for a LONG-TERM reservation — Kridar
+            // takes nothing from rent, only the publication fee.
+            $table->decimal('commission_rate', 5, 2)->default(0);   // percent, e.g. 10.00
+            $table->decimal('commission_amount', 10, 2)->default(0);
+            $table->decimal('owner_amount', 10, 2)->default(0);
+
             $table->unsignedSmallInteger('guests_count')->nullable();
 
             $table->string('status')->default('pending'); // App\Enums\ReservationStatus

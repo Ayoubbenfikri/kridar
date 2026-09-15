@@ -24,6 +24,7 @@ import UiKitPage from '@/pages/UiKitPage'
 import AdminDashboardPage from '@/pages/AdminDashboardPage'
 import AdminUsersPage from '@/pages/AdminUsersPage'
 import AdminPropertiesPage from '@/pages/AdminPropertiesPage'
+import AdminSettingsPage from '@/pages/AdminSettingsPage'
 
 /**
  * Route definitions. AppLayout wraps every page with the Navbar + the
@@ -75,6 +76,7 @@ export const router = createBrowserRouter([
               { index: true, element: <AdminDashboardPage /> },
               { path: 'users', element: <AdminUsersPage /> },
               { path: 'properties', element: <AdminPropertiesPage /> },
+              { path: 'settings', element: <AdminSettingsPage /> },
             ],
           },
         ],

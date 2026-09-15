@@ -43,6 +43,14 @@ class PropertyResource extends JsonResource
             'is_featured' => $this->is_featured,
             'published_at' => $this->published_at,
 
+            // Phase 22 (pricing) — the long-term publication fee.
+            // `requires_publication_fee` is sent (rather than letting the
+            // frontend re-derive it from rental_type) so the rule lives
+            // in ONE place: Property::requiresPublicationFee().
+            'requires_publication_fee' => $this->requiresPublicationFee(),
+            'publication_status' => $this->publication_status,
+            'publication_paid_at' => $this->publication_paid_at,
+
             // Only populated when the query added withAvg/withCount (see
             // EloquentPropertyRepository::paginatePublished() and
             // PropertyController::show()) — null/0 elsewhere rather than

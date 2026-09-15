@@ -8,6 +8,12 @@ export type PropertyType = 'apartment' | 'villa' | 'studio' | 'riad' | 'office'
 export type RentalType = 'short_term' | 'long_term' | 'both'
 export type PropertyStatusValue = 'draft' | 'pending_review' | 'published' | 'suspended' | 'archived'
 
+/**
+ * Mirrors backend App\Enums\PublicationStatus. Null means the question
+ * does not apply: the listing is short-term only and owes no fee.
+ */
+export type PublicationStatusValue = 'pending_payment' | 'paid'
+
 export interface PropertyImage {
   id: number
   url: string
@@ -60,6 +66,16 @@ export interface Property {
   status: PropertyStatusValue
   is_featured: boolean
   published_at: string | null
+
+  /**
+   * True when the listing appears in long-term search (rental_type
+   * long_term or both) and therefore owes the one-off publication fee.
+   * Computed by the backend (Property::requiresPublicationFee()) rather
+   * than re-derived here, so the rule lives in exactly one place.
+   */
+  requires_publication_fee: boolean
+  publication_status: PublicationStatusValue | null
+  publication_paid_at: string | null
 
   // Only populated when the backend query added withAvg/withCount
   // (published listing + property details) - null/0 otherwise.

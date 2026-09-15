@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\PropertyStatus;
 use App\Exceptions\PropertySuspendedException;
+use App\Exceptions\PublicationFeeRequiredException;
 use App\Models\Property;
 use App\Models\User;
 use App\Repositories\Contracts\PropertyRepositoryInterface;
@@ -72,6 +73,19 @@ class PropertyService
             $this->properties->syncAmenities($property, $amenityIds);
         }
 
+        // Phase 22 (pricing) — close the back door. Publishing a
+        // short-term listing is free, so without this an owner could
+        // publish as short_term and then edit rental_type to long_term,
+        // landing in paid long-term search for nothing. If the edit
+        // makes the fee owed and it isn't paid, the listing drops back
+        // to draft until it is.
+        if ($property->status === PropertyStatus::Published && $property->isBlockedByPublicationFee()) {
+            $property = $this->properties->update($property, [
+                'status' => PropertyStatus::Draft,
+                'published_at' => null,
+            ]);
+        }
+
         return $property->load(['amenities', 'images']);
     }
 
@@ -88,6 +102,23 @@ class PropertyService
         if ($property->status === PropertyStatus::Suspended) {
             throw new PropertySuspendedException(
                 'This property was suspended by an administrator and can only be republished by one.'
+            );
+        }
+
+        // Phase 22 (pricing) — THE enforcement point for the long-term
+        // business model. A listing that appears in long-term search
+        // goes live only once its one-off publication fee is settled.
+        // The frontend hides the publish button in that case, but this
+        // is what actually guarantees it (project rule: the backend
+        // validates, a frontend value is never trusted).
+        //
+        // Note this is deliberately NOT in AdminService::approveProperty():
+        // an admin publishing a listing by hand is an override (cash paid
+        // at the office, a goodwill gesture), and overriding is the whole
+        // point of an admin action.
+        if ($property->isBlockedByPublicationFee()) {
+            throw new PublicationFeeRequiredException(
+                'This listing appears in long-term search, so its publication fee must be paid before it can go live.'
             );
         }
 

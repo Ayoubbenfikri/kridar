@@ -1,6 +1,12 @@
 import { Link, useSearchParams } from 'react-router-dom'
-import { Building2, ChevronLeft, ChevronRight, ImageOff, Pencil, Plus, TriangleAlert } from 'lucide-react'
-import { useOwnerProperties, usePublishProperty, useUnpublishProperty } from '@/features/owner/useOwner'
+import { Building2, ChevronLeft, ChevronRight, ImageOff, Info, Pencil, Plus, TriangleAlert } from 'lucide-react'
+import {
+  useOwnerProperties,
+  usePayPublicationFee,
+  usePublishProperty,
+  useUnpublishProperty,
+} from '@/features/owner/useOwner'
+import { useSettings } from '@/features/settings/useSettings'
 import { formatMad, primaryPrice } from '@/lib/formatPrice'
 import { getErrorMessage } from '@/lib/apiErrors'
 import { Badge, Button, Card, EmptyState, Skeleton, buttonClasses, useToast } from '@/components/ui'
@@ -24,11 +30,27 @@ const STATUS_TONES: Record<PropertyStatusValue, BadgeTone> = {
 }
 
 /**
+ * Phase 22 (pricing): does this listing still owe its publication fee?
+ *
+ * `requires_publication_fee` is computed by the backend
+ * (Property::requiresPublicationFee()) - the rental_type rule is NOT
+ * duplicated here, so it can only ever change in one place.
+ */
+function owesPublicationFee(property: Property): boolean {
+  return property.requires_publication_fee && property.publication_status !== 'paid'
+}
+
+/**
  * /owner/properties - every property the current user owns, any status
  * (see EloquentPropertyRepository::paginateForOwner). Publish and
  * unpublish call the same endpoints as everywhere else (PropertyPolicy
  * checks ownership); a suspended property gets no publish button, since
  * only an admin can lift a suspension (PropertyService::publish()).
+ *
+ * A long-term listing that has not paid its fee gets a "Payer" button
+ * instead of "Publier" - the backend refuses to publish it anyway
+ * (PublicationFeeRequiredException), this just stops the owner from
+ * walking into that error.
  */
 export default function OwnerPropertiesPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -36,8 +58,10 @@ export default function OwnerPropertiesPage() {
 
   const { showToast } = useToast()
   const { data, isError, error } = useOwnerProperties(page)
+  const { data: settings } = useSettings()
   const publishMutation = usePublishProperty()
   const unpublishMutation = useUnpublishProperty()
+  const payFeeMutation = usePayPublicationFee()
 
   function goToPage(nextPage: number) {
     setSearchParams(nextPage === 1 ? {} : { page: String(nextPage) })
@@ -46,11 +70,12 @@ export default function OwnerPropertiesPage() {
   function isMutating(property: Property) {
     return (
       (publishMutation.isPending && publishMutation.variables === property.id) ||
-      (unpublishMutation.isPending && unpublishMutation.variables === property.id)
+      (unpublishMutation.isPending && unpublishMutation.variables === property.id) ||
+      (payFeeMutation.isPending && payFeeMutation.variables === property.id)
     )
   }
 
-  /** The publish/unpublish control for one property. */
+  /** The publish / unpublish / pay-the-fee control for one property. */
   function StatusAction({ property, compact }: { property: Property; compact?: boolean }) {
     if (property.status === 'suspended') {
       return (
@@ -60,20 +85,48 @@ export default function OwnerPropertiesPage() {
       )
     }
 
-    return property.status === 'published' ? (
-      <Button
-        size="sm"
-        variant="secondary"
-        disabled={isMutating(property)}
-        onClick={() =>
-          unpublishMutation.mutate(property.id, {
-            onSuccess: () => showToast('success', `"${property.title}" n'est plus visible publiquement.`),
-          })
-        }
-      >
-        {isMutating(property) ? '...' : 'Dépublier'}
-      </Button>
-    ) : (
+    if (property.status === 'published') {
+      return (
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={isMutating(property)}
+          onClick={() =>
+            unpublishMutation.mutate(property.id, {
+              onSuccess: () => showToast('success', `"${property.title}" n'est plus visible publiquement.`),
+            })
+          }
+        >
+          {isMutating(property) ? '...' : 'Dépublier'}
+        </Button>
+      )
+    }
+
+    // Not published, and the fee is still owed: paying IS what publishes
+    // it (PaymentService::markPublicationPaid), so there is no second
+    // "Publier" click afterwards.
+    if (owesPublicationFee(property)) {
+      return (
+        <Button
+          size="sm"
+          disabled={isMutating(property)}
+          onClick={() =>
+            payFeeMutation.mutate(property.id, {
+              onSuccess: () =>
+                showToast('success', `Frais payés — "${property.title}" est maintenant publiée.`),
+            })
+          }
+        >
+          {isMutating(property)
+            ? '...'
+            : settings
+              ? `Payer ${formatMad(settings.listing_publication_fee)}`
+              : 'Payer les frais'}
+        </Button>
+      )
+    }
+
+    return (
       <Button
         size="sm"
         disabled={isMutating(property)}
@@ -103,6 +156,8 @@ export default function OwnerPropertiesPage() {
     )
   }
 
+  const mutationError = publishMutation.error ?? unpublishMutation.error ?? payFeeMutation.error
+
   return (
     <>
       <div className="flex items-center justify-between gap-4">
@@ -120,10 +175,25 @@ export default function OwnerPropertiesPage() {
         </Link>
       </div>
 
-      {(publishMutation.isError || unpublishMutation.isError) && (
+      {/* The business model, stated once where the owner acts on it.
+          Both numbers come from the admin settings, never hardcoded. */}
+      {settings && (
+        <Card className="mt-4 flex items-start gap-3 bg-gray-50 p-4 text-sm text-gray-600">
+          <Info className="mt-0.5 size-4.5 shrink-0 text-brand-600" aria-hidden />
+          <p>
+            <strong className="text-gray-900">Longue durée :</strong>{' '}
+            {formatMad(settings.listing_publication_fee)} une seule fois pour publier l'annonce. Aucune
+            commission sur le loyer.{' '}
+            <strong className="text-gray-900">Courte durée :</strong> publication gratuite, Kridar
+            prélève {settings.short_term_commission_rate}% sur chaque réservation.
+          </p>
+        </Card>
+      )}
+
+      {mutationError && (
         <Card className="mt-4 flex items-start gap-3 border-red-200 bg-red-50 p-3 text-sm text-red-700">
           <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
-          {getErrorMessage(publishMutation.error ?? unpublishMutation.error)}
+          {getErrorMessage(mutationError)}
         </Card>
       )}
 
@@ -165,8 +235,8 @@ export default function OwnerPropertiesPage() {
                   <col />
                   <col className="w-28" />
                   <col className="w-36" />
-                  <col className="w-28" />
                   <col className="w-32" />
+                  <col className="w-40" />
                 </colgroup>
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/60">
@@ -213,6 +283,11 @@ export default function OwnerPropertiesPage() {
                           <Badge tone={STATUS_TONES[property.status]}>
                             {STATUS_LABELS[property.status]}
                           </Badge>
+                          {owesPublicationFee(property) && (
+                            <p className="mt-1 text-[11px] font-medium text-amber-700">
+                              Publication non payée
+                            </p>
+                          )}
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-end gap-1.5">
@@ -259,7 +334,12 @@ export default function OwnerPropertiesPage() {
                           </p>
                         )}
                       </div>
-                      <Badge tone={STATUS_TONES[property.status]}>{STATUS_LABELS[property.status]}</Badge>
+                      <div className="shrink-0 text-right">
+                        <Badge tone={STATUS_TONES[property.status]}>{STATUS_LABELS[property.status]}</Badge>
+                        {owesPublicationFee(property) && (
+                          <p className="mt-1 text-[11px] font-medium text-amber-700">Non payée</p>
+                        )}
+                      </div>
                     </div>
                     <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
                       <Link

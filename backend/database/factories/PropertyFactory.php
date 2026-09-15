@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\PropertyStatus;
 use App\Enums\PropertyType;
+use App\Enums\PublicationStatus;
 use App\Enums\RentalType;
 use App\Models\Property;
 use App\Models\User;
@@ -36,6 +37,13 @@ class PropertyFactory extends Factory
 
         $rentalType = fake()->randomElement(RentalType::cases());
 
+        // Phase 22 (pricing): a seeded listing is created as already
+        // published, so if it appears in long-term search its fee must
+        // read as already settled — otherwise the sample data would be
+        // in a state PropertyService::publish() refuses to produce.
+        // Use ->unpaidPublication() for the opposite case.
+        $owesFee = $rentalType !== RentalType::ShortTerm;
+
         return [
             'owner_id' => User::factory(),
             'title' => $title,
@@ -59,6 +67,8 @@ class PropertyFactory extends Factory
             'status' => PropertyStatus::Published,
             'is_featured' => false,
             'published_at' => now(),
+            'publication_status' => $owesFee ? PublicationStatus::Paid : null,
+            'publication_paid_at' => $owesFee ? now() : null,
         ];
     }
 
@@ -67,6 +77,48 @@ class PropertyFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'status' => PropertyStatus::Draft,
             'published_at' => null,
+        ]);
+    }
+
+    /**
+     * Phase 22 (pricing): a long-term-only listing, fee already settled.
+     * Combine with ->unpaidPublication() for the "must pay first" case.
+     */
+    public function longTerm(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'rental_type' => RentalType::LongTerm,
+            'max_guests' => null,
+            'price_per_night' => null,
+            'price_per_month' => fake()->numberBetween(2500, 25000),
+            'publication_status' => PublicationStatus::Paid,
+            'publication_paid_at' => now(),
+        ]);
+    }
+
+    public function shortTerm(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'rental_type' => RentalType::ShortTerm,
+            'max_guests' => fake()->numberBetween(1, 10),
+            'price_per_night' => fake()->numberBetween(200, 2000),
+            'price_per_month' => null,
+            'publication_status' => null,
+            'publication_paid_at' => null,
+        ]);
+    }
+
+    /**
+     * The fee is owed and has never been paid. Apply it AFTER
+     * ->longTerm(), since later states win:
+     *
+     *   Property::factory()->longTerm()->unpaidPublication()->draft()
+     */
+    public function unpaidPublication(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'publication_status' => null,
+            'publication_paid_at' => null,
         ]);
     }
 }

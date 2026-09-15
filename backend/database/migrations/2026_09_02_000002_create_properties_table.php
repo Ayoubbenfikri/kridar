@@ -45,6 +45,20 @@ return new class extends Migration
             $table->boolean('is_featured')->default(false);
             $table->timestamp('published_at')->nullable();
 
+            // ---- Phase 22 (pricing): listing publication fee --------
+            // Kridar's long-term business model is a one-off fee the
+            // owner pays to publish (no commission on rent). This is
+            // tracked SEPARATELY from `status` above: `status` is the
+            // existing lifecycle (draft/published/suspended...) and
+            // keeps working untouched, while `publication_status` only
+            // answers "has the publication fee been paid?".
+            //
+            // Null means the question doesn't apply — a short-term-only
+            // listing never owes a fee. See
+            // App\Models\Property::requiresPublicationFee().
+            $table->string('publication_status')->nullable(); // App\Enums\PublicationStatus
+            $table->timestamp('publication_paid_at')->nullable();
+
             $table->timestamps();
             $table->softDeletes();
 
