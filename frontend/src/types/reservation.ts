@@ -31,12 +31,52 @@ export interface Reservation {
   start_date: string
   end_date: string
   unit_price: string
+
+  /** What the guest pays. */
   total_price: string
+
+  /**
+   * Phase 22 (pricing) — how total_price splits, snapshotted when the
+   * reservation was created. Decimal-cast on the backend, so these
+   * arrive as strings like "150.00"; wrap in Number() for arithmetic.
+   *
+   * All three are "0.00" on a long-term reservation: Kridar takes
+   * nothing from rent, so owner_amount equals total_price.
+   */
+  commission_rate: string
+  commission_amount: string
+  owner_amount: string
+
   guests_count: number | null
   status: ReservationStatusValue
   cancellation_reason: string | null
   cancelled_at: string | null
   created_at: string
+}
+
+/**
+ * Phase 22 (pricing) — POST /reservations/price-preview.
+ *
+ * Unlike the fields on Reservation above, these come back as plain JSON
+ * NUMBERS: the endpoint returns PricingService's array directly, not a
+ * decimal-cast Eloquent model.
+ */
+export interface PricePreview {
+  unit_price: number
+  /** Nights for a short-term booking, whole months for a long-term one. */
+  units: number
+  total_price: number
+  /** Percent. 0 for a long-term booking. */
+  commission_rate: number
+  commission_amount: number
+  owner_amount: number
+}
+
+export interface PricePreviewPayload {
+  property_id: number
+  rental_type: ReservationRentalType
+  start_date: string
+  end_date: string
 }
 
 /**

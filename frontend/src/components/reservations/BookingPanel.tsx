@@ -2,11 +2,11 @@ import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertCircle, ArrowRight, CalendarCheck, CheckCircle2, LogIn, MailWarning } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
-import { useCreateReservation } from '@/features/reservations/useReservations'
+import { useCreateReservation, usePricePreview } from '@/features/reservations/useReservations'
 import AvailabilityCalendar from './AvailabilityCalendar'
 import { getErrorMessage, getValidationErrors } from '@/lib/apiErrors'
 import { formatMad } from '@/lib/formatPrice'
-import { Button, Card, Input, buttonClasses } from '@/components/ui'
+import { Button, Card, Input, Skeleton, buttonClasses } from '@/components/ui'
 import { cn } from '@/lib/cn'
 import type { Property } from '@/types/property'
 import type { ReservationRentalType } from '@/types/reservation'
@@ -18,10 +18,12 @@ interface BookingPanelProps {
 /**
  * The booking form on PropertyDetailsPage. Only renders something to
  * submit when there IS something to book: logged in, verified, not the
- * property's own owner, and the property published. total_price always
- * comes back from the server response after submitting - it is never
- * calculated here, since the pricing rules (backend PricingService)
- * live on the backend only.
+ * property's own owner, and the property published.
+ *
+ * No price is ever computed here. Once both dates are picked, the
+ * breakdown comes from POST /reservations/price-preview — the same
+ * backend PricingService that will store the figures if the guest goes
+ * ahead, so what they see and what gets saved cannot drift apart.
  */
 export default function BookingPanel({ property }: BookingPanelProps) {
   const { user, isAuthenticated } = useAuth()
@@ -34,6 +36,18 @@ export default function BookingPanel({ property }: BookingPanelProps) {
   const [startDate, setStartDate] = useState<string | null>(null)
   const [endDate, setEndDate] = useState<string | null>(null)
   const [guestsCount, setGuestsCount] = useState('')
+
+  // null until both dates are picked — usePricePreview stays disabled.
+  const pricePayload =
+    startDate && endDate
+      ? {
+          property_id: property.id,
+          rental_type: rentalType,
+          start_date: startDate,
+          end_date: endDate,
+        }
+      : null
+  const { data: pricing, isError: pricingFailed } = usePricePreview(pricePayload)
 
   if (property.status !== 'published') {
     return null
@@ -119,6 +133,7 @@ export default function BookingPanel({ property }: BookingPanelProps) {
   }
 
   const validationErrors = getValidationErrors(createReservation.error)
+  const unitLabel = rentalType === 'short_term' ? 'nuit' : 'mois'
 
   return (
     <Card className="p-5">
@@ -189,6 +204,46 @@ export default function BookingPanel({ property }: BookingPanelProps) {
           />
         )}
 
+        {/* The price breakdown, straight from the server. Three states:
+            loading, failed (stay silent rather than show a wrong number),
+            and the real figures. */}
+        {startDate && endDate && !pricingFailed && (
+          <div className="rounded-lg border border-gray-200 p-3">
+            {!pricing ? (
+              <Skeleton className="h-12 w-full rounded" />
+            ) : (
+              <>
+                <div className="flex items-baseline justify-between text-sm text-gray-600">
+                  <span>
+                    {formatMad(pricing.unit_price)} × {pricing.units} {unitLabel}
+                    {pricing.units > 1 ? 's' : ''}
+                  </span>
+                  <span>{formatMad(pricing.total_price)}</span>
+                </div>
+
+                <div className="mt-2 flex items-baseline justify-between border-t border-gray-100 pt-2">
+                  <span className="font-semibold text-gray-900">Total à payer</span>
+                  <span className="text-lg font-bold text-gray-900">
+                    {formatMad(pricing.total_price)}
+                  </span>
+                </div>
+
+                {pricing.commission_rate > 0 ? (
+                  <p className="mt-2 text-xs text-gray-500">
+                    Dont commission Kridar ({pricing.commission_rate}%) :{' '}
+                    {formatMad(pricing.commission_amount)}. Elle est incluse dans le total, vous ne
+                    payez rien en plus.
+                  </p>
+                ) : (
+                  <p className="mt-2 text-xs text-gray-500">
+                    Location longue durée : Kridar ne prélève aucune commission sur le loyer.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
         {validationErrors && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
             {Object.values(validationErrors)
@@ -218,7 +273,7 @@ export default function BookingPanel({ property }: BookingPanelProps) {
         </Button>
 
         <p className="text-center text-xs text-gray-500">
-          Le prix total est calculé par le serveur après la demande.
+          Le montant est confirmé par le serveur au moment de la demande.
         </p>
       </form>
     </Card>

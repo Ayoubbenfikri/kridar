@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { reservationsApi } from './reservationsApi'
 import type { CreateReservationPayload } from './reservationsApi'
+import type { PricePreviewPayload } from '@/types/reservation'
 
 /**
  * Fetches the booked/blocked ranges for a wide window (see
@@ -14,6 +15,24 @@ export function useAvailability(propertyId: number | undefined, start: string, e
     queryKey: ['properties', propertyId, 'availability', { start, end }],
     queryFn: () => reservationsApi.fetchAvailability(propertyId as number, start, end),
     enabled: propertyId !== undefined,
+    staleTime: 60 * 1000,
+  })
+}
+
+/**
+ * Phase 22 (pricing). A useQuery even though the endpoint is a POST:
+ * it reads, it has no side effect, and the payload IS the cache key —
+ * so re-picking the same dates costs nothing, and changing them
+ * refetches on its own.
+ *
+ * Pass null while the guest has not picked both dates yet; the query
+ * simply stays disabled.
+ */
+export function usePricePreview(payload: PricePreviewPayload | null) {
+  return useQuery({
+    queryKey: ['reservations', 'price-preview', payload],
+    queryFn: () => reservationsApi.fetchPricePreview(payload as PricePreviewPayload),
+    enabled: payload !== null,
     staleTime: 60 * 1000,
   })
 }

@@ -58,6 +58,13 @@ class ReservationService
                 'end_date' => $endDate,
                 'unit_price' => $price['unit_price'],
                 'total_price' => $price['total_price'],
+                // Phase 22 (pricing): snapshotted here, exactly like the
+                // prices above and for the same reason — an admin
+                // changing the rate tomorrow must not silently rewrite
+                // what this owner was promised today.
+                'commission_rate' => $price['commission_rate'],
+                'commission_amount' => $price['commission_amount'],
+                'owner_amount' => $price['owner_amount'],
                 'guests_count' => $data['guests_count'] ?? null,
                 'status' => ReservationStatus::Pending,
             ]);
@@ -69,6 +76,29 @@ class ReservationService
         $reservation->property->owner->notify(new ReservationRequestedNotification($reservation));
 
         return $reservation;
+    }
+
+    /**
+     * Phase 22 (pricing): the same calculation as create(), without
+     * writing anything — so the guest sees the real final amount and
+     * the real commission BEFORE committing to the booking.
+     *
+     * It deliberately reuses PricingService rather than letting the
+     * frontend do the arithmetic: the number shown to the guest and the
+     * number that gets stored must come from the same code, or they
+     * will drift apart the first time a rule changes.
+     *
+     * @param  array<string, mixed>  $data  validated PricePreviewRequest data
+     * @return array<string, mixed>
+     */
+    public function previewPrice(array $data, Property $property): array
+    {
+        return $this->pricing->calculate(
+            $property,
+            RentalType::from($data['rental_type']),
+            Carbon::parse($data['start_date'])->startOfDay(),
+            Carbon::parse($data['end_date'])->startOfDay(),
+        );
     }
 
     public function confirm(Reservation $reservation): Reservation

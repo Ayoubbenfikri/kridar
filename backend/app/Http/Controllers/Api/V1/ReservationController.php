@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Reservation\PricePreviewRequest;
 use App\Http\Requests\Reservation\StoreReservationRequest;
 use App\Http\Resources\ReservationResource;
 use App\Models\Property;
@@ -43,6 +44,26 @@ class ReservationController extends Controller
             'message' => 'Booking request sent. The owner has 48 hours to confirm it.',
             'reservation' => new ReservationResource($reservation->load(self::PROPERTY_SUMMARY_COLUMNS)),
         ], 201);
+    }
+
+    /**
+     * POST /reservations/price-preview — Phase 22 (pricing).
+     *
+     * Read-only: returns what the booking WOULD cost and how it splits
+     * between the owner and Kridar, without creating anything. This is
+     * what lets the guest see the final amount, and the owner see what
+     * they will receive, before anyone commits.
+     *
+     * The frontend never does this arithmetic itself — the displayed
+     * number and the stored number come from the same PricingService.
+     */
+    public function pricePreview(PricePreviewRequest $request): JsonResponse
+    {
+        $property = Property::findOrFail($request->validated('property_id'));
+
+        return response()->json([
+            'pricing' => $this->reservations->previewPrice($request->validated(), $property),
+        ]);
     }
 
     public function show(Reservation $reservation): JsonResponse

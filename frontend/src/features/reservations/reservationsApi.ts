@@ -1,6 +1,12 @@
 import axiosClient from '@/api/axiosClient'
 import type { PaginatedResponse } from '@/types/property'
-import type { AvailabilityResponse, Reservation, ReservationRentalType } from '@/types/reservation'
+import type {
+  AvailabilityResponse,
+  PricePreview,
+  PricePreviewPayload,
+  Reservation,
+  ReservationRentalType,
+} from '@/types/reservation'
 import type { Payment } from '@/types/payment'
 
 export interface CreateReservationPayload {
@@ -21,6 +27,25 @@ async function fetchAvailability(
     { params: { start, end } },
   )
   return data
+}
+
+/**
+ * Phase 22 (pricing) — what the booking WOULD cost, and how it splits
+ * between the owner and Kridar. Nothing is created and no dates are
+ * held; it exists so the guest sees the real final amount before
+ * committing.
+ *
+ * A POST despite being a read: it takes a body of dates. The numbers
+ * are computed by the backend's PricingService — the exact same code
+ * that will store them if the booking goes ahead, so the preview can
+ * never disagree with the reservation.
+ */
+async function fetchPricePreview(payload: PricePreviewPayload): Promise<PricePreview> {
+  const { data } = await axiosClient.post<{ pricing: PricePreview }>(
+    '/api/v1/reservations/price-preview',
+    payload,
+  )
+  return data.pricing
 }
 
 async function createReservation(payload: CreateReservationPayload): Promise<Reservation> {
@@ -67,6 +92,7 @@ async function payReservation(reservationId: number): Promise<Payment> {
 
 export const reservationsApi = {
   fetchAvailability,
+  fetchPricePreview,
   createReservation,
   fetchMyReservations,
   cancelReservation,

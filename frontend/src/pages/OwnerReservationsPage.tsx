@@ -11,6 +11,39 @@ import { getErrorMessage } from '@/lib/apiErrors'
 import { formatMad } from '@/lib/formatPrice'
 import ReservationStatusBadge from '@/components/reservations/ReservationStatusBadge'
 import { Button, Card, EmptyState, Pagination, Skeleton, Textarea, useToast } from '@/components/ui'
+import type { Reservation } from '@/types/reservation'
+
+/**
+ * Phase 22 (pricing): what the owner actually receives on this booking.
+ *
+ * Every figure is read from the reservation, never recomputed here —
+ * they were snapshotted at booking time, so an owner looking at an old
+ * reservation sees the rate that applied then, not today's.
+ */
+function Payout({ reservation }: { reservation: Reservation }) {
+  const commission = Number(reservation.commission_amount)
+
+  if (commission <= 0) {
+    return (
+      <p className="mt-3 rounded-lg bg-gray-50 px-3 py-2.5 text-sm text-gray-600">
+        Longue durée — Kridar ne prélève aucune commission. Vous percevez le loyer directement,{' '}
+        <strong className="text-gray-900">{formatMad(reservation.total_price)}</strong>.
+      </p>
+    )
+  }
+
+  return (
+    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-brand-50 px-3 py-2.5 text-sm">
+      <span className="text-gray-600">
+        Commission Kridar ({Number(reservation.commission_rate)}%) :{' '}
+        <strong className="text-gray-900">− {formatMad(reservation.commission_amount)}</strong>
+      </span>
+      <span className="font-semibold text-brand-700">
+        Vous recevez {formatMad(reservation.owner_amount)}
+      </span>
+    </div>
+  )
+}
 
 /**
  * /owner/reservations - the requests received on the current user's
@@ -123,13 +156,15 @@ export default function OwnerReservationsPage() {
                     </div>
                     <div className="col-span-2 rounded-lg border border-gray-200 px-3 py-2 sm:col-span-1">
                       <p className="text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
-                        Total
+                        Payé par le client
                       </p>
                       <p className="text-sm font-semibold text-gray-900">
                         {formatMad(reservation.total_price)}
                       </p>
                     </div>
                   </div>
+
+                  <Payout reservation={reservation} />
 
                   {reservation.cancellation_reason && (
                     <p className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-600">
