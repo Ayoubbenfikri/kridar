@@ -1,12 +1,13 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Building2, LayoutDashboard, ShieldCheck, Users, Wallet } from 'lucide-react'
+import { Building2, CreditCard, LayoutDashboard, Settings, ShieldCheck, Users } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
 const LINKS = [
   { to: '/admin', label: 'Tableau de bord', icon: LayoutDashboard, end: true },
   { to: '/admin/users', label: 'Utilisateurs', icon: Users, end: false },
   { to: '/admin/properties', label: 'Propriétés', icon: Building2, end: false },
-  { to: '/admin/settings', label: 'Tarification', icon: Wallet, end: false },
+  { to: '/admin/payments', label: 'Transactions', icon: CreditCard, end: false },
+  { to: '/admin/settings', label: 'Tarification', icon: Settings, end: false },
 ]
 
 /**

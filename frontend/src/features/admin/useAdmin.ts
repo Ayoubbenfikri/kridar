@@ -1,11 +1,12 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { adminApi } from './adminApi'
+import type { PaymentTypeValue } from '@/types/payment'
 
 /**
  * Every /admin read is namespaced under the 'admin' query key prefix, so
  * one invalidateQueries({ queryKey: ['admin'] }) after any admin action
- * refreshes users + properties + stats together - same convention as
- * useOwner.
+ * refreshes users + properties + stats + payments together - same
+ * convention as useOwner.
  */
 export function useAdminUsers(page: number) {
   return useQuery({
@@ -27,6 +28,15 @@ export function useAdminStats() {
   return useQuery({
     queryKey: ['admin', 'stats'],
     queryFn: () => adminApi.fetchStats(),
+  })
+}
+
+/** Phase 22 (pricing). `type` undefined = both revenue streams. */
+export function useAdminPayments(page: number, type?: PaymentTypeValue) {
+  return useQuery({
+    queryKey: ['admin', 'payments', { page, type }],
+    queryFn: () => adminApi.fetchPayments(page, type),
+    placeholderData: keepPreviousData,
   })
 }
 

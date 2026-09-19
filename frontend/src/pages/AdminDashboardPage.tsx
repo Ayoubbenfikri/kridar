@@ -24,11 +24,13 @@ function Stat({
   value,
   label,
   to,
+  hint,
 }: {
   icon: React.ReactNode
   value: React.ReactNode
   label: string
   to?: string
+  hint?: string
 }) {
   const content = (
     <>
@@ -37,6 +39,7 @@ function Stat({
       </span>
       <p className="mt-3 text-2xl font-bold tracking-tight text-gray-900">{value}</p>
       <p className="text-sm text-gray-500">{label}</p>
+      {hint && <p className="mt-1 text-xs text-gray-400">{hint}</p>}
     </>
   )
 
@@ -80,6 +83,56 @@ export default function AdminDashboardPage() {
         </div>
       ) : (
         <>
+          {/* Revenue first: it is the question an admin opens this page
+              to answer, and it is the part the pricing model changed. */}
+          <h2 className="mt-8 mb-3 text-xs font-semibold tracking-wider text-gray-400 uppercase">
+            Revenus Kridar
+          </h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Card className="p-4 ring-1 ring-brand-500/20">
+              <span className="flex size-9 items-center justify-center rounded-lg bg-brand-600 text-white">
+                <Wallet className="size-4.5" aria-hidden />
+              </span>
+              <p className="mt-3 text-2xl font-bold tracking-tight text-gray-900">
+                {formatMad(stats.total_revenue)}
+              </p>
+              <p className="text-sm text-gray-500">Revenu total</p>
+              <p className="mt-1 text-xs text-gray-400">Publications + commissions</p>
+            </Card>
+
+            <Stat
+              icon={<Building2 className="size-4.5" />}
+              value={formatMad(stats.long_term_revenue)}
+              label="Longue durée"
+              hint={`${stats.paid_publications_count} publication${stats.paid_publications_count > 1 ? 's' : ''} payée${stats.paid_publications_count > 1 ? 's' : ''} · ${formatMad(stats.listing_fee)} l'unité`}
+              to="/admin/payments?type=listing_publication"
+            />
+
+            <Stat
+              icon={<CalendarCheck className="size-4.5" />}
+              value={formatMad(stats.short_term_revenue)}
+              label="Courte durée"
+              hint={`Commission ${stats.commission_rate}% sur ${formatMad(stats.bookings_volume)} de réservations payées`}
+              to="/admin/payments?type=reservation"
+            />
+          </div>
+
+          {stats.unpaid_publications_count > 0 && (
+            <Card className="mt-4 flex items-start gap-3 border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+              <TriangleAlert className="mt-0.5 size-4.5 shrink-0" aria-hidden />
+              <p>
+                <strong>
+                  {stats.unpaid_publications_count} annonce
+                  {stats.unpaid_publications_count > 1 ? 's' : ''} longue durée
+                </strong>{' '}
+                n'{stats.unpaid_publications_count > 1 ? 'ont' : 'a'} pas payé les frais de
+                publication. {stats.unpaid_publications_count > 1 ? 'Elles ne sont' : 'Elle n\'est'}{' '}
+                pas visible{stats.unpaid_publications_count > 1 ? 's' : ''} publiquement tant que ce
+                n'est pas réglé.
+              </p>
+            </Card>
+          )}
+
           <h2 className="mt-8 mb-3 text-xs font-semibold tracking-wider text-gray-400 uppercase">
             Utilisateurs
           </h2>
@@ -135,14 +188,9 @@ export default function AdminDashboardPage() {
           </div>
 
           <h2 className="mt-8 mb-3 text-xs font-semibold tracking-wider text-gray-400 uppercase">
-            Revenus et avis
+            Avis
           </h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Stat
-              icon={<Wallet className="size-4.5" />}
-              value={formatMad(stats.total_revenue)}
-              label="Revenu total encaissé"
-            />
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-2">
             <Stat
               icon={<Star className="size-4.5" />}
               value={stats.average_rating !== null ? `${stats.average_rating} / 5` : '—'}

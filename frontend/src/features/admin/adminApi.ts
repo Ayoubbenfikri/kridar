@@ -1,5 +1,6 @@
 import axiosClient from '@/api/axiosClient'
-import type { AdminStats } from '@/types/admin'
+import type { AdminPayment, AdminStats } from '@/types/admin'
+import type { PaymentTypeValue } from '@/types/payment'
 import type { PaginatedResponse, Property } from '@/types/property'
 import type { User } from '@/types/user'
 
@@ -7,7 +8,7 @@ import type { User } from '@/types/user'
  * The /admin/* endpoints (routes/api/admin.php), all behind
  * auth:sanctum + the 'admin' middleware.
  *
- * Only `page` is sent: AdminService::listUsers/listProperties take a
+ * Only `page` is sent on the user/property lists: AdminService takes a
  * perPage argument but the controller never passes one, so the page
  * size is fixed at 15 server-side and there is no filter or search
  * parameter to send.
@@ -29,6 +30,21 @@ async function fetchProperties(page: number): Promise<PaginatedResponse<Property
 async function fetchStats(): Promise<AdminStats> {
   const { data } = await axiosClient.get<{ stats: AdminStats }>('/api/v1/admin/stats')
   return data.stats
+}
+
+/**
+ * Phase 22 (pricing) — every transaction, newest first. `type` narrows
+ * to one revenue stream; omit it for both. The backend ignores an
+ * unknown value rather than erroring, so there is nothing to guard here.
+ */
+async function fetchPayments(
+  page: number,
+  type?: PaymentTypeValue,
+): Promise<PaginatedResponse<AdminPayment>> {
+  const { data } = await axiosClient.get<PaginatedResponse<AdminPayment>>('/api/v1/admin/payments', {
+    params: { page, type },
+  })
+  return data
 }
 
 /**
@@ -60,6 +76,7 @@ export const adminApi = {
   fetchUsers,
   fetchProperties,
   fetchStats,
+  fetchPayments,
   suspendUser,
   approveProperty,
   suspendProperty,

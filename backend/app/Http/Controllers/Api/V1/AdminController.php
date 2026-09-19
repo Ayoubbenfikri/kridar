@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\PaymentType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateSettingsRequest;
+use App\Http\Resources\PaymentResource;
 use App\Http\Resources\PropertyResource;
 use App\Http\Resources\UserResource;
 use App\Models\Property;
@@ -11,6 +13,7 @@ use App\Models\User;
 use App\Services\AdminService;
 use App\Services\SettingService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 /**
  * The /admin/* routes - gated by the 'admin' middleware
@@ -88,6 +91,21 @@ class AdminController extends Controller
         return response()->json([
             'stats' => $this->admin->getStats(),
         ]);
+    }
+
+    /**
+     * GET /admin/payments?type=listing_publication|reservation — Phase 22
+     * (pricing). Every transaction, newest first.
+     *
+     * An unknown ?type is treated as "no filter" rather than rejected:
+     * tryFrom() returns null, and a bad query string on a read-only
+     * listing does not deserve a 422.
+     */
+    public function payments(Request $request): JsonResponse
+    {
+        $type = PaymentType::tryFrom((string) $request->query('type'));
+
+        return PaymentResource::collection($this->admin->listPayments($type))->response();
     }
 
     /**

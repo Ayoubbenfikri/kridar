@@ -26,11 +26,13 @@ function Stat({
   value,
   label,
   to,
+  hint,
 }: {
   icon: React.ReactNode
   value: React.ReactNode
   label: string
   to?: string
+  hint?: string
 }) {
   const content = (
     <>
@@ -39,6 +41,7 @@ function Stat({
       </span>
       <p className="mt-3 text-2xl font-bold tracking-tight text-gray-900">{value}</p>
       <p className="text-sm text-gray-500">{label}</p>
+      {hint && <p className="mt-1 text-xs text-gray-400">{hint}</p>}
     </>
   )
 
@@ -107,10 +110,18 @@ export default function OwnerDashboardPage() {
               label="Demandes en attente"
               to="/owner/reservations"
             />
+            {/* What the owner RECEIVES, commission already deducted.
+                The hint makes the deduction visible rather than leaving
+                the owner to wonder why the number looks small. */}
             <Stat
               icon={<Wallet className="size-4.5" />}
               value={formatMad(stats.total_revenue)}
-              label="Revenu total"
+              label="Revenu net"
+              hint={
+                stats.total_commission > 0
+                  ? `Après ${formatMad(stats.total_commission)} de commission Kridar`
+                  : 'Aucune commission prélevée'
+              }
             />
           </div>
 
@@ -166,8 +177,9 @@ export default function OwnerDashboardPage() {
                     {reservation.end_date}
                   </p>
                 </div>
+                {/* The owner's own figure, not the guest's total. */}
                 <span className="shrink-0 font-semibold text-gray-900">
-                  {formatMad(reservation.total_price)}
+                  {formatMad(reservation.owner_amount)}
                 </span>
               </Link>
             ))}

@@ -24,6 +24,7 @@ import UiKitPage from '@/pages/UiKitPage'
 import AdminDashboardPage from '@/pages/AdminDashboardPage'
 import AdminUsersPage from '@/pages/AdminUsersPage'
 import AdminPropertiesPage from '@/pages/AdminPropertiesPage'
+import AdminPaymentsPage from '@/pages/AdminPaymentsPage'
 import AdminSettingsPage from '@/pages/AdminSettingsPage'
 
 /**
@@ -76,6 +77,7 @@ export const router = createBrowserRouter([
               { index: true, element: <AdminDashboardPage /> },
               { path: 'users', element: <AdminUsersPage /> },
               { path: 'properties', element: <AdminPropertiesPage /> },
+              { path: 'payments', element: <AdminPaymentsPage /> },
               { path: 'settings', element: <AdminSettingsPage /> },
             ],
           },

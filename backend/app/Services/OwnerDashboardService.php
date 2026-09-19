@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\PaymentStatus;
+use App\Enums\PaymentType;
 use App\Enums\PropertyStatus;
 use App\Enums\ReservationStatus;
 use App\Models\Payment;
@@ -37,6 +38,13 @@ class OwnerDashboardService
      * these are simple derived/computed numbers, not model persistence,
      * so a Service querying Eloquent directly stays simple and readable.
      *
+     * Phase 22 (pricing) fixed what total_revenue means. It used to sum
+     * the full payment amounts, which is what the GUEST paid - Kridar's
+     * commission included. An owner seeing that number would be counting
+     * money that was never theirs. It now sums owner_amount: what the
+     * owner actually receives. total_commission is shown beside it so
+     * the difference is visible rather than mysterious.
+     *
      * @return array<string, mixed>
      */
     public function getStats(User $owner): array
@@ -54,10 +62,21 @@ class OwnerDashboardService
             ->count();
 
         $reservationIds = Reservation::query()->whereIn('property_id', $propertyIds)->pluck('id');
-        $totalRevenue = Payment::query()
+
+        // Only bookings that were actually paid count as earnings.
+        $paidReservationIds = Payment::query()
+            ->where('type', PaymentType::Reservation)
             ->where('status', PaymentStatus::Paid)
             ->whereIn('reservation_id', $reservationIds)
-            ->sum('amount');
+            ->pluck('reservation_id');
+
+        $totalRevenue = (float) Reservation::query()
+            ->whereIn('id', $paidReservationIds)
+            ->sum('owner_amount');
+
+        $totalCommission = (float) Reservation::query()
+            ->whereIn('id', $paidReservationIds)
+            ->sum('commission_amount');
 
         $reviewsCount = Review::query()->whereIn('property_id', $propertyIds)->count();
         $averageRating = $reviewsCount > 0
@@ -73,7 +92,10 @@ class OwnerDashboardService
             'reservations_count' => $reservationsCount,
             'pending_reservations_count' => $pendingReservationsCount,
             'completed_reservations_count' => $completedReservationsCount,
-            'total_revenue' => (float) $totalRevenue,
+            // What the owner receives, commission already deducted.
+            'total_revenue' => round($totalRevenue, 2),
+            // What Kridar kept on those same bookings.
+            'total_commission' => round($totalCommission, 2),
             'reviews_count' => $reviewsCount,
             'average_rating' => $averageRating,
         ];

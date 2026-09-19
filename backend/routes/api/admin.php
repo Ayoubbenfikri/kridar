@@ -13,7 +13,10 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 
     Route::get('/stats', [AdminController::class, 'stats']);
 
-    // Phase 22 (pricing). Reading the settings is public (GET /settings,
+    // Phase 22 (pricing).
+    Route::get('/payments', [AdminController::class, 'payments']);
+
+    // Reading the settings is public (GET /settings,
     // routes/api/settings.php) — only writing them is admin-only.
     Route::put('/settings', [AdminController::class, 'updateSettings']);
 });
