@@ -32,5 +32,14 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+
+        <!--
+            Pin the offline gateway. Without this line the value from .env
+            wins, and a developer running the suite with PAYMENT_GATEWAY=paypal
+            would have every payment test call the real PayPal sandbox:
+            slow, flaky, dependent on credentials being present, and creating
+            real sandbox orders as a side effect of `php artisan test`.
+        -->
+        <env name="PAYMENT_GATEWAY" value="fake"/>
     </php>
 </phpunit>
