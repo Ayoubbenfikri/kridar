@@ -2,12 +2,14 @@
 
 namespace App\Providers;
 
+use App\Repositories\Contracts\ConversationRepositoryInterface;
 use App\Repositories\Contracts\FavoriteRepositoryInterface;
 use App\Repositories\Contracts\NotificationRepositoryInterface;
 use App\Repositories\Contracts\PaymentRepositoryInterface;
 use App\Repositories\Contracts\PropertyRepositoryInterface;
 use App\Repositories\Contracts\ReservationRepositoryInterface;
 use App\Repositories\Contracts\ReviewRepositoryInterface;
+use App\Repositories\Eloquent\EloquentConversationRepository;
 use App\Repositories\Eloquent\EloquentFavoriteRepository;
 use App\Repositories\Eloquent\EloquentNotificationRepository;
 use App\Repositories\Eloquent\EloquentPaymentRepository;
@@ -48,6 +50,7 @@ class RepositoryServiceProvider extends ServiceProvider
         ReviewRepositoryInterface::class => EloquentReviewRepository::class,
         FavoriteRepositoryInterface::class => EloquentFavoriteRepository::class,
         NotificationRepositoryInterface::class => EloquentNotificationRepository::class,
+        ConversationRepositoryInterface::class => EloquentConversationRepository::class,
     ];
 
     /**

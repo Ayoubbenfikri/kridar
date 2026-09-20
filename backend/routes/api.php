@@ -34,6 +34,7 @@ Route::prefix('v1')->group(function () {
     require __DIR__.'/api/reviews.php';
     require __DIR__.'/api/favorites.php';
     require __DIR__.'/api/notifications.php';
+    require __DIR__.'/api/conversations.php';
     require __DIR__.'/api/owner.php';
     require __DIR__.'/api/amenities.php';
     require __DIR__.'/api/settings.php';
