@@ -7,7 +7,6 @@ import type {
   Reservation,
   ReservationRentalType,
 } from '@/types/reservation'
-import type { Payment } from '@/types/payment'
 
 export interface CreateReservationPayload {
   property_id: number
@@ -15,6 +14,11 @@ export interface CreateReservationPayload {
   start_date: string
   end_date: string
   guests_count?: number
+}
+
+/** What starting a payment gives the caller: somewhere to send the browser. */
+export interface PaymentStart {
+  redirectUrl: string
 }
 
 async function fetchAvailability(
@@ -30,10 +34,9 @@ async function fetchAvailability(
 }
 
 /**
- * Phase 22 (pricing) — what the booking WOULD cost, and how it splits
- * between the owner and Kridar. Nothing is created and no dates are
- * held; it exists so the guest sees the real final amount before
- * committing.
+ * What the booking WOULD cost, and how it splits between the owner and
+ * Kridar. Nothing is created and no dates are held; it exists so the
+ * guest sees the real final amount before committing.
  *
  * A POST despite being a read: it takes a body of dates. The numbers
  * are computed by the backend's PricingService — the exact same code
@@ -72,22 +75,20 @@ async function cancelReservation(reservationId: number, reason?: string): Promis
 }
 
 /**
- * There is no real CMI merchant account yet (see backend
- * App\Services\Gateways\FakeCmiGateway) - "paying" here means starting a
- * Payment record then immediately simulating the gateway telling us it
- * succeeded, exactly like test-payments.ps1/test-owner.ps1 already do
- * against this same fake gateway. This is a clear placeholder for the
- * real hosted checkout redirect, not a shortcut around a real one.
+ * Starts the payment for a confirmed booking and returns where to send
+ * the browser.
+ *
+ * Like payPublicationFee, this only STARTS the payment. It used to also
+ * POST to /payments/{id}/callback to mark it paid immediately — fine
+ * against the offline fake gateway, wrong against a real one, where
+ * capturing before the buyer has approved is simply rejected. The
+ * provider's return URL is the only thing that settles a payment.
  */
-async function payReservation(reservationId: number): Promise<Payment> {
-  const { data: initiated } = await axiosClient.post<{ payment: Payment; redirect_url: string }>(
+async function payReservation(reservationId: number): Promise<PaymentStart> {
+  const { data } = await axiosClient.post<{ message: string; redirect_url: string }>(
     `/api/v1/reservations/${reservationId}/payments`,
   )
-  const { data: callbackResult } = await axiosClient.post<{ message: string; payment: Payment }>(
-    `/api/v1/payments/${initiated.payment.id}/callback`,
-    { success: true },
-  )
-  return callbackResult.payment
+  return { redirectUrl: data.redirect_url }
 }
 
 export const reservationsApi = {

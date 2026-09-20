@@ -29,6 +29,9 @@ use Illuminate\Support\Collection;
  * handleCallback() is shared: the gateway doesn't know or care which
  * kind of payment it just confirmed, so the branching happens here,
  * after the payment row is marked paid.
+ *
+ * Nothing in this class knows whether the gateway is PayPal or the
+ * offline fake — that is the whole point of the interface.
  */
 class PaymentService
 {
@@ -66,11 +69,12 @@ class PaymentService
             'user_id' => $reservation->guest_id,
             'amount' => $reservation->total_price,
             'currency' => $reservation->property->currency ?? 'MAD',
-            'provider' => PaymentProvider::Cmi,
+            'provider' => $this->currentProvider(),
             'status' => PaymentStatus::Pending,
         ]);
 
         $gatewayData = $this->gateway->initiate($payment);
+        $payment = $this->persistGatewayData($payment, $gatewayData);
 
         return [
             'payment' => $payment,
@@ -79,7 +83,7 @@ class PaymentService
     }
 
     /**
-     * Phase 22 (pricing) — the long-term listing publication fee.
+     * The long-term listing publication fee.
      *
      * Who is allowed to call this (the owner, or an admin) is checked by
      * PropertyPolicy::update() at the controller level. This method only
@@ -121,7 +125,7 @@ class PaymentService
             'user_id' => $property->owner_id,
             'amount' => $fee,
             'currency' => $property->currency ?? 'MAD',
-            'provider' => $isFree ? PaymentProvider::Cash : PaymentProvider::Cmi,
+            'provider' => $isFree ? PaymentProvider::Cash : $this->currentProvider(),
             'status' => $isFree ? PaymentStatus::Paid : PaymentStatus::Pending,
             'paid_at' => $isFree ? now() : null,
         ]);
@@ -137,6 +141,7 @@ class PaymentService
         ]);
 
         $gatewayData = $this->gateway->initiate($payment);
+        $payment = $this->persistGatewayData($payment, $gatewayData);
 
         return [
             'payment' => $payment,
@@ -145,12 +150,22 @@ class PaymentService
     }
 
     /**
-     * Handle the gateway's callback/webhook for a specific payment
-     * attempt and update its status accordingly.
+     * Settle a payment the payer has come back from.
+     *
+     * Called from two places: the public GET return URL a gateway sends
+     * the browser to, and the older POST callback the test scripts use.
+     * Both end up here, and the bound gateway decides the outcome.
      */
     public function handleCallback(Payment $payment, Request $request): Payment
     {
-        $result = $this->gateway->handleCallback($request);
+        // Already settled — a refresh of the return URL, or PayPal and a
+        // retry arriving at once. Capturing twice would be a real bug,
+        // so stop here and report the payment as it stands.
+        if ($payment->status === PaymentStatus::Paid) {
+            return $payment;
+        }
+
+        $result = $this->gateway->handleCallback($payment, $request);
 
         if (! $result['success']) {
             // A failed publication payment deliberately leaves the
@@ -176,9 +191,55 @@ class PaymentService
         return $payment;
     }
 
+    /**
+     * The payer backed out on the gateway's own page. Nothing was
+     * charged; record the attempt as failed so the history is honest.
+     */
+    public function markCancelled(Payment $payment): Payment
+    {
+        if ($payment->status !== PaymentStatus::Pending) {
+            return $payment;
+        }
+
+        return $this->payments->update($payment, ['status' => PaymentStatus::Failed]);
+    }
+
     public function listForReservation(Reservation $reservation): Collection
     {
         return $this->payments->listForReservation($reservation->id);
+    }
+
+    /**
+     * Store whatever extra the gateway handed back. A simple gateway
+     * returns only redirect_url and nothing is written.
+     *
+     * @param  array<string, mixed>  $gatewayData
+     */
+    private function persistGatewayData(Payment $payment, array $gatewayData): Payment
+    {
+        $attributes = array_filter([
+            'provider_order_id' => $gatewayData['provider_order_id'] ?? null,
+            'converted_amount' => $gatewayData['converted_amount'] ?? null,
+            'converted_currency' => $gatewayData['converted_currency'] ?? null,
+        ], fn ($value) => $value !== null);
+
+        if ($attributes === []) {
+            return $payment;
+        }
+
+        return $this->payments->update($payment, $attributes);
+    }
+
+    /**
+     * Which provider to record on a new payment. Derived from the bound
+     * gateway rather than hardcoded, so the payment history says what
+     * actually processed it.
+     */
+    private function currentProvider(): PaymentProvider
+    {
+        return config('payments.gateway') === 'paypal'
+            ? PaymentProvider::Paypal
+            : PaymentProvider::Cmi;
     }
 
     /**

@@ -14,6 +14,7 @@ import {
   useMyReservations,
   usePayReservation,
 } from '@/features/reservations/useReservations'
+import { usePaymentResult } from '@/hooks/usePaymentResult'
 import { getErrorMessage } from '@/lib/apiErrors'
 import { formatMad } from '@/lib/formatPrice'
 import ReservationStatusBadge from '@/components/reservations/ReservationStatusBadge'
@@ -25,10 +26,18 @@ import type { Reservation } from '@/types/reservation'
  * ever returns the current user's own, see ReservationController::index).
  * Owner-side actions (confirm / reject a request) live on
  * /owner/reservations, not here.
+ *
+ * Paying leaves the app: the browser goes to the payment provider and
+ * comes back to this page with ?payment=... , which usePaymentResult
+ * turns into a toast. Whether a booking is settled is read from
+ * reservation.is_paid — server truth, because no local state survives
+ * that round trip.
  */
 export default function MyReservationsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Number(searchParams.get('page') ?? '1')
+
+  usePaymentResult()
 
   const { data, isError, isFetching } = useMyReservations(page)
   const cancelReservation = useCancelReservation()
@@ -36,7 +45,6 @@ export default function MyReservationsPage() {
 
   const [cancellingId, setCancellingId] = useState<number | null>(null)
   const [cancelReason, setCancelReason] = useState('')
-  const [justPaidIds, setJustPaidIds] = useState<Set<number>>(new Set())
 
   function goToPage(nextPage: number) {
     setSearchParams(nextPage === 1 ? {} : { page: String(nextPage) })
@@ -57,7 +65,11 @@ export default function MyReservationsPage() {
 
   function handlePay(reservationId: number) {
     payReservation.mutate(reservationId, {
-      onSuccess: () => setJustPaidIds((ids) => new Set(ids).add(reservationId)),
+      // Full navigation, not a router push: the destination is the
+      // payment provider, outside this app.
+      onSuccess: ({ redirectUrl }) => {
+        window.location.href = redirectUrl
+      },
     })
   }
 
@@ -148,18 +160,18 @@ export default function MyReservationsPage() {
                   )}
 
                   <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-4">
-                    {reservation.status === 'confirmed' && !justPaidIds.has(reservation.id) && (
+                    {reservation.status === 'confirmed' && !reservation.is_paid && (
                       <Button
                         size="sm"
                         icon={<CreditCard className="size-4" />}
                         isLoading={payReservation.isPending && payReservation.variables === reservation.id}
                         onClick={() => handlePay(reservation.id)}
                       >
-                        Payer (simulation CMI)
+                        Payer {formatMad(reservation.total_price)}
                       </Button>
                     )}
 
-                    {justPaidIds.has(reservation.id) && (
+                    {reservation.is_paid && (
                       <span className="flex items-center gap-1.5 text-sm font-semibold text-green-700">
                         <CheckCircle2 className="size-4" aria-hidden />
                         Payé

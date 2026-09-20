@@ -6,13 +6,17 @@ use App\Models\Setting;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * The single source of truth for Kridar's two configurable prices
- * (Phase 22 — pricing):
+ * The single source of truth for Kridar's configurable numbers:
  *
- *   listing_publication_fee     — what an owner pays once to publish a
- *                                 long-term listing (default 20 MAD)
- *   short_term_commission_rate  — Kridar's cut of a short-term booking,
- *                                 in percent (default 10)
+ *   listing_publication_fee     what an owner pays once to publish a
+ *                               long-term listing (default 20 MAD)
+ *   short_term_commission_rate  Kridar's cut of a short-term booking,
+ *                               in percent (default 10)
+ *   mad_to_paypal_rate          how many MAD one unit of the PayPal
+ *                               currency is worth (default 10.80 MAD
+ *                               per EUR) — PayPal does not accept MAD,
+ *                               so every amount is divided by this
+ *                               right before the call
  *
  * Why a service and not config(): the admin changes these from the
  * dashboard at runtime, and a config file can only be changed by
@@ -22,16 +26,14 @@ use Illuminate\Support\Facades\Cache;
  * (migrate:fresh) is then already correct before an admin has ever
  * opened the settings page, and nobody can break the app by deleting a
  * row. The table only ever holds values the admin actually changed.
- *
- * The values are read on nearly every booking and every property page,
- * so they are cached; update() is the only thing that ever invalidates
- * that cache.
  */
 class SettingService
 {
     public const LISTING_FEE = 'listing_publication_fee';
 
     public const COMMISSION_RATE = 'short_term_commission_rate';
+
+    public const PAYPAL_RATE = 'mad_to_paypal_rate';
 
     /**
      * Every setting the app knows about, with its fallback value. A key
@@ -43,6 +45,7 @@ class SettingService
     private const DEFAULTS = [
         self::LISTING_FEE => 20.00,
         self::COMMISSION_RATE => 10.00,
+        self::PAYPAL_RATE => 10.80,
     ];
 
     private const CACHE_KEY = 'kridar.settings';
@@ -52,16 +55,30 @@ class SettingService
      */
     public function all(): array
     {
-        return Cache::rememberForever(self::CACHE_KEY, function (): array {
-            $stored = Setting::query()->pluck('value', 'key');
-
-            $values = [];
-            foreach (self::DEFAULTS as $key => $default) {
-                $values[$key] = isset($stored[$key]) ? (float) $stored[$key] : $default;
-            }
-
-            return $values;
+        // Cache the RAW database rows only — never the finished array.
+        //
+        // This matters. The first version cached the merged result, and
+        // adding mad_to_paypal_rate to DEFAULTS then blew up with
+        // "Undefined array key": rememberForever still held the older
+        // two-key array, so the closure never ran again and the new key
+        // simply did not exist. Nothing short of clearing the
+        // application cache could fix it — which is impossible to ask
+        // of a production deployment.
+        //
+        // Merging on every read costs one foreach over three entries.
+        // In exchange, a setting added tomorrow can never produce a
+        // missing key: it just falls back to its default until an admin
+        // sets it, whatever is sitting in the cache.
+        $stored = Cache::rememberForever(self::CACHE_KEY, function (): array {
+            return Setting::query()->pluck('value', 'key')->all();
         });
+
+        $values = [];
+        foreach (self::DEFAULTS as $key => $default) {
+            $values[$key] = array_key_exists($key, $stored) ? (float) $stored[$key] : $default;
+        }
+
+        return $values;
     }
 
     public function listingFee(): float
@@ -72,6 +89,12 @@ class SettingService
     public function commissionRate(): float
     {
         return $this->all()[self::COMMISSION_RATE];
+    }
+
+    /** MAD per one unit of config('payments.paypal.currency'). */
+    public function paypalRate(): float
+    {
+        return $this->all()[self::PAYPAL_RATE];
     }
 
     /**

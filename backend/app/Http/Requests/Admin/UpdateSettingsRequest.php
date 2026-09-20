@@ -6,9 +6,9 @@ use App\Services\SettingService;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * PUT /admin/settings — the two configurable prices.
+ * PUT /admin/settings — the configurable numbers.
  *
- * Both fields are required: the admin form always submits the whole
+ * All fields are required: the admin form always submits the whole
  * form, so a missing field means something is wrong with the request,
  * not "leave this one alone".
  */
@@ -34,6 +34,11 @@ class UpdateSettingsRequest extends FormRequest
             // Percent. Capped at 100 — Kridar can never take more than
             // the guest actually pays.
             SettingService::COMMISSION_RATE => ['required', 'numeric', 'min:0', 'max:100'],
+
+            // MAD per one unit of the PayPal currency. min:0.01, never 0:
+            // the gateway divides by this, and a zero would be a division
+            // by zero rather than a "free" setting.
+            SettingService::PAYPAL_RATE => ['required', 'numeric', 'min:0.01', 'max:1000'],
         ];
     }
 
@@ -46,6 +51,8 @@ class UpdateSettingsRequest extends FormRequest
             SettingService::LISTING_FEE.'.required' => 'The listing publication fee is required.',
             SettingService::COMMISSION_RATE.'.required' => 'The commission rate is required.',
             SettingService::COMMISSION_RATE.'.max' => 'The commission rate cannot exceed 100%.',
+            SettingService::PAYPAL_RATE.'.required' => 'The MAD conversion rate is required.',
+            SettingService::PAYPAL_RATE.'.min' => 'The conversion rate must be greater than zero.',
         ];
     }
 }

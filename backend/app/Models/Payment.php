@@ -22,7 +22,16 @@ class Payment extends Model
         'user_id',
         'amount',
         'currency',
+        // PayPal cannot accept MAD, so these record what was actually
+        // charged and in which currency. `amount` above stays the MAD
+        // figure — it is what every revenue query reads.
+        'converted_amount',
+        'converted_currency',
         'provider',
+        // PayPal has two ids: the ORDER (created before approval, used
+        // to capture) and the CAPTURE (created after, what a refund
+        // would reference). provider_transaction_id holds the second.
+        'provider_order_id',
         'provider_transaction_id',
         'status',
         'paid_at',
@@ -35,6 +44,7 @@ class Payment extends Model
             'provider' => PaymentProvider::class,
             'status' => PaymentStatus::class,
             'amount' => 'decimal:2',
+            'converted_amount' => 'decimal:2',
             'paid_at' => 'datetime',
         ];
     }

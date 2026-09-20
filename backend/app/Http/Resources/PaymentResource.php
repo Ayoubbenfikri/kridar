@@ -18,14 +18,22 @@ class PaymentResource extends JsonResource
         return [
             'id' => $this->id,
 
-            // Phase 22 (pricing): 'reservation' or 'listing_publication'.
-            // Exactly one of the two ids below is set, decided by this.
+            // 'reservation' or 'listing_publication'. Exactly one of the
+            // two ids below is set, decided by this.
             'type' => $this->type,
             'reservation_id' => $this->reservation_id,
             'property_id' => $this->property_id,
 
+            // Always MAD — Kridar's own figure, and what the revenue
+            // queries sum.
             'amount' => $this->amount,
             'currency' => $this->currency,
+
+            // What the gateway actually charged, when it could not take
+            // MAD. Null on a payment that never needed converting.
+            'converted_amount' => $this->converted_amount,
+            'converted_currency' => $this->converted_currency,
+
             'provider' => $this->provider,
             'provider_transaction_id' => $this->provider_transaction_id,
             'status' => $this->status,

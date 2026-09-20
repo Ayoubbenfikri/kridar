@@ -36,9 +36,9 @@ export interface Reservation {
   total_price: string
 
   /**
-   * Phase 22 (pricing) — how total_price splits, snapshotted when the
-   * reservation was created. Decimal-cast on the backend, so these
-   * arrive as strings like "150.00"; wrap in Number() for arithmetic.
+   * How total_price splits, snapshotted when the reservation was
+   * created. Decimal-cast on the backend, so these arrive as strings
+   * like "150.00"; wrap in Number() for arithmetic.
    *
    * All three are "0.00" on a long-term reservation: Kridar takes
    * nothing from rent, so owner_amount equals total_price.
@@ -46,6 +46,14 @@ export interface Reservation {
   commission_rate: string
   commission_amount: string
   owner_amount: string
+
+  /**
+   * Whether this booking has a settled payment. Comes from the server
+   * (a subquery on the list endpoints), not from local state — paying
+   * sends the browser to the payment provider and back, so any React
+   * state saying "just paid" is gone by the time the user returns.
+   */
+  is_paid: boolean
 
   guests_count: number | null
   status: ReservationStatusValue
@@ -55,7 +63,7 @@ export interface Reservation {
 }
 
 /**
- * Phase 22 (pricing) — POST /reservations/price-preview.
+ * POST /reservations/price-preview.
  *
  * Unlike the fields on Reservation above, these come back as plain JSON
  * NUMBERS: the endpoint returns PricingService's array directly, not a

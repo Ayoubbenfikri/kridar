@@ -1,8 +1,17 @@
 import axiosClient from '@/api/axiosClient'
 import type { PaginatedResponse, Property } from '@/types/property'
-import type { Payment } from '@/types/payment'
 import type { Reservation } from '@/types/reservation'
 import type { OwnerStats } from '@/types/owner'
+
+/** What starting a payment gives the caller: somewhere to send the browser. */
+export interface PaymentStart {
+  /**
+   * null only when there was nothing to pay — the admin set the
+   * publication fee to 0, so the backend settled it on the spot and the
+   * listing is already live.
+   */
+  redirectUrl: string | null
+}
 
 async function fetchOwnerProperties(page: number): Promise<PaginatedResponse<Property>> {
   const { data } = await axiosClient.get<PaginatedResponse<Property>>('/api/v1/owner/properties', {
@@ -44,36 +53,24 @@ async function unpublishProperty(propertyId: number): Promise<Property> {
 }
 
 /**
- * Phase 22 (pricing) — the owner pays the one-off fee that lets a
- * long-term listing go live. The AMOUNT is never sent: the backend
+ * Starts the long-term listing publication fee payment and returns
+ * where to send the browser. The AMOUNT is never sent: the backend
  * reads it from SettingService, so it cannot be chosen from here.
  *
- * Same two-step shape as payReservation() in features/reservations:
- * there is no real CMI merchant account yet (backend
- * App\Services\Gateways\FakeCmiGateway), so "paying" means starting a
- * Payment record then immediately simulating the gateway telling us it
- * succeeded. When CmiGateway replaces the fake one, this becomes a
- * single `window.location.href = redirect_url` and the second call
- * disappears — the backend does not change at all.
- *
- * redirect_url comes back null when the admin has set the fee to 0: the
- * backend already settled it, so there is nothing to confirm.
+ * This function does NOT settle the payment, and must not. An earlier
+ * version POSTed to /payments/{id}/callback right after, which worked
+ * against the offline fake gateway but became actively wrong with a
+ * real one: it asked PayPal to capture an order the buyer had never
+ * approved. PayPal refused, the payment was recorded as failed, and the
+ * UI still showed a success toast because every HTTP call had returned
+ * 200. Approval happens on the provider's own page, and only the return
+ * URL settles anything.
  */
-async function payPublicationFee(propertyId: number): Promise<Property> {
-  const { data: initiated } = await axiosClient.post<{
-    message: string
-    payment: Payment
-    redirect_url: string | null
-  }>(`/api/v1/properties/${propertyId}/publication-payment`)
-
-  if (initiated.redirect_url !== null) {
-    await axiosClient.post(`/api/v1/payments/${initiated.payment.id}/callback`, { success: true })
-  }
-
-  // The callback is what publishes the listing server-side, so read the
-  // property back instead of guessing what it became.
-  const { data } = await axiosClient.get<{ property: Property }>(`/api/v1/properties/${propertyId}`)
-  return data.property
+async function payPublicationFee(propertyId: number): Promise<PaymentStart> {
+  const { data } = await axiosClient.post<{ message: string; redirect_url: string | null }>(
+    `/api/v1/properties/${propertyId}/publication-payment`,
+  )
+  return { redirectUrl: data.redirect_url }
 }
 
 async function confirmReservation(reservationId: number): Promise<Reservation> {

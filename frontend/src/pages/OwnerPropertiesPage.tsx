@@ -7,6 +7,7 @@ import {
   useUnpublishProperty,
 } from '@/features/owner/useOwner'
 import { useSettings } from '@/features/settings/useSettings'
+import { usePaymentResult } from '@/hooks/usePaymentResult'
 import { formatMad, primaryPrice } from '@/lib/formatPrice'
 import { getErrorMessage } from '@/lib/apiErrors'
 import { Badge, Button, Card, EmptyState, Skeleton, buttonClasses, useToast } from '@/components/ui'
@@ -30,7 +31,7 @@ const STATUS_TONES: Record<PropertyStatusValue, BadgeTone> = {
 }
 
 /**
- * Phase 22 (pricing): does this listing still owe its publication fee?
+ * Does this listing still owe its publication fee?
  *
  * `requires_publication_fee` is computed by the backend
  * (Property::requiresPublicationFee()) - the rental_type rule is NOT
@@ -48,13 +49,16 @@ function owesPublicationFee(property: Property): boolean {
  * only an admin can lift a suspension (PropertyService::publish()).
  *
  * A long-term listing that has not paid its fee gets a "Payer" button
- * instead of "Publier" - the backend refuses to publish it anyway
- * (PublicationFeeRequiredException), this just stops the owner from
- * walking into that error.
+ * instead of "Publier". Clicking it LEAVES the app for the payment
+ * provider and comes back here with ?payment=... - so there is no
+ * success toast at click time, because at click time nothing has been
+ * paid yet. usePaymentResult reports the real outcome on the way back.
  */
 export default function OwnerPropertiesPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Number(searchParams.get('page') ?? '1')
+
+  usePaymentResult()
 
   const { showToast } = useToast()
   const { data, isError, error } = useOwnerProperties(page)
@@ -112,8 +116,20 @@ export default function OwnerPropertiesPage() {
           disabled={isMutating(property)}
           onClick={() =>
             payFeeMutation.mutate(property.id, {
-              onSuccess: () =>
-                showToast('success', `Frais payés — "${property.title}" est maintenant publiée.`),
+              onSuccess: ({ redirectUrl }) => {
+                // null means there was nothing to charge - the admin set
+                // the fee to 0, the backend settled it and the listing
+                // is already live. That is the only case we can claim
+                // success at click time.
+                if (redirectUrl === null) {
+                  showToast('success', `Publication gratuite — "${property.title}" est en ligne.`)
+                  return
+                }
+
+                // Full navigation, not a router push: the destination is
+                // the payment provider, outside this app.
+                window.location.href = redirectUrl
+              },
             })
           }
         >
