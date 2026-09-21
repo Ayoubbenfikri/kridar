@@ -18,6 +18,7 @@ import { useProperty } from '@/features/properties/useProperties'
 import { formatMad, primaryPrice } from '@/lib/formatPrice'
 import ReviewsSection from '@/components/reviews/ReviewsSection'
 import FavoriteButton from '@/components/properties/FavoriteButton'
+import ContactOwnerCard from '@/components/properties/ContactOwnerCard'
 import BookingPanel from '@/components/reservations/BookingPanel'
 import { Card, EmptyState, Skeleton, buttonClasses } from '@/components/ui'
 import type { PropertyType, RentalType } from '@/types/property'
@@ -246,6 +247,13 @@ export default function PropertyDetailsPage() {
               </div>
             )}
             <BookingPanel property={property} />
+
+            {/* Under the booking panel on purpose. For a short-term stay
+                booking is the main action and messaging is the fallback;
+                for a long-term listing BookingPanel is the only path
+                Kridar offers, and this is how the tenant actually
+                reaches the owner to arrange the lease. */}
+            <ContactOwnerCard property={property} />
           </div>
         </div>
       </div>

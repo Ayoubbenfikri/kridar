@@ -12,6 +12,8 @@ import LeaveReviewPage from '@/pages/LeaveReviewPage'
 import OwnerReplyPage from '@/pages/OwnerReplyPage'
 import FavoritesPage from '@/pages/FavoritesPage'
 import NotificationsPage from '@/pages/NotificationsPage'
+import MessagesPage from '@/pages/MessagesPage'
+import ConversationPage from '@/pages/ConversationPage'
 import MyReservationsPage from '@/pages/MyReservationsPage'
 import AccountPage from '@/pages/AccountPage'
 import AccountSettingsPage from '@/pages/AccountSettingsPage'
@@ -52,6 +54,10 @@ export const router = createBrowserRouter([
           { path: 'favorites', element: <FavoritesPage /> },
           { path: 'reservations', element: <MyReservationsPage /> },
           { path: 'notifications', element: <NotificationsPage /> },
+          // Inbox, then one thread. Both need a session: a conversation
+          // is private to its two participants (ConversationPolicy).
+          { path: 'messages', element: <MessagesPage /> },
+          { path: 'messages/:id', element: <ConversationPage /> },
           { path: 'account', element: <AccountPage /> },
           { path: 'account/settings', element: <AccountSettingsPage /> },
           {

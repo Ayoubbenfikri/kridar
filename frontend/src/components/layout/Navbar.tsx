@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
 import NotificationBell from '@/components/notifications/NotificationBell'
+import MessagesLink from '@/components/messaging/MessagesLink'
 import { buttonClasses } from '@/components/ui'
 import { cn } from '@/lib/cn'
 
@@ -157,6 +158,12 @@ export default function Navbar() {
                 <Heart className="size-5" aria-hidden />
               </Link>
 
+              {/* Messages and notifications sit side by side and are
+                  built to look identical - see MessagesLink. */}
+              <div className="hidden sm:block">
+                <MessagesLink />
+              </div>
+
               <div className="hidden sm:block">
                 <NotificationBell />
               </div>
@@ -247,7 +254,9 @@ export default function Navbar() {
       <div
         className={cn(
           'overflow-hidden border-gray-100 transition-all duration-200 ease-in-out md:hidden',
-          isMenuOpen ? 'max-h-[26rem] border-t opacity-100' : 'max-h-0 opacity-0',
+          // Raised from 26rem: the panel gained a Messages row, and a
+          // max-height that is too small silently clips the last item.
+          isMenuOpen ? 'max-h-[30rem] border-t opacity-100' : 'max-h-0 opacity-0',
         )}
       >
         <nav className="mx-auto flex w-full max-w-6xl flex-col gap-1 px-4 py-3 sm:px-6">
@@ -268,9 +277,13 @@ export default function Navbar() {
               <NavLink to="/favorites" className={mobileLinkClass}>
                 <Heart className="size-4.5 text-gray-400" aria-hidden /> Mes favoris
               </NavLink>
-              {/* NotificationBell is itself a <Link>, so it is rendered on
-                  its own here rather than wrapped in a NavLink - an <a>
-                  inside an <a> is invalid HTML. */}
+              {/* MessagesLink and NotificationBell are themselves <Link>s,
+                  so they are rendered on their own here rather than
+                  wrapped in a NavLink - an <a> inside an <a> is invalid
+                  HTML. */}
+              <div className="rounded-lg px-3 py-2.5 transition hover:bg-gray-100">
+                <MessagesLink showLabel />
+              </div>
               <div className="rounded-lg px-3 py-2.5 transition hover:bg-gray-100">
                 <NotificationBell showLabel />
               </div>
