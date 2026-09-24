@@ -29,6 +29,9 @@ class User extends Authenticatable implements MustVerifyEmailContract
         'email',
         'password',
         'phone',
+        // Owner consent to publish `phone` on their long-term listings.
+        // Only ever set by the user themselves (UpdateProfileRequest).
+        'show_phone_on_listings',
         'role',
         'status',
     ];
@@ -54,6 +57,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
             'email_verified_at' => 'datetime',
             'owner_verified_at' => 'datetime',
             'password' => 'hashed',
+            'show_phone_on_listings' => 'boolean',
             'role' => UserRole::class,
             'status' => UserStatus::class,
         ];

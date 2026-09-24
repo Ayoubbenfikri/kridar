@@ -95,6 +95,42 @@ class Property extends Model
         return $this->requiresPublicationFee() && ! $this->publicationFeePaid();
     }
 
+    /**
+     * Does this listing publish its owner's phone number at all?
+     * Independent of WHO is looking — that second check lives in
+     * PropertyResource, because it depends on the request.
+     *
+     * Three conditions, all required:
+     *
+     *   1. Long-term (requiresPublicationFee): the owner paid to be
+     *      reachable, and Kridar takes nothing from rent, so showing the
+     *      number costs Kridar nothing. On a SHORT-term listing it would
+     *      let a guest call, agree a price directly, and skip the 10%
+     *      commission — so never there.
+     *   2. The owner opted in. Off by default: they gave their number
+     *      to create an account, not to publish it.
+     *   3. There is actually a number.
+     *
+     * Needs `owner` loaded WITH phone and show_phone_on_listings. When
+     * the query only selected owner:id,name (the listing index), both
+     * read as null and this safely returns false.
+     *
+     * It deliberately never loads the owner itself. PropertyResource
+     * calls this for EVERY property it serializes, and a plain
+     * `$this->owner` on an endpoint that did not eager-load it would
+     * fire one extra query per row — an N+1 on every list page. Not
+     * loaded means "not asked for here", so the answer is false.
+     */
+    public function listsOwnerPhone(): bool
+    {
+        $owner = $this->relationLoaded('owner') ? $this->owner : null;
+
+        return $this->requiresPublicationFee()
+            && $owner !== null
+            && $owner->show_phone_on_listings === true
+            && filled($owner->phone);
+    }
+
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');

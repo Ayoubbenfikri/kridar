@@ -77,6 +77,20 @@ export interface Property {
   publication_status: PublicationStatusValue | null
   publication_paid_at: string | null
 
+  /**
+   * True when this listing publishes its owner's number at all: a
+   * long-term listing, an owner who opted in, and a number on file.
+   * Sent to EVERYONE, anonymous included — it says a number exists, not
+   * what it is, so the page can honestly say "log in to see it".
+   */
+  owner_phone_available: boolean
+  /**
+   * The number itself. Null unless owner_phone_available AND the viewer
+   * is logged in with a verified email. Only ever populated on the
+   * details endpoint — the listing index never carries it.
+   */
+  owner_phone: string | null
+
   // Only populated when the backend query added withAvg/withCount
   // (published listing + property details) - null/0 otherwise.
   average_rating: number | null

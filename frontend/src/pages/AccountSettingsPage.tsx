@@ -15,6 +15,7 @@ export default function AccountSettingsPage() {
 
   const [name, setName] = useState(user?.name ?? '')
   const [phone, setPhone] = useState(user?.phone ?? '')
+  const [showPhone, setShowPhone] = useState(user?.show_phone_on_listings ?? false)
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -23,9 +24,21 @@ export default function AccountSettingsPage() {
   const profileErrors = getValidationErrors(updateProfile.error)
   const passwordErrors = getValidationErrors(updatePassword.error)
 
+  const hasPhone = phone.trim() !== ''
+
   function handleProfileSubmit(event: FormEvent) {
     event.preventDefault()
-    updateProfile.mutate({ name, phone: phone || undefined })
+
+    updateProfile.mutate({
+      name,
+      // null, not undefined. undefined drops the key from the request,
+      // the backend then leaves the column alone, and an emptied field
+      // could never actually remove a number.
+      phone: hasPhone ? phone.trim() : null,
+      // Nothing to show without a number, so consent is switched off
+      // with it rather than left pointing at nothing.
+      show_phone_on_listings: hasPhone && showPhone,
+    })
   }
 
   function handlePasswordSubmit(event: FormEvent) {
@@ -83,7 +96,36 @@ export default function AccountSettingsPage() {
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
             error={profileErrors?.phone?.[0]}
+            hint="Videz le champ pour supprimer votre numéro."
           />
+
+          {/* Consent, not a preference: nothing is shown until this is
+              ticked, and it only ever applies to long-term listings. */}
+          <label
+            className={
+              hasPhone
+                ? 'flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 p-3 transition hover:border-gray-300'
+                : 'flex cursor-not-allowed items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 opacity-60'
+            }
+          >
+            <input
+              type="checkbox"
+              className="mt-0.5 size-4 shrink-0 accent-brand-600"
+              checked={hasPhone && showPhone}
+              disabled={!hasPhone}
+              onChange={(event) => setShowPhone(event.target.checked)}
+            />
+            <span className="text-sm">
+              <span className="font-medium text-gray-900">
+                Afficher mon numéro sur mes annonces longue durée
+              </span>
+              <span className="mt-0.5 block text-gray-500">
+                {hasPhone
+                  ? "Visible uniquement par les visiteurs connectés dont l'email est vérifié. Jamais sur les annonces courte durée."
+                  : 'Ajoutez un numéro pour activer cette option.'}
+              </span>
+            </span>
+          </label>
 
           <Input label="Email" value={user?.email ?? ''} disabled />
 

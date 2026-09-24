@@ -27,7 +27,15 @@ class UpdateProfileRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+
+            // nullable so a user can REMOVE their number, not just
+            // change it. Sending null clears it.
             'phone' => ['nullable', 'string', 'max:30'],
+
+            // Consent to show the number on long-term listings.
+            // `sometimes`: an older client that does not send it leaves
+            // the stored choice untouched rather than resetting it.
+            'show_phone_on_listings' => ['sometimes', 'boolean'],
         ];
     }
 }

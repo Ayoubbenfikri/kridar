@@ -9,11 +9,13 @@ import {
   Check,
   ImageOff,
   MapPin,
+  Phone,
   Ruler,
   Star,
   User,
   Users,
 } from 'lucide-react'
+import { useAuth } from '@/features/auth/useAuth'
 import { useProperty } from '@/features/properties/useProperties'
 import { formatMad, primaryPrice } from '@/lib/formatPrice'
 import ReviewsSection from '@/components/reviews/ReviewsSection'
@@ -21,7 +23,7 @@ import FavoriteButton from '@/components/properties/FavoriteButton'
 import ContactOwnerCard from '@/components/properties/ContactOwnerCard'
 import BookingPanel from '@/components/reservations/BookingPanel'
 import { Card, EmptyState, Skeleton, buttonClasses } from '@/components/ui'
-import type { PropertyType, RentalType } from '@/types/property'
+import type { Property, PropertyType, RentalType } from '@/types/property'
 
 const TYPE_LABELS: Record<PropertyType, string> = {
   apartment: 'Appartement',
@@ -45,6 +47,57 @@ function Fact({ icon, label }: { icon: React.ReactNode; label: string }) {
       </span>
       <span className="text-sm text-gray-700">{label}</span>
     </div>
+  )
+}
+
+/**
+ * The owner's phone line, in the "Propriétaire" section.
+ *
+ * Every decision about WHETHER to show a number is made by the backend
+ * (Property::listsOwnerPhone + the viewer check in PropertyResource).
+ * This component only decides how to present the three outcomes:
+ *
+ *   owner_phone set        -> the number, as a tel: link
+ *   available but withheld -> say why, and what would unlock it
+ *   not available          -> nothing at all
+ *
+ * The middle case is why `owner_phone_available` exists: without it
+ * the page could not tell "log in to see it" from "there is nothing",
+ * and would end up promising a number the owner never agreed to show.
+ */
+function OwnerPhone({ property }: { property: Property }) {
+  const { isAuthenticated } = useAuth()
+
+  if (property.owner_phone) {
+    return (
+      <a
+        href={`tel:${property.owner_phone.replace(/\s+/g, '')}`}
+        className="mt-4 inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3.5 py-2 text-sm font-semibold text-gray-900 transition hover:border-brand-500 hover:text-brand-600"
+      >
+        <Phone className="size-4 text-brand-600" aria-hidden />
+        {property.owner_phone}
+      </a>
+    )
+  }
+
+  if (!property.owner_phone_available) {
+    return null
+  }
+
+  return (
+    <p className="mt-4 flex items-center gap-2 text-sm text-gray-500">
+      <Phone className="size-4 shrink-0 text-gray-400" aria-hidden />
+      {isAuthenticated ? (
+        'Vérifiez votre email pour voir le numéro du propriétaire.'
+      ) : (
+        <span>
+          <Link to="/login" className="font-semibold text-brand-600 transition hover:text-brand-700">
+            Connectez-vous
+          </Link>{' '}
+          pour voir le numéro du propriétaire.
+        </span>
+      )}
+    </p>
   )
 }
 
@@ -230,6 +283,7 @@ export default function PropertyDetailsPage() {
                 <p className="text-sm text-gray-500">Propose ce logement</p>
               </div>
             </div>
+            <OwnerPhone property={property} />
           </section>
 
           <ReviewsSection propertyId={property.id.toString()} />

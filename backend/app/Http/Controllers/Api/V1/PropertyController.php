@@ -48,7 +48,16 @@ class PropertyController extends Controller
     {
         $this->authorize('view', $property);
 
-        $property->load(['owner:id,name', 'amenities', 'images']);
+        // phone + show_phone_on_listings are loaded here, and ONLY here:
+        // the details page is where the owner's number is shown. Loading
+        // them is safe because PropertyResource never serializes the
+        // owner through UserResource any more — the number can only come
+        // out through `owner_phone`, which applies the visibility rules.
+        $property->load([
+            'owner:id,name,phone,show_phone_on_listings',
+            'amenities',
+            'images',
+        ]);
         $property->loadAvg('reviews', 'rating');
         $property->loadCount('reviews');
 

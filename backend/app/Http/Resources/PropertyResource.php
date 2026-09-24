@@ -15,6 +15,18 @@ class PropertyResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // The phone rule, in two halves:
+        //   listsOwnerPhone() — does this listing publish a number at all?
+        //   viewer check      — may THIS request see it?
+        //
+        // sanctum guard explicitly: the property routes are public, so
+        // there may be no user; asking the sanctum guard is what resolves
+        // the SPA session cookie on an API route that does not require
+        // auth (same mechanism that lets an owner preview their draft).
+        $viewer = $request->user('sanctum');
+        $listsPhone = $this->listsOwnerPhone();
+        $viewerMaySeePhone = $viewer !== null && $viewer->hasVerifiedEmail();
+
         return [
             'id' => $this->id,
             'title' => $this->title,
@@ -43,10 +55,10 @@ class PropertyResource extends JsonResource
             'is_featured' => $this->is_featured,
             'published_at' => $this->published_at,
 
-            // Phase 22 (pricing) — the long-term publication fee.
-            // `requires_publication_fee` is sent (rather than letting the
-            // frontend re-derive it from rental_type) so the rule lives
-            // in ONE place: Property::requiresPublicationFee().
+            // The long-term publication fee. `requires_publication_fee`
+            // is sent (rather than letting the frontend re-derive it from
+            // rental_type) so the rule lives in ONE place:
+            // Property::requiresPublicationFee().
             'requires_publication_fee' => $this->requiresPublicationFee(),
             'publication_status' => $this->publication_status,
             'publication_paid_at' => $this->publication_paid_at,
@@ -58,7 +70,31 @@ class PropertyResource extends JsonResource
             'average_rating' => $this->reviews_avg_rating !== null ? round((float) $this->reviews_avg_rating, 1) : null,
             'reviews_count' => $this->reviews_count ?? 0,
 
-            'owner' => new UserResource($this->whenLoaded('owner')),
+            // Built by hand, NOT through UserResource. UserResource
+            // exposes email and phone; this used to be
+            // `new UserResource($this->whenLoaded('owner'))`, and was
+            // safe only because the queries happened to select
+            // owner:id,name. Loading one more column — which the phone
+            // feature needs — would have published every owner's email
+            // and phone to anonymous visitors. Only id and name can ever
+            // come out of this key now, whatever the query loads.
+            'owner' => $this->whenLoaded('owner', fn () => [
+                'id' => $this->owner->id,
+                'name' => $this->owner->name,
+            ]),
+
+            // Safe to send to anyone: it says THAT a number exists, not
+            // what it is. It lets the page tell an anonymous visitor
+            // "log in to see the number" honestly, instead of promising
+            // a number that the owner never agreed to show.
+            'owner_phone_available' => $listsPhone,
+
+            // The number itself: long-term listing, owner opted in, and a
+            // logged-in, verified viewer. Verified rather than merely
+            // logged in, because a throwaway account is free to create —
+            // that is what a scraper would use.
+            'owner_phone' => $listsPhone && $viewerMaySeePhone ? $this->owner->phone : null,
+
             'amenities' => AmenityResource::collection($this->whenLoaded('amenities')),
             'images' => PropertyImageResource::collection($this->whenLoaded('images')),
 

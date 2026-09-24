@@ -51,7 +51,14 @@ export async function resendVerificationEmail(): Promise<{ message: string }> {
 
 export interface UpdateProfilePayload {
   name: string
-  phone?: string
+  /**
+   * `null` CLEARS the number. Not the same as leaving the key out:
+   * an absent key is simply not updated, so a user could never remove
+   * a number once set — which matters now that it can be shown to
+   * clients.
+   */
+  phone?: string | null
+  show_phone_on_listings?: boolean
 }
 
 export interface UpdatePasswordPayload {

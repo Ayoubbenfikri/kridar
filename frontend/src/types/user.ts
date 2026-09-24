@@ -10,6 +10,12 @@ export interface User {
   name: string
   email: string
   phone: string | null
+  /**
+   * Consent to show `phone` on this user's long-term listings. Off by
+   * default — the number was given to create an account, not to be
+   * published. Set from /account/settings.
+   */
+  show_phone_on_listings: boolean
   role: UserRole
   status: UserStatus
   email_verified: boolean
