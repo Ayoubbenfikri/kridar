@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Bath, BedDouble, ImageOff, MapPin, Ruler, Star, Users } from 'lucide-react'
 import FavoriteButton from './FavoriteButton'
 import { formatMad, primaryPrice } from '@/lib/formatPrice'
@@ -12,21 +13,31 @@ import type { Property } from '@/types/property'
  * The favourite button sits outside the <Link> on purpose - a <button>
  * cannot legally be nested inside an <a> - so it is absolutely
  * positioned over the image as a sibling instead.
+ *
+ * RTL (Phase 27): the two overlay badges are pinned with start/end so
+ * the heart and the "featured" pill swap corners in Darija instead of
+ * landing on top of each other's side.
  */
 export default function PropertyCard({ property }: { property: Property }) {
-  const cover = property.images.find((image) => image.is_cover) ?? property.images[0] ?? null
+  const { t, i18n } = useTranslation()
+
+  // Defensive: PropertyResource emits `images` through whenLoaded(), so
+  // an endpoint whose query forgot to eager-load it omits the key. See
+  // AdminPropertiesPage for the crash that taught us this.
+  const images = property.images ?? []
+  const cover = images.find((image) => image.is_cover) ?? images[0] ?? null
   const price = primaryPrice(property)
   const rating = property.average_rating
 
   return (
     <article className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-gray-300 hover:shadow-lg">
-      <div className="absolute top-3 right-3 z-10">
+      <div className="absolute top-3 end-3 z-10">
         <FavoriteButton propertyId={property.id} />
       </div>
 
       {property.is_featured && (
-        <span className="absolute top-3 left-3 z-10 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-gray-900 backdrop-blur-sm">
-          Coup de coeur
+        <span className="absolute top-3 start-3 z-10 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-gray-900 backdrop-blur-sm">
+          {t('card.featured')}
         </span>
       )}
 
@@ -42,7 +53,7 @@ export default function PropertyCard({ property }: { property: Property }) {
           ) : (
             <div className="flex size-full flex-col items-center justify-center gap-1.5 text-gray-400">
               <ImageOff className="size-6" aria-hidden />
-              <span className="text-xs">Pas de photo</span>
+              <span className="text-xs">{t('card.noPhoto')}</span>
             </div>
           )}
         </div>
@@ -55,7 +66,13 @@ export default function PropertyCard({ property }: { property: Property }) {
             {rating !== null && (
               <span className="flex shrink-0 items-center gap-1 text-sm font-semibold text-gray-900">
                 <Star className="size-3.5 fill-accent text-accent" aria-hidden />
-                {rating.toFixed(1).replace('.', ',')}
+                {/* The decimal separator is a comma in French and a dot
+                    in English, so it comes from Intl rather than a
+                    hardcoded .replace('.', ','). */}
+                {rating.toLocaleString(i18n.language === 'en' ? 'en-US' : 'fr-FR', {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                })}
               </span>
             )}
           </div>
@@ -67,18 +84,18 @@ export default function PropertyCard({ property }: { property: Property }) {
 
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-gray-100 pt-3 text-[13px] text-gray-500">
             <span className="flex items-center gap-1.5">
-              <BedDouble className="size-3.5" aria-hidden /> {property.bedrooms} ch.
+              <BedDouble className="size-3.5" aria-hidden /> {t('card.bedrooms', { n: property.bedrooms })}
             </span>
             <span className="flex items-center gap-1.5">
-              <Bath className="size-3.5" aria-hidden /> {property.bathrooms} sdb
+              <Bath className="size-3.5" aria-hidden /> {t('card.bathrooms', { n: property.bathrooms })}
             </span>
             {property.max_guests !== null ? (
               <span className="flex items-center gap-1.5">
-                <Users className="size-3.5" aria-hidden /> {property.max_guests} pers.
+                <Users className="size-3.5" aria-hidden /> {t('card.guests', { n: property.max_guests })}
               </span>
             ) : property.area_sqm !== null ? (
               <span className="flex items-center gap-1.5">
-                <Ruler className="size-3.5" aria-hidden /> {Number(property.area_sqm)} m²
+                <Ruler className="size-3.5" aria-hidden /> {t('card.area', { n: Number(property.area_sqm) })}
               </span>
             ) : null}
           </div>
@@ -88,10 +105,10 @@ export default function PropertyCard({ property }: { property: Property }) {
               <span className="text-lg font-bold tracking-tight text-gray-900">
                 {formatMad(price.amount)}
               </span>
-              <span className="text-sm text-gray-500">/ {price.unit}</span>
+              <span className="text-sm text-gray-500">{t(price.unitKey)}</span>
             </p>
           ) : (
-            <p className="mt-3 text-sm text-gray-400">Prix non defini</p>
+            <p className="mt-3 text-sm text-gray-400">{t('price.notSet')}</p>
           )}
         </div>
       </Link>

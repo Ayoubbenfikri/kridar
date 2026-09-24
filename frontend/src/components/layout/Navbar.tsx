@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Building2,
   CalendarCheck,
@@ -15,19 +16,26 @@ import {
 import { useAuth } from '@/features/auth/useAuth'
 import NotificationBell from '@/components/notifications/NotificationBell'
 import MessagesLink from '@/components/messaging/MessagesLink'
+import LanguageSwitcher from './LanguageSwitcher'
 import { buttonClasses } from '@/components/ui'
 import { cn } from '@/lib/cn'
 
-/** Links shown to everyone. */
+/**
+ * Links shown to everyone. `labelKey` rather than `label` (Phase 27):
+ * these arrays are module constants, evaluated once at import time, so a
+ * translated STRING here would be frozen in whatever language the app
+ * started in and would never change when the language does. The key is
+ * what is constant; the text is looked up during render.
+ */
 const PUBLIC_LINKS = [
-  { to: '/', label: 'Accueil', end: true },
-  { to: '/properties', label: 'Propriétés', end: false },
+  { to: '/', labelKey: 'nav.home', end: true },
+  { to: '/properties', labelKey: 'nav.properties', end: false },
 ]
 
 /** Links that only make sense once logged in. */
 const PRIVATE_LINKS = [
-  { to: '/reservations', label: 'Mes réservations', icon: CalendarCheck },
-  { to: '/owner', label: 'Espace propriétaire', icon: Building2 },
+  { to: '/reservations', labelKey: 'nav.myReservations', icon: CalendarCheck },
+  { to: '/owner', labelKey: 'nav.ownerSpace', icon: Building2 },
 ]
 
 /**
@@ -40,8 +48,15 @@ const PRIVATE_LINKS = [
  *    aria-current always follow the real route, never a manual guess.
  * 3. From `md` up the links sit inline; below that they collapse into a
  *    hamburger panel (CSS max-height transition, no animation library).
+ *
+ * RTL (Phase 27): almost nothing here needed changing. The layout is
+ * flexbox with `gap`, and flexbox reverses itself under dir="rtl" — so
+ * the logo moves to the right and the account menu to the left on its
+ * own. Only the genuinely one-sided bits were converted to logical
+ * utilities: the avatar pill's uneven padding and the dropdown's anchor.
  */
 export default function Navbar() {
+  const { t } = useTranslation()
   const { user, isAuthenticated, isLoadingUser, logout } = useAuth()
   const location = useLocation()
 
@@ -129,18 +144,18 @@ export default function Navbar() {
           <nav className="hidden items-center gap-1 md:flex">
             {PUBLIC_LINKS.map((link) => (
               <NavLink key={link.to} to={link.to} end={link.end} className={desktopLinkClass}>
-                {link.label}
+                {t(link.labelKey)}
               </NavLink>
             ))}
             {isAuthenticated &&
               PRIVATE_LINKS.map((link) => (
                 <NavLink key={link.to} to={link.to} className={desktopLinkClass}>
-                  {link.label}
+                  {t(link.labelKey)}
                 </NavLink>
               ))}
             {isAdmin && (
               <NavLink to="/admin" className={desktopLinkClass}>
-                Administration
+                {t('nav.admin')}
               </NavLink>
             )}
           </nav>
@@ -148,11 +163,17 @@ export default function Navbar() {
 
         {/* Account area */}
         <div className="flex items-center gap-2">
+          {/* Hidden on the smallest screens, where it would crowd the
+              hamburger — the mobile panel carries its own copy. */}
+          <div className="hidden sm:block">
+            <LanguageSwitcher compact />
+          </div>
+
           {isLoadingUser ? null : isAuthenticated ? (
             <>
               <Link
                 to="/favorites"
-                aria-label="Mes favoris"
+                aria-label={t('nav.favorites')}
                 className="hidden size-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 sm:flex"
               >
                 <Heart className="size-5" aria-hidden />
@@ -174,7 +195,7 @@ export default function Navbar() {
                   onClick={() => setIsUserMenuOpen((open) => !open)}
                   aria-expanded={isUserMenuOpen}
                   aria-haspopup="menu"
-                  className="flex items-center gap-2 rounded-full border border-gray-200 bg-white py-1 pr-2.5 pl-1 transition hover:border-gray-300 hover:shadow-sm"
+                  className="flex items-center gap-2 rounded-full border border-gray-200 bg-white py-1 pe-2.5 ps-1 transition hover:border-gray-300 hover:shadow-sm"
                 >
                   <span className="flex size-7 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">
                     {initials || <User className="size-4" aria-hidden />}
@@ -187,7 +208,10 @@ export default function Navbar() {
                 {isUserMenuOpen && (
                   <div
                     role="menu"
-                    className="absolute right-0 z-50 mt-2 w-60 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg"
+                    // end-0 rather than right-0: the menu hangs off the
+                    // trailing edge of its button, which is the left one
+                    // in Darija.
+                    className="absolute end-0 z-50 mt-2 w-60 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg"
                   >
                     <div className="border-b border-gray-100 px-4 py-3">
                       <p className="truncate text-sm font-semibold text-gray-900">{user?.name}</p>
@@ -199,14 +223,14 @@ export default function Navbar() {
                         role="menuitem"
                         className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-gray-700 transition hover:bg-gray-100"
                       >
-                        <User className="size-4 text-gray-400" aria-hidden /> Mon compte
+                        <User className="size-4 text-gray-400" aria-hidden /> {t('nav.account')}
                       </Link>
                       <Link
                         to="/account/settings"
                         role="menuitem"
                         className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-gray-700 transition hover:bg-gray-100"
                       >
-                        <Settings className="size-4 text-gray-400" aria-hidden /> Paramètres
+                        <Settings className="size-4 text-gray-400" aria-hidden /> {t('nav.settings')}
                       </Link>
                     </div>
                     <div className="border-t border-gray-100 p-1.5">
@@ -218,7 +242,7 @@ export default function Navbar() {
                         className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-red-600 transition hover:bg-red-50 disabled:opacity-50"
                       >
                         <LogOut className="size-4" aria-hidden />
-                        {logout.isPending ? 'Deconnexion...' : 'Se deconnecter'}
+                        {logout.isPending ? t('nav.loggingOut') : t('nav.logout')}
                       </button>
                     </div>
                   </div>
@@ -228,10 +252,10 @@ export default function Navbar() {
           ) : (
             <div className="hidden items-center gap-2 sm:flex">
               <Link to="/login" className={buttonClasses({ variant: 'ghost', size: 'sm' })}>
-                Connexion
+                {t('nav.login')}
               </Link>
               <Link to="/register" className={buttonClasses({ size: 'sm' })}>
-                S'inscrire
+                {t('nav.register')}
               </Link>
             </div>
           )}
@@ -240,7 +264,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => setIsMenuOpen((open) => !open)}
-            aria-label={isMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+            aria-label={isMenuOpen ? t('nav.closeMenu') : t('nav.openMenu')}
             aria-expanded={isMenuOpen}
             className="flex size-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 md:hidden"
           >
@@ -254,15 +278,16 @@ export default function Navbar() {
       <div
         className={cn(
           'overflow-hidden border-gray-100 transition-all duration-200 ease-in-out md:hidden',
-          // Raised from 26rem: the panel gained a Messages row, and a
-          // max-height that is too small silently clips the last item.
-          isMenuOpen ? 'max-h-[30rem] border-t opacity-100' : 'max-h-0 opacity-0',
+          // Raised again from 30rem: the panel gained a language picker,
+          // and a max-height that is too small silently clips the last
+          // item rather than scrolling.
+          isMenuOpen ? 'max-h-[34rem] border-t opacity-100' : 'max-h-0 opacity-0',
         )}
       >
         <nav className="mx-auto flex w-full max-w-6xl flex-col gap-1 px-4 py-3 sm:px-6">
           {PUBLIC_LINKS.map((link) => (
             <NavLink key={link.to} to={link.to} end={link.end} className={mobileLinkClass}>
-              {link.label}
+              {t(link.labelKey)}
             </NavLink>
           ))}
 
@@ -271,11 +296,11 @@ export default function Navbar() {
               {PRIVATE_LINKS.map((link) => (
                 <NavLink key={link.to} to={link.to} className={mobileLinkClass}>
                   <link.icon className="size-4.5 text-gray-400" aria-hidden />
-                  {link.label}
+                  {t(link.labelKey)}
                 </NavLink>
               ))}
               <NavLink to="/favorites" className={mobileLinkClass}>
-                <Heart className="size-4.5 text-gray-400" aria-hidden /> Mes favoris
+                <Heart className="size-4.5 text-gray-400" aria-hidden /> {t('nav.favorites')}
               </NavLink>
               {/* MessagesLink and NotificationBell are themselves <Link>s,
                   so they are rendered on their own here rather than
@@ -289,11 +314,11 @@ export default function Navbar() {
               </div>
               {isAdmin && (
                 <NavLink to="/admin" className={mobileLinkClass}>
-                  <ShieldCheck className="size-4.5 text-gray-400" aria-hidden /> Administration
+                  <ShieldCheck className="size-4.5 text-gray-400" aria-hidden /> {t('nav.admin')}
                 </NavLink>
               )}
               <NavLink to="/account" className={mobileLinkClass}>
-                <User className="size-4.5 text-gray-400" aria-hidden /> Mon compte
+                <User className="size-4.5 text-gray-400" aria-hidden /> {t('nav.account')}
               </NavLink>
               <button
                 type="button"
@@ -302,19 +327,28 @@ export default function Navbar() {
                 className="mt-1 flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
               >
                 <LogOut className="size-4.5" aria-hidden />
-                {logout.isPending ? 'Deconnexion...' : 'Se deconnecter'}
+                {logout.isPending ? t('nav.loggingOut') : t('nav.logout')}
               </button>
             </>
           ) : (
             <div className="mt-2 flex flex-col gap-2">
               <Link to="/login" className={buttonClasses({ variant: 'secondary', fullWidth: true })}>
-                Connexion
+                {t('nav.login')}
               </Link>
               <Link to="/register" className={buttonClasses({ fullWidth: true })}>
-                S'inscrire
+                {t('nav.register')}
               </Link>
             </div>
           )}
+
+          {/* Full language names here rather than the compact codes: in a
+              stack of full-width rows, "FR" on its own looks unfinished. */}
+          <div className="mt-3 border-t border-gray-100 pt-3">
+            <p className="mb-2 px-1 text-xs font-semibold tracking-wider text-gray-400 uppercase">
+              {t('language.label')}
+            </p>
+            <LanguageSwitcher />
+          </div>
         </nav>
       </div>
     </header>

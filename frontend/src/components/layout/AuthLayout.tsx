@@ -1,11 +1,16 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { KeyRound } from 'lucide-react'
 
 /**
  * Shared frame for /login and /register: one centred card, the Kridar
  * mark, a title and a subtitle. Having it in one place is what keeps
  * the two pages from slowly drifting apart.
+ *
+ * title and subtitle stay PROPS rather than becoming translation keys
+ * inside here: the two pages differ only by those two strings, and
+ * passing them in is what makes that obvious at the call site.
  */
 export default function AuthLayout({
   title,
@@ -16,6 +21,8 @@ export default function AuthLayout({
   subtitle: string
   children: ReactNode
 }) {
+  const { t } = useTranslation()
+
   return (
     <main className="relative flex min-h-[calc(100vh-68px)] items-center justify-center overflow-hidden px-4 py-12">
       <div
@@ -28,7 +35,7 @@ export default function AuthLayout({
           <Link
             to="/"
             className="flex size-11 items-center justify-center rounded-xl bg-brand-600 text-white transition hover:-translate-y-px hover:shadow-md"
-            aria-label="Retour a l'accueil"
+            aria-label={t('common.backToHome')}
           >
             <KeyRound className="size-5" aria-hidden />
           </Link>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { useAmenities } from '@/features/amenities/useAmenities'
@@ -7,7 +8,7 @@ import type { PropertyType, RentalType } from '@/types/property'
 /**
  * Every value here is a string because it comes from - and goes back
  * to - the URL. The page owns the URL; this component only edits a
- * local draft and hands it back on "Appliquer", so typing a price does
+ * local draft and hands it back on "Apply", so typing a price does
  * not fire a request on every keystroke.
  */
 export interface FilterValues {
@@ -32,20 +33,14 @@ export const EMPTY_FILTERS: FilterValues = {
   amenities: [],
 }
 
-const TYPE_OPTIONS: Array<{ value: PropertyType | ''; label: string }> = [
-  { value: '', label: 'Tous les types' },
-  { value: 'apartment', label: 'Appartement' },
-  { value: 'villa', label: 'Villa' },
-  { value: 'studio', label: 'Studio' },
-  { value: 'riad', label: 'Riad' },
-  { value: 'office', label: 'Bureau' },
-]
+/**
+ * Values only — the labels are looked up during render (Phase 27).
+ * A module constant of translated strings would be evaluated once at
+ * import time and stay in the language the app booted in.
+ */
+const TYPE_VALUES: Array<PropertyType | ''> = ['', 'apartment', 'villa', 'studio', 'riad', 'office']
 
-const RENTAL_OPTIONS: Array<{ value: RentalType | ''; label: string }> = [
-  { value: '', label: 'Courte ou longue duree' },
-  { value: 'short_term', label: 'Courte duree' },
-  { value: 'long_term', label: 'Longue duree' },
-]
+const RENTAL_VALUES: Array<RentalType | ''> = ['', 'short_term', 'long_term']
 
 const COUNT_OPTIONS = ['', '1', '2', '3', '4', '5']
 
@@ -73,6 +68,7 @@ export default function PropertyFilters({
   onApply: (next: FilterValues) => void
   onReset: () => void
 }) {
+  const { t } = useTranslation()
   const [draft, setDraft] = useState<FilterValues>(value)
   const { data: amenities } = useAmenities()
 
@@ -93,7 +89,8 @@ export default function PropertyFilters({
   // The price column the backend compares depends on rental_type
   // (price_per_month for long_term, price_per_night otherwise), so the
   // label has to follow the same rule or it would lie.
-  const priceUnit = draft.rental_type === 'long_term' ? 'par mois' : 'par nuit'
+  const priceUnit =
+    draft.rental_type === 'long_term' ? t('filters.perMonth') : t('filters.perNight')
 
   return (
     <form
@@ -104,35 +101,35 @@ export default function PropertyFilters({
       className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Field label="Type de logement">
+        <Field label={t('filters.propertyType')}>
           <select
             value={draft.property_type}
             onChange={(event) => set('property_type', event.target.value)}
             className={SELECT_CLASS}
           >
-            {TYPE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
+            {TYPE_VALUES.map((option) => (
+              <option key={option} value={option}>
+                {option === '' ? t('propertyType.all') : t(`propertyType.${option}`)}
               </option>
             ))}
           </select>
         </Field>
 
-        <Field label="Duree de location">
+        <Field label={t('filters.rentalType')}>
           <select
             value={draft.rental_type}
             onChange={(event) => set('rental_type', event.target.value)}
             className={SELECT_CLASS}
           >
-            {RENTAL_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
+            {RENTAL_VALUES.map((option) => (
+              <option key={option} value={option}>
+                {option === '' ? t('rentalType.both') : t(`rentalType.${option}`)}
               </option>
             ))}
           </select>
         </Field>
 
-        <Field label={`Prix min (${priceUnit})`}>
+        <Field label={t('filters.minPrice', { unit: priceUnit })}>
           <input
             type="number"
             min={0}
@@ -144,12 +141,12 @@ export default function PropertyFilters({
           />
         </Field>
 
-        <Field label={`Prix max (${priceUnit})`}>
+        <Field label={t('filters.maxPrice', { unit: priceUnit })}>
           <input
             type="number"
             min={0}
             inputMode="numeric"
-            placeholder="Sans limite"
+            placeholder={t('filters.noLimit')}
             value={draft.max_price}
             onChange={(event) => set('max_price', event.target.value)}
             className={NUMBER_CLASS}
@@ -157,7 +154,7 @@ export default function PropertyFilters({
         </Field>
 
         {/* These three are minimums server-side (>=), so the labels say so. */}
-        <Field label="Chambres (au moins)">
+        <Field label={t('filters.bedrooms')}>
           <select
             value={draft.bedrooms}
             onChange={(event) => set('bedrooms', event.target.value)}
@@ -165,13 +162,13 @@ export default function PropertyFilters({
           >
             {COUNT_OPTIONS.map((count) => (
               <option key={count} value={count}>
-                {count === '' ? 'Peu importe' : `${count}+`}
+                {count === '' ? t('filters.any') : `${count}+`}
               </option>
             ))}
           </select>
         </Field>
 
-        <Field label="Salles de bain (au moins)">
+        <Field label={t('filters.bathrooms')}>
           <select
             value={draft.bathrooms}
             onChange={(event) => set('bathrooms', event.target.value)}
@@ -179,18 +176,18 @@ export default function PropertyFilters({
           >
             {COUNT_OPTIONS.map((count) => (
               <option key={count} value={count}>
-                {count === '' ? 'Peu importe' : `${count}+`}
+                {count === '' ? t('filters.any') : `${count}+`}
               </option>
             ))}
           </select>
         </Field>
 
-        <Field label="Voyageurs (au moins)">
+        <Field label={t('filters.guests')}>
           <input
             type="number"
             min={1}
             inputMode="numeric"
-            placeholder="Peu importe"
+            placeholder={t('filters.any')}
             value={draft.max_guests}
             onChange={(event) => set('max_guests', event.target.value)}
             className={NUMBER_CLASS}
@@ -200,7 +197,9 @@ export default function PropertyFilters({
 
       {amenities && amenities.length > 0 && (
         <fieldset className="mt-5 border-t border-gray-100 pt-5">
-          <legend className="mb-3 text-sm font-semibold text-gray-900">Equipements</legend>
+          <legend className="mb-3 text-sm font-semibold text-gray-900">
+            {t('filters.amenities')}
+          </legend>
           <div className="flex flex-wrap gap-2">
             {amenities.map((amenity) => {
               const checked = draft.amenities.includes(String(amenity.id))
@@ -220,19 +219,21 @@ export default function PropertyFilters({
                     onChange={() => toggleAmenity(amenity.id)}
                     className="sr-only"
                   />
+                  {/* Amenity names come from the database (the amenities
+                      table), so they are NOT translated here — they are
+                      data, not interface. Translating them would mean a
+                      column per language on that table. */}
                   {amenity.name}
                 </label>
               )
             })}
           </div>
-          <p className="mt-2 text-xs text-gray-500">
-            Un logement doit avoir <strong>tous</strong> les equipements coches pour apparaitre.
-          </p>
+          <p className="mt-2 text-xs text-gray-500">{t('filters.amenitiesHint')}</p>
         </fieldset>
       )}
 
       <div className="mt-5 flex flex-wrap gap-3 border-t border-gray-100 pt-5">
-        <Button type="submit">Appliquer les filtres</Button>
+        <Button type="submit">{t('filters.apply')}</Button>
         <Button
           type="button"
           variant="ghost"
@@ -242,7 +243,7 @@ export default function PropertyFilters({
             onReset()
           }}
         >
-          Tout effacer
+          {t('filters.reset')}
         </Button>
       </div>
     </form>

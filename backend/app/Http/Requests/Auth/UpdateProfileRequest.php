@@ -21,6 +21,15 @@ class UpdateProfileRequest extends FormRequest
      * to re-trigger verification, which is a bigger decision than a
      * simple profile edit. Out of scope for now.
      *
+     * `locale` is deliberately NOT here either (Phase 27). It looks like
+     * it belongs, but `name` is required on this endpoint — the settings
+     * form always submits every field — and the language switcher sends
+     * nothing but the new language. Adding locale here would have meant
+     * either relaxing `name` to `sometimes` (so a buggy client could
+     * silently half-update a profile) or making the switcher resend the
+     * user's name to change a dropdown. It gets its own endpoint instead:
+     * PUT /auth/locale, UpdateLocaleRequest.
+     *
      * @return array<string, mixed>
      */
     public function rules(): array

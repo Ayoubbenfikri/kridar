@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
+import { useAccountLocaleSync } from '@/features/locale/useLocale'
 import Navbar from './Navbar'
 import SiteFooter from './SiteFooter'
 import VerifyEmailBanner from './VerifyEmailBanner'
@@ -12,6 +13,12 @@ import VerifyEmailBanner from './VerifyEmailBanner'
  */
 export default function AppLayout() {
   const { pathname } = useLocation()
+
+  // Phase 27. THE one call site — see useAccountLocaleSync for why it
+  // must not be called anywhere else. It adopts the language saved on the
+  // account when someone signs in, so a person who chose Darija on their
+  // phone gets Darija on their laptop too.
+  useAccountLocaleSync()
 
   // A single-page app keeps the scroll position when the URL changes, so
   // clicking a card near the bottom of a list would open the next page

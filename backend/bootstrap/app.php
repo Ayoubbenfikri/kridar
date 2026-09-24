@@ -26,17 +26,17 @@ return Application::configure(basePath: dirname(__DIR__))
         // App\Http\Middleware\EnsureUserOwnsAProperty for what it checks.
         // 'admin' gates /admin/* the same way (Phase 13, role=admin).
         //
-        // 'active' (Phase 26) is different from those two: it is not for
-        // one section, it wraps the entire /api/v1 group in routes/api.php.
-        // See App\Http\Middleware\EnsureAccountIsActive — a suspended
-        // account has to stop being able to do ANYTHING, not just stop
-        // being able to open one dashboard, and applying it once at the
-        // top means a route added next month is covered without anyone
-        // remembering to add it.
+        // 'active' (Phase 26) and 'locale' (Phase 27) are different from
+        // those two: they are not for one section, they wrap the entire
+        // /api/v1 group in routes/api.php, in that order. 'locale' picks
+        // the response language; 'active' refuses suspended accounts. See
+        // routes/api.php for why they live on the group and why the order
+        // is what it is.
         $middleware->alias([
             'owner' => \App\Http\Middleware\EnsureUserOwnsAProperty::class,
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
             'active' => \App\Http\Middleware\EnsureAccountIsActive::class,
+            'locale' => \App\Http\Middleware\SetLocale::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

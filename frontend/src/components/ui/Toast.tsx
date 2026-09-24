@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
@@ -38,6 +39,7 @@ const TONE_STYLES: Record<ToastTone, { icon: ReactNode; className: string }> = {
 const AUTO_DISMISS_MS = 4500
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const { t } = useTranslation()
   const [toasts, setToasts] = useState<Toast[]>([])
   const nextId = useRef(1)
   // Every pending dismiss timer, so they can all be cleared on unmount
@@ -69,10 +71,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
 
       {/* aria-live so a screen reader announces the message without the
-          focus ever being moved away from what the user was doing. */}
+          focus ever being moved away from what the user was doing.
+
+          sm:end-6 rather than sm:right-6 (Phase 27): toasts belong in the
+          corner the eye rests in, which is the left one when the page
+          reads right to left. */}
       <div
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-4 bottom-4 z-[100] flex flex-col items-center gap-2 sm:inset-x-auto sm:right-6 sm:bottom-6 sm:items-end"
+        className="pointer-events-none fixed inset-x-4 bottom-4 z-[100] flex flex-col items-center gap-2 sm:inset-x-auto sm:end-6 sm:bottom-6 sm:items-end"
       >
         {toasts.map((toast) => (
           <div
@@ -91,7 +97,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <button
               type="button"
               onClick={() => dismiss(toast.id)}
-              aria-label="Fermer"
+              aria-label={t('common.close')}
               className="flex size-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
             >
               <X className="size-4" aria-hidden />
@@ -106,6 +112,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 export function useToast(): ToastContextValue {
   const context = useContext(ToastContext)
   if (!context) {
+    // Developer-facing, never shown to a user — deliberately not
+    // translated.
     throw new Error('useToast doit etre utilise a l interieur de <ToastProvider>')
   }
   return context

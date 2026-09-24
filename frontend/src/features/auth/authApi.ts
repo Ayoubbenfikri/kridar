@@ -1,4 +1,5 @@
 import axiosClient from '@/api/axiosClient'
+import type { LocaleCode } from '@/i18n'
 import type { User } from '@/types/user'
 
 export interface RegisterPayload {
@@ -75,4 +76,19 @@ export async function updateProfile(payload: UpdateProfilePayload): Promise<{ me
 export async function updatePassword(payload: UpdatePasswordPayload): Promise<{ message: string }> {
   const { data } = await axiosClient.put('/api/v1/auth/password', payload)
   return data
+}
+
+/**
+ * Phase 27 — persist the interface language on the account.
+ *
+ * Its own endpoint rather than a field on updateProfile, because that one
+ * requires `name` and the switcher only knows the new language. See
+ * backend UpdateLocaleRequest.
+ *
+ * Returns the whole user so the caller can reseed the cached profile in
+ * one round trip instead of refetching /auth/me afterwards.
+ */
+export async function updateLocale(locale: LocaleCode): Promise<User> {
+  const { data } = await axiosClient.put<{ user: User }>('/api/v1/auth/locale', { locale })
+  return data.user
 }

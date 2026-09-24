@@ -7,6 +7,17 @@
 @import "@fontsource/inter/600.css";
 @import "@fontsource/inter/700.css";
 
+/* Cairo — la police arabe, pour la darija (Phase 27).
+   Inter ne contient AUCUN glyphe arabe : sans ceci, chaque caractere
+   tomberait sur la police par defaut du systeme, donc un rendu different
+   sur chaque machine et une interface qui a l'air cassee. Memes graisses
+   qu'Inter pour que le passage d'une langue a l'autre ne change que
+   l'alphabet, pas la hierarchie visuelle. */
+@import "@fontsource/cairo/400.css";
+@import "@fontsource/cairo/500.css";
+@import "@fontsource/cairo/600.css";
+@import "@fontsource/cairo/700.css";
+
 /* By default Tailwind v4 wraps every `hover:` utility in
    @media (hover: hover), so browsers that report "no mouse" (Windows
    tablet mode, touchscreen laptops, some embedded browsers) silently
@@ -66,6 +77,23 @@
   --shadow-2xl: 0 12px 20px -8px rgb(15 23 42 / 0.08), 0 32px 48px -16px rgb(15 23 42 / 0.2);
 
   --font-sans: Inter, system-ui, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ---------------------------------------------------------------------
+   DARIJA (Phase 27)
+
+   On redefinit --font-sans plutot que d'ajouter une regle font-family :
+   <html> EST :root, donc html[lang="ary"] surcharge le token defini dans
+   @theme sur le meme element. Consequence : body, mais AUSSI chaque
+   utilitaire `font-sans` de Tailwind (qui resout var(--font-sans) au
+   moment de l'usage) passent a l'arabe d'un seul coup. Une seule regle
+   au lieu d'une chasse aux font-family dans toute l'application.
+
+   La direction (dir="rtl") est posee sur <html> par src/i18n/index.ts,
+   pas ici : c'est JavaScript qui connait la langue courante.
+   --------------------------------------------------------------------- */
+html[lang="ary"] {
+  --font-sans: Cairo, "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif;
 }
 
 html,

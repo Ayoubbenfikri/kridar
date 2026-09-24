@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Locale;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use Database\Factories\UserFactory;
@@ -41,6 +42,10 @@ class User extends Authenticatable implements MustVerifyEmailContract
      * Model::unguarded(), so UserFactory's role/status defaults and its
      * admin() state keep working.
      *
+     * `locale` IS fillable — it is the user's own preference, like
+     * show_phone_on_listings, and UpdateProfileRequest validates it
+     * against App\Enums\Locale so only a real language can land here.
+     *
      * @var list<string>
      */
     protected $fillable = [
@@ -51,6 +56,10 @@ class User extends Authenticatable implements MustVerifyEmailContract
         // Owner consent to publish `phone` on their long-term listings.
         // Only ever set by the user themselves (UpdateProfileRequest).
         'show_phone_on_listings',
+        // Interface language (Phase 27). Stored on the account so it
+        // follows the person across devices and so a queued notification
+        // email knows which language to send.
+        'locale',
     ];
 
     /**
@@ -77,6 +86,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
             'show_phone_on_listings' => 'boolean',
             'role' => UserRole::class,
             'status' => UserStatus::class,
+            'locale' => Locale::class,
         ];
     }
 

@@ -1,11 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { AlertCircle, Eye, EyeOff, Lock, Mail } from 'lucide-react'
 import { useAuth } from './useAuth'
 import { getErrorMessage, getValidationErrors } from '@/lib/apiErrors'
 import { Button, Input } from '@/components/ui'
 
 export default function LoginForm() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { login } = useAuth()
   const [email, setEmail] = useState('')
@@ -13,6 +15,10 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
 
   const fieldErrors = getValidationErrors(login.error)
+  // Not translated here, and that is correct: this string comes from
+  // Laravel, which already answered in the right language (SetLocale).
+  // Translating it a second time on the frontend would mean keeping two
+  // copies of every backend message in sync.
   const generalError = login.isError && !fieldErrors ? getErrorMessage(login.error) : null
 
   function handleSubmit(event: FormEvent) {
@@ -23,11 +29,11 @@ export default function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <Input
-        label="Email"
+        label={t('auth.email')}
         type="email"
         required
         autoComplete="email"
-        placeholder="vous@exemple.com"
+        placeholder={t('auth.emailPlaceholder')}
         icon={<Mail className="size-5" />}
         value={email}
         onChange={(event) => setEmail(event.target.value)}
@@ -35,7 +41,7 @@ export default function LoginForm() {
       />
 
       <Input
-        label="Mot de passe"
+        label={t('auth.password')}
         type={showPassword ? 'text' : 'password'}
         required
         autoComplete="current-password"
@@ -47,7 +53,7 @@ export default function LoginForm() {
           <button
             type="button"
             onClick={() => setShowPassword((shown) => !shown)}
-            aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+            aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
             className="flex size-8 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
           >
             {showPassword ? <EyeOff className="size-4.5" aria-hidden /> : <Eye className="size-4.5" aria-hidden />}
@@ -63,13 +69,13 @@ export default function LoginForm() {
       )}
 
       <Button type="submit" fullWidth isLoading={login.isPending}>
-        {login.isPending ? 'Connexion...' : 'Se connecter'}
+        {login.isPending ? t('auth.loggingIn') : t('auth.login')}
       </Button>
 
       <p className="text-center text-sm text-gray-500">
-        Pas encore de compte ?{' '}
+        {t('auth.noAccount')}{' '}
         <Link to="/register" className="font-semibold text-brand-600 transition hover:text-brand-700">
-          S'inscrire
+          {t('auth.register')}
         </Link>
       </p>
     </form>

@@ -36,6 +36,10 @@ use Symfony\Component\HttpFoundation\Response;
  * authenticates with, and because PropertyResource already resolves that
  * same guard on public reads — reusing it means no second query.
  *
+ * It runs AFTER 'locale' (Phase 27), which is deliberate: the refusal
+ * below is a message a real person reads, so it goes out in the language
+ * they are using rather than always in English.
+ *
  * WHY 401 AND NOT 403
  * -------------------
  * By the time this responds the session is gone, so "you are not
@@ -75,7 +79,7 @@ class EnsureAccountIsActive
         }
 
         return response()->json([
-            'message' => 'This account has been suspended.',
+            'message' => __('messages.auth.suspended'),
         ], 401);
     }
 }

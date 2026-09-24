@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import * as authApi from './authApi'
 import type { LoginPayload, RegisterPayload, UpdatePasswordPayload, UpdateProfilePayload } from './authApi'
+import type { LocaleCode } from '@/i18n'
 import type { User } from '@/types/user'
 
 const ME_QUERY_KEY = ['auth', 'me'] as const
@@ -59,6 +60,22 @@ export function useAuth() {
     mutationFn: (payload: UpdatePasswordPayload) => authApi.updatePassword(payload),
   })
 
+  /**
+   * Phase 27. Lives here rather than in useLocale so that ME_QUERY_KEY
+   * stays private to this file — a second module writing to the profile
+   * cache by a duplicated key is exactly how the "who is logged in"
+   * single source of truth stops being single.
+   *
+   * The interface has already switched by the time this runs; this only
+   * makes the choice outlive the browser. See useLocale.
+   */
+  const updateLocaleMutation = useMutation({
+    mutationFn: (locale: LocaleCode) => authApi.updateLocale(locale),
+    onSuccess: (user) => {
+      queryClient.setQueryData(ME_QUERY_KEY, user)
+    },
+  })
+
   // A 401 on GET /auth/me just means "nobody is logged in" - that's an
   // expected, normal state, not something to show as an error.
   const isUnauthenticated = isAxiosError(meQuery.error) && meQuery.error.response?.status === 401
@@ -74,5 +91,6 @@ export function useAuth() {
     resendVerification: resendVerificationMutation,
     updateProfile: updateProfileMutation,
     updatePassword: updatePasswordMutation,
+    updateLocale: updateLocaleMutation,
   }
 }

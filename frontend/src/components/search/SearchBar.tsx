@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Home, MapPin, Search, Users } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import type { PropertyType } from '@/types/property'
@@ -15,17 +16,15 @@ import type { PropertyType } from '@/types/property'
  * /properties, which reads them back. That keeps a search shareable and
  * bookmarkable, and leaves /properties as the single place that talks
  * to the listing endpoint.
+ *
+ * Phase 27: the type list holds VALUES and translation keys, never
+ * labels. It used to be a module constant of French strings, which would
+ * have frozen the dropdown in whatever language the app booted in.
  */
-const TYPE_OPTIONS: Array<{ value: PropertyType | ''; label: string }> = [
-  { value: '', label: 'Tous les types' },
-  { value: 'apartment', label: 'Appartement' },
-  { value: 'villa', label: 'Villa' },
-  { value: 'studio', label: 'Studio' },
-  { value: 'riad', label: 'Riad' },
-  { value: 'office', label: 'Bureau' },
-]
+const TYPE_VALUES: Array<PropertyType | ''> = ['', 'apartment', 'villa', 'studio', 'riad', 'office']
 
 export default function SearchBar() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [city, setCity] = useState('')
   const [propertyType, setPropertyType] = useState<PropertyType | ''>('')
@@ -51,62 +50,64 @@ export default function SearchBar() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="mx-auto flex w-full max-w-3xl flex-col gap-1 rounded-2xl border border-gray-200 bg-white p-1.5 text-left shadow-lg sm:flex-row sm:items-stretch"
+      className="mx-auto flex w-full max-w-3xl flex-col gap-1 rounded-2xl border border-gray-200 bg-white p-1.5 text-start shadow-lg sm:flex-row sm:items-stretch"
     >
       <label className="flex flex-1 cursor-text items-center gap-3 rounded-xl px-4 py-2.5 transition hover:bg-gray-50">
         <MapPin className="size-5 shrink-0 text-gray-400" aria-hidden />
         <span className="min-w-0 flex-1">
           <span className="block text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
-            Destination
+            {t('search.destination')}
           </span>
           <input
             value={city}
             onChange={(event) => setCity(event.target.value)}
-            placeholder="Marrakech, Casablanca..."
+            placeholder={t('search.destinationPlaceholder')}
             className="w-full border-0 bg-transparent p-0 text-[15px] text-gray-900 placeholder:text-gray-400 focus:outline-none"
           />
         </span>
       </label>
 
-      <label className="flex flex-1 cursor-pointer items-center gap-3 rounded-xl px-4 py-2.5 transition hover:bg-gray-50 sm:border-l sm:border-gray-200">
+      {/* border-s rather than border-l: the divider belongs between the
+          fields, whichever way they are laid out. */}
+      <label className="flex flex-1 cursor-pointer items-center gap-3 rounded-xl px-4 py-2.5 transition hover:bg-gray-50 sm:border-s sm:border-gray-200">
         <Home className="size-5 shrink-0 text-gray-400" aria-hidden />
         <span className="min-w-0 flex-1">
           <span className="block text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
-            Type de logement
+            {t('search.propertyType')}
           </span>
           <select
             value={propertyType}
             onChange={(event) => setPropertyType(event.target.value as PropertyType | '')}
             className="w-full cursor-pointer border-0 bg-transparent p-0 text-[15px] text-gray-900 focus:outline-none"
           >
-            {TYPE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
+            {TYPE_VALUES.map((value) => (
+              <option key={value} value={value}>
+                {value === '' ? t('propertyType.all') : t(`propertyType.${value}`)}
               </option>
             ))}
           </select>
         </span>
       </label>
 
-      <label className="flex cursor-text items-center gap-3 rounded-xl px-4 py-2.5 transition hover:bg-gray-50 sm:w-40 sm:border-l sm:border-gray-200">
+      <label className="flex cursor-text items-center gap-3 rounded-xl px-4 py-2.5 transition hover:bg-gray-50 sm:w-40 sm:border-s sm:border-gray-200">
         <Users className="size-5 shrink-0 text-gray-400" aria-hidden />
         <span className="min-w-0 flex-1">
           <span className="block text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
-            Voyageurs
+            {t('search.guests')}
           </span>
           <input
             type="number"
             min={1}
             value={guests}
             onChange={(event) => setGuests(event.target.value)}
-            placeholder="2"
+            placeholder={t('search.guestsPlaceholder')}
             className="w-full border-0 bg-transparent p-0 text-[15px] text-gray-900 placeholder:text-gray-400 focus:outline-none"
           />
         </span>
       </label>
 
       <Button type="submit" icon={<Search className="size-4.5" />} className="h-12 sm:w-auto">
-        Rechercher
+        {t('search.submit')}
       </Button>
     </form>
   )

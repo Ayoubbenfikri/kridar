@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Button from './Button'
 
@@ -8,6 +9,10 @@ import Button from './Button'
  *
  * Renders nothing when there is only one page - a pager that can never
  * be used is noise.
+ *
+ * RTL (Phase 27): the chevrons get rtl:rotate-180 so "previous" points
+ * the way reading goes. The buttons themselves need nothing — the row is
+ * flex, so it reverses on its own.
  */
 export default function Pagination({
   currentPage,
@@ -18,21 +23,23 @@ export default function Pagination({
   lastPage: number
   onChange: (page: number) => void
 }) {
+  const { t } = useTranslation()
+
   if (lastPage <= 1) return null
 
   return (
-    <nav className="mt-8 flex items-center justify-center gap-3" aria-label="Pagination">
+    <nav className="mt-8 flex items-center justify-center gap-3" aria-label={t('properties.pagination')}>
       <Button
         variant="secondary"
         size="sm"
-        icon={<ChevronLeft className="size-4" />}
+        icon={<ChevronLeft className="size-4 rtl:rotate-180" />}
         disabled={currentPage <= 1}
         onClick={() => onChange(currentPage - 1)}
       >
-        Précédent
+        {t('properties.previous')}
       </Button>
       <span className="text-sm text-gray-500">
-        Page {currentPage} / {lastPage}
+        {t('properties.pageOf', { current: currentPage, last: lastPage })}
       </span>
       <Button
         variant="secondary"
@@ -40,8 +47,8 @@ export default function Pagination({
         disabled={currentPage >= lastPage}
         onClick={() => onChange(currentPage + 1)}
       >
-        Suivant
-        <ChevronRight className="size-4" aria-hidden />
+        {t('properties.next')}
+        <ChevronRight className="size-4 rtl:rotate-180" aria-hidden />
       </Button>
     </nav>
   )

@@ -36,4 +36,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // change their password.
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
     Route::put('/auth/password', [AuthController::class, 'updatePassword']);
+
+    // The language switcher (Phase 27). Its own route rather than a field
+    // on /auth/profile, because that endpoint requires `name` and the
+    // switcher sends only the language — see UpdateLocaleRequest.
+    //
+    // Only logged-in users persist a choice. A visitor's language lives in
+    // localStorage and travels on the Accept-Language header, which is all
+    // the backend needs to answer them correctly.
+    Route::put('/auth/locale', [AuthController::class, 'updateLocale']);
 });

@@ -1,10 +1,17 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowRight, Building2, ShieldCheck, Sparkles } from 'lucide-react'
 import SearchBar from '@/components/search/SearchBar'
 import PropertyCard from '@/components/properties/PropertyCard'
 import { useProperties } from '@/features/properties/useProperties'
 import { Card, EmptyState, Skeleton, buttonClasses } from '@/components/ui'
 
+/**
+ * City names are proper nouns and stay as they are in all three
+ * languages — a Moroccan reading Darija still recognises "Marrakech",
+ * and transliterating them would break the `city=` filter they link to,
+ * which matches the exact value stored in the database.
+ */
 const CITIES = ['Marrakech', 'Casablanca', 'Rabat', 'Tanger', 'Agadir', 'Essaouira']
 
 /** Same shape as a PropertyCard, so the grid does not jump on load. */
@@ -23,8 +30,10 @@ function PropertyCardSkeleton() {
 }
 
 export default function HomePage() {
+  const { t } = useTranslation()
+
   // Newest published properties. The listing endpoint returns them
-  // newest-first, so this is "les derniers logements", not a curated
+  // newest-first, so this is "the latest homes", not a curated
   // selection - there is no "popular" ranking on the backend to claim.
   const { data, isError } = useProperties({ per_page: 6 })
   const properties = data?.data ?? []
@@ -43,17 +52,16 @@ export default function HomePage() {
         />
 
         <div className="relative mx-auto w-full max-w-6xl px-4 py-16 text-center sm:px-6 sm:py-20">
-          <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50 py-1.5 pr-3.5 pl-2.5 text-[13px] font-medium text-brand-700">
+          <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50 py-1.5 pe-3.5 ps-2.5 text-[13px] font-medium text-brand-700">
             <Sparkles className="size-3.5" aria-hidden />
-            Location courte et longue duree au Maroc
+            {t('home.badge')}
           </span>
 
           <h1 className="mt-5 text-4xl font-bold tracking-tight text-balance text-gray-900 sm:text-5xl">
-            Trouvez votre prochain logement au Maroc
+            {t('home.title')}
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-[17px] text-pretty text-gray-500">
-            Appartements, villas et riads a Marrakech, Casablanca, Rabat et partout ailleurs.
-            Reservation directe avec le proprietaire.
+            {t('home.subtitle')}
           </p>
 
           <div className="mt-9">
@@ -80,15 +88,19 @@ export default function HomePage() {
       <section className="mx-auto w-full max-w-6xl px-4 pb-4 sm:px-6">
         <div className="mb-6 flex items-end justify-between gap-5">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-gray-900">Derniers logements</h2>
-            <p className="mt-1 text-sm text-gray-500">Les propriétés publiées le plus récemment</p>
+            <h2 className="text-2xl font-bold tracking-tight text-gray-900">{t('home.latest')}</h2>
+            <p className="mt-1 text-sm text-gray-500">{t('home.latestSubtitle')}</p>
           </div>
           <Link
             to="/properties"
             className="group hidden shrink-0 items-center gap-1.5 text-sm font-semibold text-brand-600 transition hover:text-brand-700 sm:flex"
           >
-            Voir tout
-            <ArrowRight className="size-4 transition group-hover:translate-x-0.5" aria-hidden />
+            {t('home.seeAll')}
+            {/* rtl:rotate-180 so the arrow points the way reading goes. */}
+            <ArrowRight
+              className="size-4 transition group-hover:translate-x-0.5 rtl:rotate-180"
+              aria-hidden
+            />
           </Link>
         </div>
 
@@ -97,8 +109,7 @@ export default function HomePage() {
             combination of states that renders nothing at all. */}
         {isError ? (
           <Card className="border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-            Impossible de charger les propriétés pour le moment. Verifie que l'API tourne
-            (php artisan serve), puis recharge la page.
+            {t('home.loadError')}
           </Card>
         ) : !data ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -109,11 +120,11 @@ export default function HomePage() {
         ) : properties.length === 0 ? (
           <EmptyState
             icon={<Building2 className="size-6" />}
-            title="Aucun logement publié pour le moment"
-            description="Les propriétés apparaitront ici des qu'un proprietaire en publiera une."
+            title={t('home.emptyTitle')}
+            description={t('home.emptyDescription')}
             action={
               <Link to="/owner/properties/new" className={buttonClasses()}>
-                Publier mon logement
+                {t('home.publishCta')}
               </Link>
             }
           />
@@ -126,12 +137,11 @@ export default function HomePage() {
             </div>
             <div className="mt-8 flex justify-center sm:hidden">
               <Link to="/properties" className={buttonClasses({ variant: 'secondary' })}>
-                Voir toutes les propriétés
+                {t('home.seeAllProperties')}
               </Link>
             </div>
           </>
         )}
-
       </section>
 
       {/* ---------------------------------------------------------------
@@ -144,15 +154,12 @@ export default function HomePage() {
               <ShieldCheck className="size-5" aria-hidden />
             </span>
             <h2 className="mt-4 text-2xl font-bold tracking-tight text-gray-900">
-              Vous avez un logement a louer ?
+              {t('home.ownerTitle')}
             </h2>
-            <p className="mt-2 text-gray-500">
-              Publiez votre annonce, gerez vos disponibilites et vos reservations depuis un seul
-              espace. Sans intermediaire.
-            </p>
+            <p className="mt-2 text-gray-500">{t('home.ownerText')}</p>
           </div>
           <Link to="/owner" className={buttonClasses({ className: 'shrink-0' })}>
-            Devenir proprietaire
+            {t('home.ownerCta')}
           </Link>
         </Card>
       </section>

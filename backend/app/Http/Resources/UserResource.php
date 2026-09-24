@@ -29,6 +29,10 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'phone' => $this->phone,
             'show_phone_on_listings' => (bool) $this->show_phone_on_listings,
+            // Phase 27. The frontend reads this on sign-in to restore the
+            // language the account chose, whatever this browser had in
+            // localStorage.
+            'locale' => $this->locale,
             'role' => $this->role,
             'status' => $this->status,
             'email_verified' => ! is_null($this->email_verified_at),

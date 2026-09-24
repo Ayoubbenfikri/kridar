@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Api\V1\Auth;
 
+use App\Enums\Locale;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\UpdateLocaleRequest;
 use App\Http\Requests\Auth\UpdatePasswordRequest;
 use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Http\Resources\UserResource;
@@ -18,6 +20,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
+/**
+ * Phase 27: every message in this controller comes from the messages.php
+ * of the current locale, via __(), and which file that is was decided by
+ * the SetLocale middleware before this ran. Nothing here knows or cares
+ * which language it is speaking.
+ *
+ * (Do not write that path as a glob in a docblock. "lang" slash star
+ * slash closes the comment, and the next line becomes PHP — which is a
+ * ParseError that takes every route on this controller down with it.)
+ */
 class AuthController extends Controller
 {
     public function register(RegisterRequest $request): JsonResponse
@@ -45,6 +57,19 @@ class AuthController extends Controller
 
         $user->role = UserRole::User;
         $user->status = UserStatus::Active;
+
+        // Phase 27: whatever language they are registering IN. SetLocale
+        // already resolved it from the Accept-Language header the SPA
+        // sent, so the account starts in the language of the form they
+        // just filled in — including the verification email, which is
+        // queued from the event below and could not otherwise know.
+        //
+        // tryFrom rather than a bare assignment: the locale cast throws a
+        // ValueError on an unknown value, and app()->getLocale() answers
+        // from config on any route SetLocale does not cover. A registration
+        // must not be able to 500 because APP_LOCALE was edited.
+        $user->locale = Locale::tryFrom(app()->getLocale()) ?? Locale::default();
+
         $user->save();
 
         // Firing this event is enough to send the verification email —
@@ -61,7 +86,7 @@ class AuthController extends Controller
         $request->session()->regenerate();
 
         return response()->json([
-            'message' => 'Registered successfully. Check your email to verify your account.',
+            'message' => __('messages.auth.registered'),
             'user' => new UserResource($user),
         ], 201);
     }
@@ -72,7 +97,7 @@ class AuthController extends Controller
 
         if (! Auth::attempt($credentials, remember: true)) {
             return response()->json([
-                'message' => 'These credentials do not match our records.',
+                'message' => __('messages.auth.invalid_credentials'),
             ], 401);
         }
 
@@ -89,7 +114,7 @@ class AuthController extends Controller
             Auth::logout();
 
             return response()->json([
-                'message' => 'This account has been suspended.',
+                'message' => __('messages.auth.suspended'),
             ], 403);
         }
 
@@ -106,7 +131,7 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return response()->json([
-            'message' => 'Logged out.',
+            'message' => __('messages.auth.logged_out'),
         ]);
     }
 
@@ -130,11 +155,11 @@ class AuthController extends Controller
         $user = User::findOrFail($id);
 
         if (! hash_equals(sha1($user->getEmailForVerification()), $hash)) {
-            abort(403, 'Invalid verification link.');
+            abort(403, __('messages.auth.invalid_verification_link'));
         }
 
         if ($user->hasVerifiedEmail()) {
-            return response()->json(['message' => 'Email already verified.']);
+            return response()->json(['message' => __('messages.auth.email_already_verified')]);
         }
 
         $user->markEmailAsVerified();
@@ -148,18 +173,18 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return response()->json(['message' => 'Email verified successfully.']);
+        return response()->json(['message' => __('messages.auth.email_verified')]);
     }
 
     public function resendVerificationEmail(Request $request): JsonResponse
     {
         if ($request->user()->hasVerifiedEmail()) {
-            return response()->json(['message' => 'Email already verified.']);
+            return response()->json(['message' => __('messages.auth.email_already_verified')]);
         }
 
         $request->user()->sendEmailVerificationNotification();
 
-        return response()->json(['message' => 'Verification link sent.']);
+        return response()->json(['message' => __('messages.auth.verification_sent')]);
     }
 
     /**
@@ -178,7 +203,30 @@ class AuthController extends Controller
         $user->update($request->validated());
 
         return response()->json([
-            'message' => 'Profile updated.',
+            'message' => __('messages.auth.profile_updated'),
+            'user' => new UserResource($user->fresh()),
+        ]);
+    }
+
+    /**
+     * PUT /auth/locale — the language switcher (Phase 27).
+     *
+     * Its own endpoint rather than a field on updateProfile: see
+     * UpdateLocaleRequest for why. The response is the whole user so the
+     * SPA can reseed its cached copy in one round trip instead of
+     * refetching /auth/me afterwards.
+     *
+     * Note this does NOT decide the language of THIS response — SetLocale
+     * already did that from the Accept-Language header the switcher sent.
+     * What it does is make the choice outlive the browser.
+     */
+    public function updateLocale(UpdateLocaleRequest $request): JsonResponse
+    {
+        $user = $request->user();
+        $user->locale = $request->validated('locale');
+        $user->save();
+
+        return response()->json([
             'user' => new UserResource($user->fresh()),
         ]);
     }
@@ -195,7 +243,7 @@ class AuthController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Password updated.',
+            'message' => __('messages.auth.password_updated'),
         ]);
     }
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, Search, SearchX, SlidersHorizontal, X } from 'lucide-react'
 import PropertyCard from '@/components/properties/PropertyCard'
 import PropertyFilters from '@/components/properties/PropertyFilters'
@@ -8,20 +9,6 @@ import { useProperties } from '@/features/properties/useProperties'
 import { useAmenities } from '@/features/amenities/useAmenities'
 import { Button, Card, EmptyState, Skeleton } from '@/components/ui'
 import type { PropertyType, RentalType } from '@/types/property'
-
-const TYPE_LABELS: Record<PropertyType, string> = {
-  apartment: 'Appartement',
-  villa: 'Villa',
-  studio: 'Studio',
-  riad: 'Riad',
-  office: 'Bureau',
-}
-
-const RENTAL_LABELS: Record<RentalType, string> = {
-  short_term: 'Courte duree',
-  long_term: 'Longue duree',
-  both: 'Courte ou longue duree',
-}
 
 function PropertyCardSkeleton() {
   return (
@@ -44,6 +31,7 @@ function PropertyCardSkeleton() {
  * free. Nothing about a search is kept in component state.
  */
 export default function PropertiesPage() {
+  const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [showFilters, setShowFilters] = useState(false)
   const { data: amenities } = useAmenities()
@@ -132,33 +120,52 @@ export default function PropertiesPage() {
     setSearchParams(params)
   }
 
-  // One chip per active filter, each removable on its own.
+  // One chip per active filter, each removable on its own. Labels are
+  // built during render, so they follow the language like everything else.
   const chips: Array<{ key: string; value?: string; label: string }> = []
   if (get('q')) chips.push({ key: 'q', label: `"${get('q')}"` })
   if (get('city')) chips.push({ key: 'city', label: get('city') })
   if (get('property_type'))
-    chips.push({ key: 'property_type', label: TYPE_LABELS[get('property_type') as PropertyType] })
+    chips.push({ key: 'property_type', label: t(`propertyType.${get('property_type')}`) })
   if (get('rental_type'))
-    chips.push({ key: 'rental_type', label: RENTAL_LABELS[get('rental_type') as RentalType] })
-  if (get('min_price')) chips.push({ key: 'min_price', label: `Min ${get('min_price')} MAD` })
-  if (get('max_price')) chips.push({ key: 'max_price', label: `Max ${get('max_price')} MAD` })
-  if (get('bedrooms')) chips.push({ key: 'bedrooms', label: `${get('bedrooms')}+ chambres` })
-  if (get('bathrooms')) chips.push({ key: 'bathrooms', label: `${get('bathrooms')}+ sdb` })
-  if (get('max_guests')) chips.push({ key: 'max_guests', label: `${get('max_guests')}+ voyageurs` })
+    chips.push({ key: 'rental_type', label: t(`rentalType.${get('rental_type')}`) })
+  if (get('min_price'))
+    chips.push({
+      key: 'min_price',
+      label: t('properties.chipMin', { value: get('min_price'), currency: t('common.currency') }),
+    })
+  if (get('max_price'))
+    chips.push({
+      key: 'max_price',
+      label: t('properties.chipMax', { value: get('max_price'), currency: t('common.currency') }),
+    })
+  if (get('bedrooms'))
+    chips.push({ key: 'bedrooms', label: t('properties.chipBedrooms', { n: get('bedrooms') }) })
+  if (get('bathrooms'))
+    chips.push({ key: 'bathrooms', label: t('properties.chipBathrooms', { n: get('bathrooms') }) })
+  if (get('max_guests'))
+    chips.push({ key: 'max_guests', label: t('properties.chipGuests', { n: get('max_guests') }) })
   searchParams.getAll('amenities').forEach((id) => {
     const amenity = amenities?.find((item) => String(item.id) === id)
-    chips.push({ key: 'amenities', value: id, label: amenity?.name ?? `Equipement ${id}` })
+    // Amenity names are database values, not interface text — shown as
+    // they come. The fallback only appears while the amenities list is
+    // still loading.
+    chips.push({
+      key: 'amenities',
+      value: id,
+      label: amenity?.name ?? t('properties.chipAmenity', { id }),
+    })
   })
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
-      <h1 className="text-3xl font-bold tracking-tight text-gray-900">Toutes les propriétés</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-gray-900">{t('properties.title')}</h1>
       <p className="mt-1.5 text-gray-500">
         {isError
-          ? 'Serveur injoignable'
+          ? t('properties.serverDown')
           : data
-            ? `${data.meta.total} logement${data.meta.total > 1 ? 's' : ''} disponible${data.meta.total > 1 ? 's' : ''}`
-            : 'Chargement des logements...'}
+            ? t('properties.available', { n: data.meta.total })
+            : t('properties.loading')}
       </p>
 
       {/* Toolbar: free-text search (q = partial match on title or city)
@@ -166,16 +173,16 @@ export default function PropertiesPage() {
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
         <form onSubmit={submitSearch} className="relative flex-1">
           <Search
-            className="pointer-events-none absolute top-1/2 left-3.5 size-4.5 -translate-y-1/2 text-gray-400"
+            className="pointer-events-none absolute top-1/2 start-3.5 size-4.5 -translate-y-1/2 text-gray-400"
             aria-hidden
           />
           <input
             name="q"
             defaultValue={get('q')}
             key={get('q')}
-            placeholder="Rechercher par titre ou ville..."
-            aria-label="Rechercher"
-            className="h-11 w-full rounded-lg border border-gray-200 bg-white pr-3.5 pl-10.5 text-[15px] transition hover:border-gray-300 focus:border-brand-500 focus:ring-[3px] focus:ring-brand-500/20 focus:outline-none"
+            placeholder={t('properties.searchPlaceholder')}
+            aria-label={t('properties.searchLabel')}
+            className="h-11 w-full rounded-lg border border-gray-200 bg-white pe-3.5 ps-10.5 text-[15px] transition hover:border-gray-300 focus:border-brand-500 focus:ring-[3px] focus:ring-brand-500/20 focus:outline-none"
           />
         </form>
 
@@ -185,9 +192,9 @@ export default function PropertiesPage() {
           onClick={() => setShowFilters((open) => !open)}
           aria-expanded={showFilters}
         >
-          Filtres
+          {t('properties.filters')}
           {chips.length > 0 && (
-            <span className="ml-0.5 flex size-5 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">
+            <span className="ms-0.5 flex size-5 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">
               {chips.length}
             </span>
           )}
@@ -216,11 +223,11 @@ export default function PropertiesPage() {
               key={`${chip.key}-${chip.value ?? ''}`}
               type="button"
               onClick={() => removeParam(chip.key, chip.value)}
-              className="inline-flex items-center gap-1.5 rounded-full border border-brand-100 bg-brand-50 py-1 pr-2 pl-3 text-sm font-medium text-brand-700 transition hover:border-brand-300 hover:bg-brand-100"
+              className="inline-flex items-center gap-1.5 rounded-full border border-brand-100 bg-brand-50 py-1 pe-2 ps-3 text-sm font-medium text-brand-700 transition hover:border-brand-300 hover:bg-brand-100"
             >
               {chip.label}
               <X className="size-3.5" aria-hidden />
-              <span className="sr-only">Retirer ce filtre</span>
+              <span className="sr-only">{t('properties.removeFilter')}</span>
             </button>
           ))}
           <button
@@ -228,7 +235,7 @@ export default function PropertiesPage() {
             onClick={() => setSearchParams(new URLSearchParams())}
             className="text-sm font-medium text-gray-500 underline underline-offset-2 transition hover:text-gray-900"
           >
-            Tout effacer
+            {t('properties.clearAll')}
           </button>
         </div>
       )}
@@ -237,8 +244,7 @@ export default function PropertiesPage() {
       <div className="mt-8">
         {isError ? (
           <Card className="border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-            Impossible de charger les propriétés. Verifie que l'API tourne (php artisan serve), puis
-            recharge la page.
+            {t('properties.loadError')}
           </Card>
         ) : !data ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -249,12 +255,12 @@ export default function PropertiesPage() {
         ) : properties.length === 0 ? (
           <EmptyState
             icon={<SearchX className="size-6" />}
-            title="Aucun logement ne correspond"
-            description="Essaie d'elargir ta recherche : moins de filtres, une fourchette de prix plus large, ou une autre ville."
+            title={t('properties.emptyTitle')}
+            description={t('properties.emptyDescription')}
             action={
               chips.length > 0 ? (
                 <Button variant="secondary" onClick={() => setSearchParams(new URLSearchParams())}>
-                  Effacer les filtres
+                  {t('properties.clearFilters')}
                 </Button>
               ) : undefined
             }
@@ -271,17 +277,22 @@ export default function PropertiesPage() {
 
             {data.meta.last_page > 1 && (
               <div className="mt-10 flex items-center justify-center gap-3">
+                {/* The chevrons flip with the text: "previous" is on the
+                    right in Darija. */}
                 <Button
                   variant="secondary"
                   size="sm"
-                  icon={<ChevronLeft className="size-4" />}
+                  icon={<ChevronLeft className="size-4 rtl:rotate-180" />}
                   disabled={page <= 1}
                   onClick={() => goToPage(page - 1)}
                 >
-                  Precedent
+                  {t('properties.previous')}
                 </Button>
                 <span className="text-sm text-gray-500">
-                  Page {data.meta.current_page} / {data.meta.last_page}
+                  {t('properties.pageOf', {
+                    current: data.meta.current_page,
+                    last: data.meta.last_page,
+                  })}
                 </span>
                 <Button
                   variant="secondary"
@@ -289,8 +300,8 @@ export default function PropertiesPage() {
                   disabled={page >= data.meta.last_page}
                   onClick={() => goToPage(page + 1)}
                 >
-                  Suivant
-                  <ChevronRight className="size-4" aria-hidden />
+                  {t('properties.next')}
+                  <ChevronRight className="size-4 rtl:rotate-180" aria-hidden />
                 </Button>
               </div>
             )}

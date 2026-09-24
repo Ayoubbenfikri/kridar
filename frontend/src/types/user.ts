@@ -1,3 +1,5 @@
+import type { LocaleCode } from '@/i18n'
+
 export type UserRole = 'user' | 'admin'
 export type UserStatus = 'active' | 'suspended'
 
@@ -16,6 +18,17 @@ export interface User {
    * published. Set from /account/settings.
    */
   show_phone_on_listings: boolean
+  /**
+   * Interface language saved on the account (Phase 27). The type comes
+   * from @/i18n rather than being spelled out again here, so the list of
+   * languages lives in exactly one place on the frontend — and mirrors
+   * App\Enums\Locale on the backend.
+   *
+   * Read once when the profile arrives (useAccountLocaleSync), so signing
+   * in on a new device restores the language the person chose rather than
+   * whatever that browser happened to have.
+   */
+  locale: LocaleCode
   role: UserRole
   status: UserStatus
   email_verified: boolean

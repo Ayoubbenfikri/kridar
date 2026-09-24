@@ -14,6 +14,10 @@ interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'id'
  * form mixing text fields and dropdowns lines up without any per-page
  * tweaking. appearance-none + our own chevron keeps the control looking
  * the same across browsers.
+ *
+ * RTL (Phase 27): the chevron and the padding that makes room for it are
+ * logical (end-3.5, pe-10), so the arrow sits on the trailing edge in
+ * every language instead of overlapping the option text in Darija.
  */
 export default function Select({ label, error, hint, className, children, ...rest }: SelectProps) {
   const id = useId()
@@ -31,7 +35,7 @@ export default function Select({ label, error, hint, className, children, ...res
           id={id}
           aria-invalid={error ? true : undefined}
           className={cn(
-            'h-11 w-full appearance-none rounded-lg border bg-white pr-10 pl-3.5 text-[15px] text-gray-900 transition',
+            'h-11 w-full appearance-none rounded-lg border bg-white pe-10 ps-3.5 text-[15px] text-gray-900 transition',
             'hover:border-gray-300 focus:ring-[3px] focus:outline-none',
             'disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400',
             error
@@ -44,7 +48,7 @@ export default function Select({ label, error, hint, className, children, ...res
           {children}
         </select>
         <ChevronDown
-          className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-gray-400"
+          className="pointer-events-none absolute top-1/2 end-3.5 size-4 -translate-y-1/2 text-gray-400"
           aria-hidden
         />
       </div>

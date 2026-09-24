@@ -5,14 +5,16 @@ import { cn } from '@/lib/cn'
 
 interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id'> {
   label?: string
-  /** A lucide icon element, shown inside the field on the left. */
+  /** A lucide icon element, shown inside the field on the leading side
+      (left in French/English, right in Darija). */
   icon?: ReactNode
   /** Validation message from the backend. Turns the field red. */
   error?: string
   /** Grey helper text, hidden while an error is shown. */
   hint?: string
-  /** Interactive element pinned to the right inside the field (e.g. a
-      show/hide password toggle). Unlike `icon`, it stays clickable. */
+  /** Interactive element pinned to the trailing side inside the field
+      (e.g. a show/hide password toggle). Unlike `icon`, it stays
+      clickable. */
   trailing?: ReactNode
 }
 
@@ -21,6 +23,12 @@ interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id'> {
  * The id is generated with useId() so the <label> is always correctly
  * tied to the input - that is what makes clicking the label focus the
  * field, and what screen readers rely on.
+ *
+ * RTL (Phase 27): this component is the reason a form does not break in
+ * Darija. The icon and the trailing slot were pinned with left-/right-
+ * and the field padded with pl-/pr-, which in RTL put the icon on top of
+ * the text. They are logical now — start/end, ps/pe — so the icon is
+ * always on the side the text starts from, whichever side that is.
  */
 export default function Input({ label, icon, error, hint, trailing, className, ...rest }: InputProps) {
   const id = useId()
@@ -35,7 +43,7 @@ export default function Input({ label, icon, error, hint, trailing, className, .
 
       <div className="relative flex items-center">
         {icon && (
-          <span className="pointer-events-none absolute left-3.5 text-gray-400" aria-hidden>
+          <span className="pointer-events-none absolute start-3.5 text-gray-400" aria-hidden>
             {icon}
           </span>
         )}
@@ -47,8 +55,8 @@ export default function Input({ label, icon, error, hint, trailing, className, .
             'placeholder:text-gray-400 hover:border-gray-300',
             'focus:outline-none focus:ring-[3px]',
             'disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400',
-            icon ? 'pl-10.5' : undefined,
-            trailing ? 'pr-11' : undefined,
+            icon ? 'ps-10.5' : undefined,
+            trailing ? 'pe-11' : undefined,
             error
               ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
               : 'border-gray-200 focus:border-brand-500 focus:ring-brand-500/20',
@@ -56,7 +64,7 @@ export default function Input({ label, icon, error, hint, trailing, className, .
           )}
           {...rest}
         />
-        {trailing && <span className="absolute right-1.5 flex items-center">{trailing}</span>}
+        {trailing && <span className="absolute end-1.5 flex items-center">{trailing}</span>}
       </div>
 
       {error ? (

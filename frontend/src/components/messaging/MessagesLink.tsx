@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { MessageSquare } from 'lucide-react'
 import { useMessagesUnreadCount } from '@/features/messaging/useMessaging'
 
@@ -10,15 +11,20 @@ import { useMessagesUnreadCount } from '@/features/messaging/useMessaging'
  *
  * Only rendered for a logged-in user (see Navbar), which is also why
  * the unread query can be enabled unconditionally here.
+ *
+ * RTL (Phase 27): the dot sits on the icon's TRAILING corner — -end-0.5
+ * rather than -right-0.5 — so it stays on the outside edge in Darija
+ * instead of landing over the label.
  */
 export default function MessagesLink({ showLabel = false }: { showLabel?: boolean }) {
+  const { t } = useTranslation()
   const unreadCount = useMessagesUnreadCount(true)
   const hasUnread = unreadCount > 0
 
   return (
     <Link
       to="/messages"
-      aria-label={hasUnread ? `Messages (${unreadCount} non lus)` : 'Messages'}
+      aria-label={hasUnread ? t('nav.messagesUnread', { n: unreadCount }) : t('nav.messages')}
       className={
         showLabel
           ? 'flex items-center gap-3 text-[15px] font-medium text-gray-600 transition hover:text-gray-900'
@@ -31,16 +37,16 @@ export default function MessagesLink({ showLabel = false }: { showLabel?: boolea
           <span
             className={
               showLabel
-                ? 'absolute -top-0.5 -right-0.5 size-2 rounded-full bg-accent'
-                : 'absolute -top-0.5 -right-0.5 size-2 rounded-full bg-accent ring-2 ring-white'
+                ? 'absolute -top-0.5 -end-0.5 size-2 rounded-full bg-accent'
+                : 'absolute -top-0.5 -end-0.5 size-2 rounded-full bg-accent ring-2 ring-white'
             }
           />
         )}
       </span>
       {showLabel && (
         <span>
-          Messages
-          {hasUnread && <span className="ml-1 text-xs font-semibold text-accent">({unreadCount})</span>}
+          {t('nav.messages')}
+          {hasUnread && <span className="ms-1 text-xs font-semibold text-accent">({unreadCount})</span>}
         </span>
       )}
     </Link>
