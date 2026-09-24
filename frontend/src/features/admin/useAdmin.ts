@@ -1,12 +1,13 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { adminApi } from './adminApi'
+import type { AdminActionValue } from '@/types/admin'
 import type { PaymentTypeValue } from '@/types/payment'
 
 /**
  * Every /admin read is namespaced under the 'admin' query key prefix, so
  * one invalidateQueries({ queryKey: ['admin'] }) after any admin action
- * refreshes users + properties + stats + payments together - same
- * convention as useOwner.
+ * refreshes users + properties + stats + payments + activity together -
+ * same convention as useOwner.
  */
 export function useAdminUsers(page: number) {
   return useQuery({
@@ -40,6 +41,15 @@ export function useAdminPayments(page: number, type?: PaymentTypeValue) {
   })
 }
 
+/** Phase 26 — the audit trail. `action` undefined = every kind. */
+export function useAdminActivity(page: number, action?: AdminActionValue) {
+  return useQuery({
+    queryKey: ['admin', 'activity', { page, action }],
+    queryFn: () => adminApi.fetchActivity(page, action),
+    placeholderData: keepPreviousData,
+  })
+}
+
 export function useSuspendUser() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -50,6 +60,20 @@ export function useSuspendUser() {
       // and the admin property list both change too.
       queryClient.invalidateQueries({ queryKey: ['admin'] })
       queryClient.invalidateQueries({ queryKey: ['properties'] })
+    },
+  })
+}
+
+/**
+ * Phase 26. Only the user list and the stats change here — the listings
+ * stay suspended on purpose, so nothing in ['properties'] moves.
+ */
+export function useActivateUser() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (userId: number) => adminApi.activateUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin'] })
     },
   })
 }

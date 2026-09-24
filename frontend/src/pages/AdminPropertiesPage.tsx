@@ -9,7 +9,7 @@ import type { Property, PropertyStatusValue } from '@/types/property'
 
 const STATUS_LABELS: Record<PropertyStatusValue, string> = {
   draft: 'Brouillon',
-  pending_review: 'En revision',
+  pending_review: 'En révision',
   published: 'Publiée',
   suspended: 'Suspendue',
   archived: 'Archivée',
@@ -24,12 +24,44 @@ const STATUS_TONES: Record<PropertyStatusValue, BadgeTone> = {
 }
 
 /**
+ * The thumbnail for one row.
+ *
+ * `images` is NOT guaranteed to be present. PropertyResource emits it
+ * through whenLoaded(), so any endpoint whose query did not eager-load
+ * the relation omits the key entirely — and types/property.ts declares it
+ * as always-there, which with strictNullChecks off means TypeScript will
+ * never warn about it. That combination white-screened this whole page.
+ *
+ * AdminService::listProperties() now loads the cover image, so the normal
+ * case works. This stays defensive anyway: a missing thumbnail is worth a
+ * grey placeholder, never a crashed admin panel.
+ */
+function Thumbnail({ property }: { property: Property }) {
+  const images = property.images ?? []
+  const cover = images.find((image) => image.is_cover) ?? images[0] ?? null
+
+  return (
+    <div className="size-12 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+      {cover ? (
+        <img src={cover.url} alt="" className="size-full object-cover" />
+      ) : (
+        <span className="flex size-full items-center justify-center text-gray-400">
+          <ImageOff className="size-4" aria-hidden />
+        </span>
+      )}
+    </div>
+  )
+}
+
+/**
  * /admin/properties - every property, any status, any owner. Like
  * /admin/users, the endpoint accepts no filter or search parameter, so
  * this page does not pretend to offer one.
  *
  * "Approuver" publishes whatever the current status is - it is the only
- * way back to Published for a suspended listing (AdminService).
+ * way back to Published for a suspended listing (AdminService). It is
+ * refused with a 409 on a listing that is already published, so the
+ * button is hidden in that case.
  */
 export default function AdminPropertiesPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -86,22 +118,13 @@ export default function AdminPropertiesPage() {
           <>
             <div className={`space-y-3 transition-opacity ${isFetching ? 'opacity-60' : ''}`}>
               {data.data.map((property) => {
-                const cover = property.images.find((image) => image.is_cover) ?? property.images[0] ?? null
                 const price = primaryPrice(property)
 
                 return (
                   <Card key={property.id} className="p-4">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div className="flex min-w-0 items-center gap-3">
-                        <div className="size-12 shrink-0 overflow-hidden rounded-lg bg-gray-100">
-                          {cover ? (
-                            <img src={cover.url} alt="" className="size-full object-cover" />
-                          ) : (
-                            <span className="flex size-full items-center justify-center text-gray-400">
-                              <ImageOff className="size-4" aria-hidden />
-                            </span>
-                          )}
-                        </div>
+                        <Thumbnail property={property} />
                         <div className="min-w-0">
                           <Link
                             to={`/properties/${property.id}`}
@@ -131,7 +154,7 @@ export default function AdminPropertiesPage() {
                             }
                             onClick={() =>
                               approveMutation.mutate(property.id, {
-                                onSuccess: () => showToast('success', `"${property.title}" est publiee.`),
+                                onSuccess: () => showToast('success', `"${property.title}" est publiée.`),
                               })
                             }
                           >

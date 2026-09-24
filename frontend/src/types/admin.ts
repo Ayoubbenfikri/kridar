@@ -36,6 +36,12 @@ export interface AdminStats {
   /** Long-term listings that owe the fee and have not settled it. */
   unpaid_publications_count: number
 
+  /**
+   * Phase 26 — listings waiting on a human decision. The one number that
+   * answers "do I have work to do today", and the one that was missing.
+   */
+  pending_review_properties_count: number
+
   /** The rates currently in force. */
   listing_fee: number
   commission_rate: number
@@ -58,4 +64,47 @@ export interface AdminPayment extends Payment {
     commission_amount: string
     owner_amount: string
   } | null
+}
+
+/**
+ * Phase 26 — the audit trail. Mirrors App\Enums\AdminAction; these
+ * strings are stored in the database, so they are stable.
+ */
+export type AdminActionValue =
+  | 'user.suspended'
+  | 'user.activated'
+  | 'property.approved'
+  | 'property.suspended'
+  | 'settings.updated'
+
+/**
+ * One recorded admin action, as GET /admin/activity returns it
+ * (AdminActivityLogResource).
+ */
+export interface AdminActivityLog {
+  id: number
+  action: AdminActionValue
+
+  /**
+   * Null when the acting admin's account was since deleted — User uses
+   * soft deletes, so the relation comes back empty while admin_id stays
+   * on the row. The UI says so rather than showing a blank author.
+   */
+  admin: { id: number; name: string; email: string } | null
+
+  /**
+   * 'User' | 'Property', or null for an action with no single target
+   * (a settings change). Deliberately not a foreign key on the backend:
+   * a log row has to survive its target being deleted, which is why
+   * target_label exists as a snapshot of the name at the time.
+   */
+  target_type: string | null
+  target_id: number | null
+  target_label: string | null
+
+  /** Action-specific details. Shape depends on `action`. */
+  context: Record<string, unknown> | null
+
+  ip_address: string | null
+  created_at: string
 }

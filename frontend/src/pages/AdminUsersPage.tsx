@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { AlertCircle, ShieldCheck, TriangleAlert, UserX, Users } from 'lucide-react'
-import { useAdminUsers, useSuspendUser } from '@/features/admin/useAdmin'
+import { AlertCircle, ShieldCheck, TriangleAlert, UserCheck, UserX, Users } from 'lucide-react'
+import { useActivateUser, useAdminUsers, useSuspendUser } from '@/features/admin/useAdmin'
 import { getErrorMessage } from '@/lib/apiErrors'
 import { Badge, Button, Card, EmptyState, Pagination, Skeleton, useToast } from '@/components/ui'
 import type { User } from '@/types/user'
@@ -19,6 +19,7 @@ export default function AdminUsersPage() {
   const { showToast } = useToast()
   const { data, isError, error, isFetching } = useAdminUsers(page)
   const suspendUser = useSuspendUser()
+  const activateUser = useActivateUser()
   const [confirmingId, setConfirmingId] = useState<number | null>(null)
 
   function goToPage(nextPage: number) {
@@ -30,8 +31,19 @@ export default function AdminUsersPage() {
     suspendUser.mutate(user.id, {
       onSuccess: () => {
         setConfirmingId(null)
-        showToast('success', `${user.name} a ete suspendu.`)
+        showToast('success', `${user.name} a été suspendu.`)
       },
+    })
+  }
+
+  /**
+   * No confirmation step, unlike suspending. Friction should match
+   * consequence: this one restores access and can be undone by the very
+   * button next to it, so a dialog would just be a speed bump.
+   */
+  function handleActivate(user: User) {
+    activateUser.mutate(user.id, {
+      onSuccess: () => showToast('success', `${user.name} peut se reconnecter.`),
     })
   }
 
@@ -42,6 +54,13 @@ export default function AdminUsersPage() {
         <p className="mt-1 text-sm text-gray-500">
           {data.meta.total} compte{data.meta.total > 1 ? 's' : ''}
         </p>
+      )}
+
+      {activateUser.isError && (
+        <Card className="mt-4 flex items-start gap-3 border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
+          {getErrorMessage(activateUser.error)}
+        </Card>
       )}
 
       <div className="mt-6">
@@ -84,37 +103,49 @@ export default function AdminUsersPage() {
                           Admin
                         </Badge>
                       )}
-                      {!user.email_verified && <Badge tone="amber">Email non verifie</Badge>}
+                      {!user.email_verified && <Badge tone="amber">Email non vérifié</Badge>}
                       <Badge tone={user.status === 'active' ? 'green' : 'red'}>
                         {user.status === 'active' ? 'Actif' : 'Suspendu'}
                       </Badge>
 
-                      {/* No button for an admin account: AdminService
-                          refuses to suspend one, and for an already
-                          suspended account there is no reactivate route. */}
-                      {user.role !== 'admin' && user.status === 'active' && (
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          icon={<UserX className="size-4" />}
-                          onClick={() => setConfirmingId(user.id)}
-                        >
-                          Suspendre
-                        </Button>
-                      )}
+                      {/* Never for an admin account: AdminService refuses
+                          to suspend one, so offering the button would only
+                          produce a 409. */}
+                      {user.role !== 'admin' &&
+                        (user.status === 'active' ? (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            icon={<UserX className="size-4" />}
+                            onClick={() => setConfirmingId(user.id)}
+                          >
+                            Suspendre
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            icon={<UserCheck className="size-4" />}
+                            isLoading={activateUser.isPending && activateUser.variables === user.id}
+                            onClick={() => handleActivate(user)}
+                          >
+                            Réactiver
+                          </Button>
+                        ))}
                     </div>
                   </div>
 
                   {confirmingId === user.id && (
                     <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
-                      <p className="text-sm font-semibold text-red-800">
-                        Suspendre {user.name} ?
-                      </p>
-                      <p className="mt-1 text-sm text-red-700">
-                        Le compte ne pourra plus se connecter et ses propriétés publiées seront
-                        suspendues. <strong>Cette action est definitive</strong> : l'API ne propose
-                        aucune reactivation.
-                      </p>
+                      <p className="text-sm font-semibold text-red-800">Suspendre {user.name} ?</p>
+                      <ul className="mt-2 space-y-1 text-sm text-red-700">
+                        <li>• Le compte est déconnecté immédiatement et ne peut plus rien faire.</li>
+                        <li>• Ses annonces publiées passent en suspendu.</li>
+                        <li>
+                          • Réversible avec « Réactiver », mais les annonces ne se republient pas
+                          toutes seules : il faut les approuver une par une.
+                        </li>
+                      </ul>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <Button
                           size="sm"

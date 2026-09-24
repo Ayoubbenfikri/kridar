@@ -14,9 +14,25 @@ use Illuminate\Support\Facades\Route;
 | them (Phase 4: auth, Phase 5: properties, Phase 8: reservations, ...).
 | This keeps this file short instead of becoming one giant route list.
 |
+| The 'active' middleware on the whole group (Phase 26) refuses any
+| request from a suspended account and destroys the session it arrived
+| with — see App\Http\Middleware\EnsureAccountIsActive. It is HERE, on
+| the group, rather than in each route file, for two reasons:
+|
+|   1. Suspension is account-wide. Before this existed, suspending
+|      someone only stopped them logging in AGAIN: their already-open
+|      browser kept publishing listings and taking bookings, because
+|      auth:sanctum reloads the user from the database and never looks
+|      at `status`.
+|   2. A route file added in a later phase is covered automatically.
+|      Nothing to remember, nothing to forget.
+|
+| It runs before each group's own auth:sanctum, and resolves the user
+| itself. Unauthenticated and active requests pass straight through.
+|
 */
 
-Route::prefix('v1')->group(function () {
+Route::prefix('v1')->middleware('active')->group(function () {
 
     // Simple health check so we can verify the API is reachable from the
     // frontend before any real feature exists yet.

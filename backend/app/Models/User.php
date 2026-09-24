@@ -22,6 +22,25 @@ class User extends Authenticatable implements MustVerifyEmailContract
     /**
      * The attributes that are mass assignable.
      *
+     * ⚠️ `role` and `status` are deliberately NOT here (Phase 26).
+     *
+     * They used to be, and nothing was exploiting it — UpdateProfileRequest
+     * only validates name/phone/consent, so no request body ever reached
+     * them. But that safety lived entirely in one validation rule list. A
+     * single careless `$user->update($request->all())` anywhere in the app
+     * would have let a user promote themselves to admin, or lift their own
+     * suspension, and nothing would have failed loudly.
+     *
+     * Now the only way to set either one is direct assignment, which means
+     * a human wrote that line on purpose. Exactly three places do:
+     *   - AuthController::register()   role=user, status=active
+     *   - AdminService::suspendUser()  status=suspended
+     *   - AdminService::activateUser() status=active
+     *
+     * Factories are unaffected: Eloquent factories build models inside
+     * Model::unguarded(), so UserFactory's role/status defaults and its
+     * admin() state keep working.
+     *
      * @var list<string>
      */
     protected $fillable = [
@@ -32,8 +51,6 @@ class User extends Authenticatable implements MustVerifyEmailContract
         // Owner consent to publish `phone` on their long-term listings.
         // Only ever set by the user themselves (UpdateProfileRequest).
         'show_phone_on_listings',
-        'role',
-        'status',
     ];
 
     /**

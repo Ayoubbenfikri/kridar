@@ -25,9 +25,18 @@ return Application::configure(basePath: dirname(__DIR__))
         // 'owner' gates the /owner/* dashboard routes (Phase 12) - see
         // App\Http\Middleware\EnsureUserOwnsAProperty for what it checks.
         // 'admin' gates /admin/* the same way (Phase 13, role=admin).
+        //
+        // 'active' (Phase 26) is different from those two: it is not for
+        // one section, it wraps the entire /api/v1 group in routes/api.php.
+        // See App\Http\Middleware\EnsureAccountIsActive — a suspended
+        // account has to stop being able to do ANYTHING, not just stop
+        // being able to open one dashboard, and applying it once at the
+        // top means a route added next month is covered without anyone
+        // remembering to add it.
         $middleware->alias([
             'owner' => \App\Http\Middleware\EnsureUserOwnsAProperty::class,
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+            'active' => \App\Http\Middleware\EnsureAccountIsActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

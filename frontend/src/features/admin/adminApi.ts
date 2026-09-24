@@ -1,12 +1,12 @@
 import axiosClient from '@/api/axiosClient'
-import type { AdminPayment, AdminStats } from '@/types/admin'
+import type { AdminActionValue, AdminActivityLog, AdminPayment, AdminStats } from '@/types/admin'
 import type { PaymentTypeValue } from '@/types/payment'
 import type { PaginatedResponse, Property } from '@/types/property'
 import type { User } from '@/types/user'
 
 /**
  * The /admin/* endpoints (routes/api/admin.php), all behind
- * auth:sanctum + the 'admin' middleware.
+ * auth:sanctum + the 'admin' middleware + throttle:60,1.
  *
  * Only `page` is sent on the user/property lists: AdminService takes a
  * perPage argument but the controller never passes one, so the page
@@ -48,11 +48,37 @@ async function fetchPayments(
 }
 
 /**
- * There is no matching "reactivate" route: suspending an account is
- * one-way from the API's point of view. The UI has to say so.
+ * Phase 26 — the audit trail, newest first. Same lenient handling of an
+ * unknown `action` as fetchPayments has for `type`.
+ */
+async function fetchActivity(
+  page: number,
+  action?: AdminActionValue,
+): Promise<PaginatedResponse<AdminActivityLog>> {
+  const { data } = await axiosClient.get<PaginatedResponse<AdminActivityLog>>(
+    '/api/v1/admin/activity',
+    { params: { page, action } },
+  )
+  return data
+}
+
+/**
+ * Suspending blocks the account AND takes its published listings down.
+ * As of Phase 26 it also ends whatever session the person had open — the
+ * backend refuses their next request and destroys it.
  */
 async function suspendUser(userId: number): Promise<User> {
   const { data } = await axiosClient.patch<{ user: User }>(`/api/v1/admin/users/${userId}/suspend`)
+  return data.user
+}
+
+/**
+ * Phase 26 — the undo. Note it does NOT put the owner's listings back
+ * online: some may have been suspended on their own merits first, so
+ * each one has to be approved from /admin/properties.
+ */
+async function activateUser(userId: number): Promise<User> {
+  const { data } = await axiosClient.patch<{ user: User }>(`/api/v1/admin/users/${userId}/activate`)
   return data.user
 }
 
@@ -77,7 +103,9 @@ export const adminApi = {
   fetchProperties,
   fetchStats,
   fetchPayments,
+  fetchActivity,
   suspendUser,
+  activateUser,
   approveProperty,
   suspendProperty,
 }
