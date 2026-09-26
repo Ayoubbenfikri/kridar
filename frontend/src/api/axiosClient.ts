@@ -4,18 +4,29 @@ import i18n from '@/i18n'
 /**
  * Base axios instance for every API call in the app.
  *
+ * baseURL defaults to '' (same origin) because in production the React
+ * build is served BY Laravel itself (single domain, e.g. krihouse.com) -
+ * there is no separate API host, so a relative URL is correct and needs
+ * no CORS configuration at all.
+ *
+ * Locally, frontend/.env.local (git-ignored) sets
+ * VITE_API_URL=http://localhost:8000 because in dev the Vite server
+ * (:5173) and `php artisan serve` (:8000) are two different origins.
+ * Vite bakes VITE_* variables in at BUILD time, so this only needs to be
+ * right once per environment, not per request.
+ *
  * withCredentials: true lets the browser send/receive the Sanctum
- * session + XSRF-TOKEN cookies on cross-origin requests (Vite dev
- * server on :5173 talking to Laravel on :8000).
+ * session + XSRF-TOKEN cookies (needed whether same-origin in
+ * production or cross-origin in local dev).
  *
  * withXSRFToken: true tells axios to also ATTACH the X-XSRF-TOKEN
  * header automatically (reading it from the XSRF-TOKEN cookie) even
- * though this is a cross-origin request - without it axios only does
- * this for same-origin requests by default, and every POST/PUT/PATCH/
- * DELETE would get rejected with a 419 CSRF error.
+ * on a cross-origin request - without it axios only does this for
+ * same-origin requests by default, and every POST/PUT/PATCH/DELETE
+ * would get rejected with a 419 CSRF error in local dev.
  */
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8000',
+  baseURL: import.meta.env.VITE_API_URL ?? '',
   withCredentials: true,
   withXSRFToken: true,
   headers: {
