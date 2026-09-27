@@ -170,8 +170,18 @@ class AuthController extends Controller
         // and land signed in), and it's also why the PowerShell test
         // scripts keep working: they call authenticated endpoints right
         // after hitting this route.
-        Auth::login($user);
-        $request->session()->regenerate();
+        //
+        // BUT: this is only possible when the request actually has a
+        // session attached. statefulApi() only attaches one when Sanctum
+        // recognises the request as coming from the SPA (matching
+        // Referer against SANCTUM_STATEFUL_DOMAINS) — a link opened
+        // directly from an email client has no such Referer, so there is
+        // no session at all. hasSession() lets us skip the auto-login
+        // instead of crashing; the email is still verified either way.
+        if ($request->hasSession()) {
+            Auth::login($user);
+            $request->session()->regenerate();
+        }
 
         return response()->json(['message' => __('messages.auth.email_verified')]);
     }
