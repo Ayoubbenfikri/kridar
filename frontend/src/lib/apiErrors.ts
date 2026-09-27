@@ -24,3 +24,14 @@ export function getErrorMessage(error: unknown): string {
   }
   return 'Une erreur est survenue. Reessaie.'
 }
+
+/**
+ * 402 Payment Required — the request is well-formed, the user is just
+ * out of something they need to pay for. Phase 29 (monetization
+ * overhaul): MessagingCreditsExhaustedException uses this status
+ * specifically so the frontend can tell "buy a pack" apart from a
+ * generic failure, same convention as PublicationFeeRequiredException.
+ */
+export function isPaymentRequiredError(error: unknown): boolean {
+  return isAxiosError(error) && error.response?.status === 402
+}

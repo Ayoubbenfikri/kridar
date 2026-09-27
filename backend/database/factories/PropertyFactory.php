@@ -37,13 +37,13 @@ class PropertyFactory extends Factory
 
         $rentalType = fake()->randomElement(RentalType::cases());
 
-        // Phase 22 (pricing): a seeded listing is created as already
-        // published, so if it appears in long-term search its fee must
-        // read as already settled — otherwise the sample data would be
-        // in a state PropertyService::publish() refuses to produce.
-        // Use ->unpaidPublication() for the opposite case.
-        $owesFee = $rentalType !== RentalType::ShortTerm;
-
+        // Phase 29: whether a listing owes the fee is now a per-OWNER
+        // history question (PropertyService::create()), not a
+        // rental_type one, and factories bypass that service entirely.
+        // A seeded listing is therefore just created already settled,
+        // whatever its rental_type — otherwise the sample data would be
+        // in a state PropertyService::publish() refuses to produce. Use
+        // ->unpaidPublication() for the opposite case.
         return [
             'owner_id' => User::factory(),
             'title' => $title,
@@ -67,8 +67,8 @@ class PropertyFactory extends Factory
             'status' => PropertyStatus::Published,
             'is_featured' => false,
             'published_at' => now(),
-            'publication_status' => $owesFee ? PublicationStatus::Paid : null,
-            'publication_paid_at' => $owesFee ? now() : null,
+            'publication_status' => PublicationStatus::Paid,
+            'publication_paid_at' => now(),
         ];
     }
 
@@ -81,7 +81,9 @@ class PropertyFactory extends Factory
     }
 
     /**
-     * Phase 22 (pricing): a long-term-only listing, fee already settled.
+     * A long-term-only listing, fee already settled (Phase 29: the fee
+     * itself no longer depends on rental_type, but this state is kept for
+     * every existing test that wants "a long-term listing" specifically).
      * Combine with ->unpaidPublication() for the "must pay first" case.
      */
     public function longTerm(): static
@@ -103,21 +105,24 @@ class PropertyFactory extends Factory
             'max_guests' => fake()->numberBetween(1, 10),
             'price_per_night' => fake()->numberBetween(200, 2000),
             'price_per_month' => null,
-            'publication_status' => null,
-            'publication_paid_at' => null,
+            'publication_status' => PublicationStatus::Paid,
+            'publication_paid_at' => now(),
         ]);
     }
 
     /**
-     * The fee is owed and has never been paid. Apply it AFTER
-     * ->longTerm(), since later states win:
+     * Phase 29: the fee is owed and has never been paid — this is the
+     * ADDITIONAL-listing case now, not a rental_type one, but the state
+     * name is kept since every caller reads the same way: "this property
+     * still needs its fee paid before it can publish". Combine with any
+     * rental_type state, later states win:
      *
      *   Property::factory()->longTerm()->unpaidPublication()->draft()
      */
     public function unpaidPublication(): static
     {
         return $this->state(fn (array $attributes) => [
-            'publication_status' => null,
+            'publication_status' => PublicationStatus::PendingPayment,
             'publication_paid_at' => null,
         ]);
     }

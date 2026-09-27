@@ -24,6 +24,7 @@ class MessagingService
 {
     public function __construct(
         private readonly ConversationRepositoryInterface $conversations,
+        private readonly MessagingCreditsService $credits,
     ) {}
 
     public function listForUser(User $user, int $perPage = 15): LengthAwarePaginator
@@ -51,13 +52,17 @@ class MessagingService
      * and post the first/next message.
      *
      * Who may call this is NOT a Policy question — there is no
-     * conversation yet to authorize against. The two rules live here:
+     * conversation yet to authorize against. The rules live here:
      *
      *   - the listing must be published. A draft is not offered to
      *     anyone, so there is nothing to ask about; allowing it would
      *     also leak the existence of unpublished listings.
      *   - an owner cannot open a thread on their own listing. They have
      *     nobody to talk to until someone writes to them.
+     *   - Phase 29 (monetization): starting a GENUINELY NEW conversation
+     *     costs one free contact (or is covered by an active messaging
+     *     pass) — continuing an existing one, and every reply, is always
+     *     free. See MessagingCreditsService.
      */
     public function startOrContinue(Property $property, User $sender, string $body): Conversation
     {
@@ -74,11 +79,33 @@ class MessagingService
         }
 
         $conversation = DB::transaction(function () use ($property, $sender, $body): Conversation {
-            $conversation = $this->conversations->findForPropertyAndGuest($property->id, $sender->id)
-                ?? $this->conversations->create([
-                    'property_id' => $property->id,
-                    'guest_id' => $sender->id,
-                ]);
+            $existing = $this->conversations->findForPropertyAndGuest($property->id, $sender->id);
+
+            if ($existing !== null) {
+                $this->conversations->addMessage($existing, $sender->id, $body);
+
+                return $this->conversations->touchLastMessageAt($existing);
+            }
+
+            // Genuinely new: lock the sender's row and confirm they can
+            // afford it BEFORE creating anything. checkAccess() throws
+            // MessagingCreditsExhaustedException if neither a free
+            // contact nor an active pass is available — nothing has been
+            // written yet at that point.
+            $accessPath = $this->credits->checkAccess($sender);
+
+            $conversation = $this->conversations->create([
+                'property_id' => $property->id,
+                'guest_id' => $sender->id,
+            ]);
+
+            // Only spent AFTER the conversation row exists. If the create
+            // above had thrown (e.g. the unique constraint losing a race
+            // against a parallel request), the whole transaction — the
+            // row lock included — rolls back and nothing is ever spent.
+            if ($accessPath === MessagingCreditsService::FREE_CREDIT) {
+                $this->credits->consumeFreeCredit($sender);
+            }
 
             $this->conversations->addMessage($conversation, $sender->id, $body);
 

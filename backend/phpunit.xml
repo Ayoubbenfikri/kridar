@@ -41,5 +41,23 @@
             real sandbox orders as a side effect of `php artisan test`.
         -->
         <env name="PAYMENT_GATEWAY" value="fake"/>
+
+        <!--
+            The suite runs with the PAID model on, even though production
+            currently runs free (config/payments.php defaults to false).
+
+            That is deliberate. The pricing work from Phases 22-25 is
+            dormant, not deleted, and dormant code that nothing exercises
+            rots: the day Ayoub decides on pricing he needs those 20 tests
+            to still mean something. Keeping the flag on here is what keeps
+            the publication fee, the commission split and the gateway
+            covered while nobody is being charged.
+
+            Free mode gets its own coverage from
+            tests/Feature/Pricing/FreeModeTest, which flips this off with
+            config()->set() per test — so both modes are tested and neither
+            depends on how the file happens to be configured.
+        -->
+        <env name="PAYMENTS_ENABLED" value="true"/>
     </php>
 </phpunit>

@@ -54,6 +54,16 @@ class Payment extends Model
         return $this->type === PaymentType::ListingPublication;
     }
 
+    public function isPhoneReveal(): bool
+    {
+        return $this->type === PaymentType::PhoneReveal;
+    }
+
+    public function isMessagingPack(): bool
+    {
+        return $this->type === PaymentType::MessagingPack;
+    }
+
     /** Null on a listing-publication payment. */
     public function reservation(): BelongsTo
     {

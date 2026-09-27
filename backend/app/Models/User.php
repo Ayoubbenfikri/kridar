@@ -38,6 +38,11 @@ class User extends Authenticatable implements MustVerifyEmailContract
      *   - AdminService::suspendUser()  status=suspended
      *   - AdminService::activateUser() status=active
      *
+     * Phase 29 (monetization overhaul) added two more system-controlled
+     * columns on the same principle — also NOT here:
+     *   - free_contacts_remaining  only MessagingCreditsService writes it
+     *   - has_used_free_listing   only PropertyService::create() writes it
+     *
      * Factories are unaffected: Eloquent factories build models inside
      * Model::unguarded(), so UserFactory's role/status defaults and its
      * admin() state keep working.
@@ -53,8 +58,8 @@ class User extends Authenticatable implements MustVerifyEmailContract
         'email',
         'password',
         'phone',
-        // Owner consent to publish `phone` on their long-term listings.
-        // Only ever set by the user themselves (UpdateProfileRequest).
+        // Owner consent to publish `phone` on their listings. Only ever
+        // set by the user themselves (UpdateProfileRequest).
         'show_phone_on_listings',
         // Interface language (Phase 27). Stored on the account so it
         // follows the person across devices and so a queued notification
@@ -87,6 +92,8 @@ class User extends Authenticatable implements MustVerifyEmailContract
             'role' => UserRole::class,
             'status' => UserStatus::class,
             'locale' => Locale::class,
+            'free_contacts_remaining' => 'integer',
+            'has_used_free_listing' => 'boolean',
         ];
     }
 
@@ -120,5 +127,37 @@ class User extends Authenticatable implements MustVerifyEmailContract
     public function favorites(): HasMany
     {
         return $this->hasMany(Favorite::class);
+    }
+
+    /**
+     * Phase 29 — every messaging pass this user has ever bought, expired
+     * or not. See activeMessagingPass() for the one that matters right now.
+     */
+    public function messagingPasses(): HasMany
+    {
+        return $this->hasMany(MessagingPass::class);
+    }
+
+    /**
+     * Phase 29 — every phone number this user has paid to reveal.
+     */
+    public function phoneReveals(): HasMany
+    {
+        return $this->hasMany(PhoneReveal::class);
+    }
+
+    /**
+     * The messaging pass currently in force, if any — for the frontend's
+     * "unlimited until <date>" banner. Not used by
+     * MessagingCreditsService::checkAccess() itself (that runs its own
+     * locked query), so this can be eager-loaded freely without affecting
+     * the anti-race guarantees.
+     */
+    public function activeMessagingPass(): ?MessagingPass
+    {
+        return $this->messagingPasses()
+            ->where('expires_at', '>', now())
+            ->orderByDesc('expires_at')
+            ->first();
     }
 }

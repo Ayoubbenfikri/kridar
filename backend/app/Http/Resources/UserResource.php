@@ -36,6 +36,15 @@ class UserResource extends JsonResource
             'role' => $this->role,
             'status' => $this->status,
             'email_verified' => ! is_null($this->email_verified_at),
+
+            // Phase 29 (monetization overhaul) — what the messaging
+            // paywall UI needs to know about THIS account, without a
+            // second request. Both are read fresh (not cached client
+            // side) since a conversation started elsewhere can change
+            // free_contacts_remaining at any moment.
+            'free_contacts_remaining' => $this->free_contacts_remaining,
+            'messaging_pack_expires_at' => $this->activeMessagingPass()?->expires_at,
+
             'created_at' => $this->created_at,
         ];
     }

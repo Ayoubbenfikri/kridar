@@ -32,5 +32,21 @@ export interface User {
   role: UserRole
   status: UserStatus
   email_verified: boolean
+
+  /**
+   * Messaging paywall (Phase 29). Starts at 5, spent one at a time by
+   * starting a genuinely NEW conversation — replying is always free, so
+   * this only ever goes down on the FIRST message to a given owner.
+   * Meaningless while settings.payments_enabled is false: check that
+   * first, this stays whatever it was before payments went off.
+   */
+  free_contacts_remaining: number
+  /**
+   * When the current unlimited-messaging pass runs out, or null if there
+   * isn't one. A pass in force means free_contacts_remaining is not even
+   * consulted (see MessagingCreditsService::checkAccess on the backend).
+   */
+  messaging_pack_expires_at: string | null
+
   created_at: string
 }

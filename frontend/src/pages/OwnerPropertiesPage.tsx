@@ -34,8 +34,10 @@ const STATUS_TONES: Record<PropertyStatusValue, BadgeTone> = {
  * Does this listing still owe its publication fee?
  *
  * `requires_publication_fee` is computed by the backend
- * (Property::requiresPublicationFee()) - the rental_type rule is NOT
- * duplicated here, so it can only ever change in one place.
+ * (Property::requiresPublicationFee()) - the rule (an owner's first
+ * listing is free, every one after that owes the fee, whatever its
+ * rental_type) is NOT duplicated here, so it can only ever change in
+ * one place.
  */
 function owesPublicationFee(property: Property): boolean {
   return property.requires_publication_fee && property.publication_status !== 'paid'
@@ -48,11 +50,12 @@ function owesPublicationFee(property: Property): boolean {
  * checks ownership); a suspended property gets no publish button, since
  * only an admin can lift a suspension (PropertyService::publish()).
  *
- * A long-term listing that has not paid its fee gets a "Payer" button
- * instead of "Publier". Clicking it LEAVES the app for the payment
- * provider and comes back here with ?payment=... - so there is no
- * success toast at click time, because at click time nothing has been
- * paid yet. usePaymentResult reports the real outcome on the way back.
+ * An additional listing (Phase 29 - the owner's first is always free)
+ * that has not paid its fee gets a "Payer" button instead of "Publier".
+ * Clicking it LEAVES the app for the payment provider and comes back
+ * here with ?payment=... - so there is no success toast at click time,
+ * because at click time nothing has been paid yet. usePaymentResult
+ * reports the real outcome on the way back.
  */
 export default function OwnerPropertiesPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -191,17 +194,17 @@ export default function OwnerPropertiesPage() {
         </Link>
       </div>
 
-      {/* The business model, stated once where the owner acts on it.
-          Both numbers come from the admin settings, never hardcoded. */}
+      {/* The business model, stated once where the owner acts on it. The
+          fee comes from the admin settings, never hardcoded. */}
       {settings && (
         <Card className="mt-4 flex items-start gap-3 bg-gray-50 p-4 text-sm text-gray-600">
           <Info className="mt-0.5 size-4.5 shrink-0 text-brand-600" aria-hidden />
           <p>
-            <strong className="text-gray-900">Longue durée :</strong>{' '}
-            {formatMad(settings.listing_publication_fee)} une seule fois pour publier l'annonce. Aucune
-            commission sur le loyer.{' '}
-            <strong className="text-gray-900">Courte durée :</strong> publication gratuite, Kridar
-            prélève {settings.short_term_commission_rate}% sur chaque réservation.
+            <strong className="text-gray-900">Premiere annonce :</strong> gratuite, quel que soit son
+            type de location.{' '}
+            <strong className="text-gray-900">Annonces suivantes :</strong>{' '}
+            {formatMad(settings.listing_publication_fee)} une seule fois pour publier chacune. Aucune
+            commission sur le loyer ni sur les réservations.
           </p>
         </Card>
       )}

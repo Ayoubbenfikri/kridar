@@ -8,15 +8,26 @@ use Illuminate\Support\Facades\Cache;
 /**
  * The single source of truth for Kridar's configurable numbers:
  *
- *   listing_publication_fee     what an owner pays once to publish a
- *                               long-term listing (default 20 MAD)
- *   short_term_commission_rate  Kridar's cut of a short-term booking,
- *                               in percent (default 10)
+ *   listing_publication_fee     what an owner pays for an ADDITIONAL
+ *                               listing (their first is always free —
+ *                               see PropertyService::create()). Default
+ *                               10 MAD (Phase 29 — was 20 MAD under the
+ *                               old long-term-only rule).
+ *   short_term_commission_rate  Kridar's cut of a short-term booking, in
+ *                               percent (default 10). Dormant since
+ *                               Phase 29 — see PricingService.
  *   mad_to_paypal_rate          how many MAD one unit of the PayPal
  *                               currency is worth (default 10.80 MAD
  *                               per EUR) — PayPal does not accept MAD,
  *                               so every amount is divided by this
  *                               right before the call
+ *   phone_reveal_fee            what a user pays once to reveal one
+ *                               owner's phone number on one listing
+ *                               (Phase 29, default 5 MAD).
+ *   messaging_pack_7d_fee       a 7-day unlimited messaging pass
+ *                               (Phase 29, default 15 MAD).
+ *   messaging_pack_15d_fee      a 15-day unlimited messaging pass
+ *                               (Phase 29, default 25 MAD).
  *
  * Why a service and not config(): the admin changes these from the
  * dashboard at runtime, and a config file can only be changed by
@@ -35,6 +46,12 @@ class SettingService
 
     public const PAYPAL_RATE = 'mad_to_paypal_rate';
 
+    public const PHONE_REVEAL_FEE = 'phone_reveal_fee';
+
+    public const MESSAGING_PACK_7D_FEE = 'messaging_pack_7d_fee';
+
+    public const MESSAGING_PACK_15D_FEE = 'messaging_pack_15d_fee';
+
     /**
      * Every setting the app knows about, with its fallback value. A key
      * that is not in this list is never read and never written — the
@@ -43,9 +60,12 @@ class SettingService
      * @var array<string, float>
      */
     private const DEFAULTS = [
-        self::LISTING_FEE => 20.00,
+        self::LISTING_FEE => 10.00,
         self::COMMISSION_RATE => 10.00,
         self::PAYPAL_RATE => 10.80,
+        self::PHONE_REVEAL_FEE => 5.00,
+        self::MESSAGING_PACK_7D_FEE => 15.00,
+        self::MESSAGING_PACK_15D_FEE => 25.00,
     ];
 
     private const CACHE_KEY = 'kridar.settings';
@@ -65,10 +85,10 @@ class SettingService
         // application cache could fix it — which is impossible to ask
         // of a production deployment.
         //
-        // Merging on every read costs one foreach over three entries.
-        // In exchange, a setting added tomorrow can never produce a
-        // missing key: it just falls back to its default until an admin
-        // sets it, whatever is sitting in the cache.
+        // Merging on every read costs one foreach over the DEFAULTS
+        // entries. In exchange, a setting added tomorrow can never
+        // produce a missing key: it just falls back to its default until
+        // an admin sets it, whatever is sitting in the cache.
         $stored = Cache::rememberForever(self::CACHE_KEY, function (): array {
             return Setting::query()->pluck('value', 'key')->all();
         });
@@ -95,6 +115,25 @@ class SettingService
     public function paypalRate(): float
     {
         return $this->all()[self::PAYPAL_RATE];
+    }
+
+    public function phoneRevealFee(): float
+    {
+        return $this->all()[self::PHONE_REVEAL_FEE];
+    }
+
+    /**
+     * @param  '7d'|'15d'  $duration
+     */
+    public function messagingPackFee(string $duration): float
+    {
+        $key = match ($duration) {
+            '7d' => self::MESSAGING_PACK_7D_FEE,
+            '15d' => self::MESSAGING_PACK_15D_FEE,
+            default => throw new \InvalidArgumentException("Unknown messaging pack duration [{$duration}]."),
+        };
+
+        return $this->all()[$key];
     }
 
     /**

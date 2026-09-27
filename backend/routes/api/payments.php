@@ -7,10 +7,19 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('/reservations/{reservation}/payments', [PaymentController::class, 'store']);
     Route::get('/reservations/{reservation}/payments', [PaymentController::class, 'indexForReservation']);
 
-    // The owner pays the long-term listing publication fee. Kept here
-    // with the other payment routes rather than in properties.php — it
-    // is a payment, and it is handled by PaymentController.
+    // The owner pays for an additional listing (Phase 29 — the first is
+    // always free). Kept here with the other payment routes rather than
+    // in properties.php — it is a payment, and it is handled by
+    // PaymentController.
     Route::post('/properties/{property}/publication-payment', [PaymentController::class, 'storeForProperty']);
+
+    // Phase 29 (monetization overhaul) — pay once to reveal one owner's
+    // phone number on one listing. Independent of messaging.
+    Route::post('/properties/{property}/phone-reveal', [PaymentController::class, 'storePhoneReveal']);
+
+    // Phase 29 — a 7 or 15 day unlimited messaging pass, bought once the
+    // 5 free contacts run out.
+    Route::post('/messaging/packs', [PaymentController::class, 'storeMessagingPack']);
 
     Route::get('/payments/{payment}', [PaymentController::class, 'show']);
 });

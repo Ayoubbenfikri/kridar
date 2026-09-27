@@ -9,8 +9,11 @@ export type RentalType = 'short_term' | 'long_term' | 'both'
 export type PropertyStatusValue = 'draft' | 'pending_review' | 'published' | 'suspended' | 'archived'
 
 /**
- * Mirrors backend App\Enums\PublicationStatus. Null means the question
- * does not apply: the listing is short-term only and owes no fee.
+ * Mirrors backend App\Enums\PublicationStatus. Null means this listing
+ * predates the Phase 29 monetization overhaul (grandfathered — it never
+ * owes a fee). A non-null value is unrelated to rental_type now: every
+ * owner's first-ever listing is free and stored as `paid`; every one
+ * after that is `pending_payment` until settled.
  */
 export type PublicationStatusValue = 'pending_payment' | 'paid'
 
@@ -68,26 +71,39 @@ export interface Property {
   published_at: string | null
 
   /**
-   * True when the listing appears in long-term search (rental_type
-   * long_term or both) and therefore owes the one-off publication fee.
-   * Computed by the backend (Property::requiresPublicationFee()) rather
-   * than re-derived here, so the rule lives in exactly one place.
+   * True when this is an ADDITIONAL listing (Phase 29 — every owner's
+   * first-ever listing is free, whatever its rental_type) whose one-off
+   * publication fee is still owed. Also false whenever
+   * settings.payments_enabled is false. Computed by the backend
+   * (Property::requiresPublicationFee()) rather than re-derived here, so
+   * the rule lives in exactly one place.
    */
   requires_publication_fee: boolean
   publication_status: PublicationStatusValue | null
   publication_paid_at: string | null
 
   /**
-   * True when this listing publishes its owner's number at all: a
-   * long-term listing, an owner who opted in, and a number on file.
-   * Sent to EVERYONE, anonymous included — it says a number exists, not
-   * what it is, so the page can honestly say "log in to see it".
+   * True when this listing publishes its owner's number at all: the
+   * owner opted in and has a number on file. Phase 29 — no longer
+   * limited to long-term listings, every published listing can list a
+   * number. Sent to EVERYONE, anonymous included — it says a number
+   * exists, not what it is, so the page can honestly say "log in to see
+   * it".
    */
   owner_phone_available: boolean
   /**
+   * Phase 29 (monetization overhaul) — has THE CURRENT VIEWER paid to
+   * reveal THIS listing's number? Independent of messaging credits.
+   * Always true while settings.payments_enabled is false. Use this
+   * (not owner_phone being non-null) to decide between showing a "reveal
+   * for X MAD" button and the unlocked number.
+   */
+  owner_phone_unlocked: boolean
+  /**
    * The number itself. Null unless owner_phone_available AND the viewer
-   * is logged in with a verified email. Only ever populated on the
-   * details endpoint — the listing index never carries it.
+   * is logged in with a verified email AND owner_phone_unlocked. Only
+   * ever populated on the details endpoint — the listing index never
+   * carries it.
    */
   owner_phone: string | null
 

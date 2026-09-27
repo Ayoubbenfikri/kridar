@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Building2, CalendarCheck, CreditCard, TriangleAlert } from 'lucide-react'
+import { Building2, CalendarCheck, CreditCard, MessageSquare, Phone, TriangleAlert } from 'lucide-react'
 import { useSettings, useUpdateSettings } from '@/features/settings/useSettings'
 import { getErrorMessage, getValidationErrors } from '@/lib/apiErrors'
 import { Button, Card, Input, Skeleton, useToast } from '@/components/ui'
@@ -27,6 +27,9 @@ export default function AdminSettingsPage() {
   const [fee, setFee] = useState('')
   const [rate, setRate] = useState('')
   const [paypalRate, setPaypalRate] = useState('')
+  const [phoneRevealFee, setPhoneRevealFee] = useState('')
+  const [pack7dFee, setPack7dFee] = useState('')
+  const [pack15dFee, setPack15dFee] = useState('')
 
   // Fill the form once the current values arrive. Keyed on `settings`
   // so a successful save (which rewrites the cache) also re-syncs the
@@ -36,6 +39,9 @@ export default function AdminSettingsPage() {
       setFee(String(settings.listing_publication_fee))
       setRate(String(settings.short_term_commission_rate))
       setPaypalRate(String(settings.mad_to_paypal_rate))
+      setPhoneRevealFee(String(settings.phone_reveal_fee))
+      setPack7dFee(String(settings.messaging_pack_7d_fee))
+      setPack15dFee(String(settings.messaging_pack_15d_fee))
     }
   }, [settings])
 
@@ -61,6 +67,9 @@ export default function AdminSettingsPage() {
         listing_publication_fee: Number(fee),
         short_term_commission_rate: Number(rate),
         mad_to_paypal_rate: Number(paypalRate),
+        phone_reveal_fee: Number(phoneRevealFee),
+        messaging_pack_7d_fee: Number(pack7dFee),
+        messaging_pack_15d_fee: Number(pack15dFee),
       },
       {
         onSuccess: () => showToast('success', 'Tarification mise a jour.'),
@@ -78,11 +87,13 @@ export default function AdminSettingsPage() {
     <>
       <h1 className="text-2xl font-bold tracking-tight text-gray-900">Tarification</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Les deux sources de revenus de Kridar, et la conversion vers PayPal.
+        Les revenus de Kridar (Phase 29) et la conversion vers PayPal.
       </p>
 
       {!settings ? (
         <div className="mt-6 space-y-4">
+          <Skeleton className="h-40 w-full rounded-xl" />
+          <Skeleton className="h-40 w-full rounded-xl" />
           <Skeleton className="h-40 w-full rounded-xl" />
           <Skeleton className="h-40 w-full rounded-xl" />
           <Skeleton className="h-40 w-full rounded-xl" />
@@ -95,11 +106,12 @@ export default function AdminSettingsPage() {
                 <Building2 className="size-5" aria-hidden />
               </span>
               <div className="min-w-0">
-                <h2 className="font-semibold text-gray-900">Longue duree</h2>
+                <h2 className="font-semibold text-gray-900">Annonces supplementaires</h2>
                 <p className="mt-1 text-sm text-gray-500">
-                  Frais fixes payes une seule fois par le proprietaire pour publier son annonce.
-                  Kridar ne prend aucune commission sur le loyer et ne gere ni le contrat ni
-                  l'encaissement. La recherche reste gratuite pour le locataire.
+                  Le premier bien d'un proprietaire est toujours gratuit, quel que soit son type de
+                  location. Chaque annonce supplementaire coute ces frais fixes, payes une seule
+                  fois. Kridar ne prend aucune commission sur le loyer et ne gere ni le contrat ni
+                  l'encaissement.
                 </p>
               </div>
             </div>
@@ -125,10 +137,12 @@ export default function AdminSettingsPage() {
                 <CalendarCheck className="size-5" aria-hidden />
               </span>
               <div className="min-w-0">
-                <h2 className="font-semibold text-gray-900">Courte duree</h2>
+                <h2 className="font-semibold text-gray-900">Courte duree (desactive)</h2>
                 <p className="mt-1 text-sm text-gray-500">
-                  Pourcentage preleve sur chaque reservation courte duree. Le locataire paie le
-                  total affiche, le proprietaire recoit le total moins cette commission.
+                  Pourcentage preleve sur chaque reservation courte duree. Desactive depuis la
+                  refonte de la tarification (Phase 29) — chaque reservation est enregistree avec
+                  une commission de 0, quel que soit ce taux. Garde configurable pour une
+                  reactivation future.
                 </p>
               </div>
             </div>
@@ -161,6 +175,77 @@ export default function AdminSettingsPage() {
                 </strong>
                 .
               </p>
+            </div>
+          </Card>
+
+          <Card className="p-5">
+            <div className="flex items-start gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+                <Phone className="size-5" aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <h2 className="font-semibold text-gray-900">Revelation du numero</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Ce qu'un utilisateur paie une seule fois pour voir le numero du proprietaire
+                  d'une annonce. Independant de la messagerie — un utilisateur sans contacts
+                  gratuits peut toujours reveler un numero.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 max-w-xs">
+              <Input
+                label="Frais de revelation"
+                type="number"
+                min={0}
+                step="0.01"
+                inputMode="decimal"
+                value={phoneRevealFee}
+                onChange={(event) => setPhoneRevealFee(event.target.value)}
+                error={validationErrors?.phone_reveal_fee?.[0]}
+                hint="En MAD. Mettre 0 pour reveler gratuitement."
+              />
+            </div>
+          </Card>
+
+          <Card className="p-5">
+            <div className="flex items-start gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+                <MessageSquare className="size-5" aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <h2 className="font-semibold text-gray-900">Pass messagerie</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Chaque compte dispose de 5 contacts gratuits (une seule fois par annonceur
+                  contacte pour la premiere fois). Une fois epuises, un pass donne des messages
+                  illimites pendant la duree choisie.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <Input
+                label="Pass 7 jours"
+                type="number"
+                min={0}
+                step="0.01"
+                inputMode="decimal"
+                value={pack7dFee}
+                onChange={(event) => setPack7dFee(event.target.value)}
+                error={validationErrors?.messaging_pack_7d_fee?.[0]}
+                hint="En MAD."
+              />
+              <Input
+                label="Pass 15 jours"
+                type="number"
+                min={0}
+                step="0.01"
+                inputMode="decimal"
+                value={pack15dFee}
+                onChange={(event) => setPack15dFee(event.target.value)}
+                error={validationErrors?.messaging_pack_15d_fee?.[0]}
+                hint="En MAD."
+              />
             </div>
           </Card>
 
@@ -219,7 +304,8 @@ export default function AdminSettingsPage() {
               {updateSettings.isPending ? 'Enregistrement...' : 'Enregistrer'}
             </Button>
             <p className="text-xs text-gray-500">
-              Frais et commission s'appliquent aux futures annonces et reservations uniquement.
+              Chaque frais est enregistre au moment ou il est paye — changer un montant ici n'affecte
+              jamais ce qui a deja ete facture.
             </p>
           </div>
         </form>

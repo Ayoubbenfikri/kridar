@@ -103,6 +103,27 @@ async function deletePropertyImage(propertyId: number, imageId: number): Promise
   await axiosClient.delete(`/api/v1/properties/${propertyId}/images/${imageId}`)
 }
 
+/** Same shape as ownerApi's PaymentStart - kept local rather than shared
+ * across features, since both are trivial and this avoids a feature-to-
+ * feature import for one line of typing. */
+export interface PhoneRevealStart {
+  redirectUrl: string | null
+}
+
+/**
+ * POST /properties/{id}/phone-reveal — Phase 29 (monetization overhaul).
+ * Pay once to see this listing's owner phone number. Independent of
+ * messaging credits, and leaves the app the same way payPublicationFee
+ * does: this only STARTS the payment, the gateway's return URL is what
+ * settles it.
+ */
+async function revealPhone(propertyId: number): Promise<PhoneRevealStart> {
+  const { data } = await axiosClient.post<{ message: string; redirect_url: string | null }>(
+    `/api/v1/properties/${propertyId}/phone-reveal`,
+  )
+  return { redirectUrl: data.redirect_url }
+}
+
 export const propertiesApi = {
   fetchProperties,
   fetchProperty,
@@ -111,4 +132,5 @@ export const propertiesApi = {
   deleteProperty,
   uploadPropertyImages,
   deletePropertyImage,
+  revealPhone,
 }

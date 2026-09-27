@@ -54,4 +54,20 @@ class UserFactory extends Factory
             'role' => UserRole::Admin,
         ]);
     }
+
+    /** Phase 29 — a user who has already spent all 5 free contacts. */
+    public function withNoFreeContacts(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'free_contacts_remaining' => 0,
+        ]);
+    }
+
+    /** Phase 29 — an owner who has already used their one free listing. */
+    public function hasUsedFreeListing(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'has_used_free_listing' => true,
+        ]);
+    }
 }

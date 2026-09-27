@@ -41,8 +41,9 @@ class Property extends Model
         'is_featured',
         'published_at',
         // Phase 22 (pricing) — set by PaymentService when the owner's
-        // publication fee is confirmed paid, never by an owner's own
-        // create/update request (they are not in StorePropertyRequest).
+        // publication fee is confirmed paid, or by PropertyService::create()
+        // for a free first listing. Never by an owner's own create/update
+        // request (they are not in StorePropertyRequest).
         'publication_status',
         'publication_paid_at',
     ];
@@ -65,20 +66,24 @@ class Property extends Model
     }
 
     /**
-     * Phase 22 (pricing): does this listing owe the publication fee?
+     * Phase 29 (monetization overhaul): does this listing sit inside the
+     * fee model at all?
      *
-     * Yes as soon as it appears in long-term search — so `long_term`
-     * AND `both`. A `both` listing uses the paid long-term service, so
-     * it pays like any other long-term listing (and Kridar still takes
-     * its commission on that same listing's short-term bookings).
+     * Deliberately NOT a rental_type check any more. The decision is made
+     * once, per OWNER, at Property::create() time (PropertyService::create()):
+     * the very first property an owner ever creates is free and stored as
+     * `paid` directly; every one after that is `pending_payment` until
+     * settled. A null publication_status is a pre-Phase-29 row — it was
+     * never part of this model and never owes anything.
      *
      * This method is THE rule. Everything else (PropertyService::publish,
-     * PaymentService, PropertyResource) asks it instead of re-testing
-     * rental_type, so the rule can only ever change in one place.
+     * PaymentService, PropertyResource, AdminService) asks it (or
+     * publicationFeePaid()) instead of re-testing rental_type or the raw
+     * column, so the rule can only ever change in one place.
      */
     public function requiresPublicationFee(): bool
     {
-        return in_array($this->rental_type, [RentalType::LongTerm, RentalType::Both], true);
+        return $this->publication_status !== null;
     }
 
     public function publicationFeePaid(): bool
@@ -89,27 +94,49 @@ class Property extends Model
     /**
      * True when the fee is owed and not yet settled — the one case where
      * publishing must be refused.
+     *
+     * Phase 28: short-circuits to false while Kridar is free
+     * (config('payments.enabled') === false, the current default). This
+     * single line is what turns the paid model off — it is THE gate that
+     * PropertyService::publish() and PropertyService::update() both ask,
+     * so switching it here switches it everywhere at once instead of
+     * leaving a copy of the rule in two services to drift apart.
+     *
+     * Reading config from a model is not something to do casually, but
+     * this class already owns the publication-fee rule (see
+     * requiresPublicationFee above) and "is there a fee at all" is part
+     * of that same rule. Checking it in each caller instead would mean two
+     * places to remember and one to forget.
      */
     public function isBlockedByPublicationFee(): bool
     {
+        if (! config('payments.enabled')) {
+            return false;
+        }
+
         return $this->requiresPublicationFee() && ! $this->publicationFeePaid();
     }
 
     /**
      * Does this listing publish its owner's phone number at all?
-     * Independent of WHO is looking — that second check lives in
-     * PropertyResource, because it depends on the request.
+     * Independent of WHO is looking, and independent of whether THIS
+     * viewer has paid to reveal it — both of those live in
+     * PropertyResource, because they depend on the request.
      *
-     * Three conditions, all required:
+     * Two conditions, both required:
      *
-     *   1. Long-term (requiresPublicationFee): the owner paid to be
-     *      reachable, and Kridar takes nothing from rent, so showing the
-     *      number costs Kridar nothing. On a SHORT-term listing it would
-     *      let a guest call, agree a price directly, and skip the 10%
-     *      commission — so never there.
-     *   2. The owner opted in. Off by default: they gave their number
-     *      to create an account, not to publish it.
-     *   3. There is actually a number.
+     *   1. The owner opted in. Off by default: they gave their number to
+     *      create an account, not to publish it.
+     *   2. There is actually a number.
+     *
+     * Phase 29 (monetization overhaul): this used to also require
+     * requiresPublicationFee() (long-term only) — a short-term guest
+     * calling the owner directly used to skip Kridar's commission. Phase
+     * 29 removed the short-term commission model entirely (see
+     * PricingService, left disabled but intact), so there is nothing left
+     * to protect: phone reveal now applies to every published listing,
+     * gated instead by its own one-off fee (PhoneReveal / PaymentService::
+     * initiatePhoneReveal()).
      *
      * Needs `owner` loaded WITH phone and show_phone_on_listings. When
      * the query only selected owner:id,name (the listing index), both
@@ -125,8 +152,7 @@ class Property extends Model
     {
         $owner = $this->relationLoaded('owner') ? $this->owner : null;
 
-        return $this->requiresPublicationFee()
-            && $owner !== null
+        return $owner !== null
             && $owner->show_phone_on_listings === true
             && filled($owner->phone);
     }
@@ -169,6 +195,16 @@ class Property extends Model
     public function publicationPayments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Phase 29 — everyone who has paid to reveal THIS listing's owner
+     * phone number. Almost always zero or one row per viewer (the unique
+     * constraint), read via PropertyResource for the current viewer only.
+     */
+    public function phoneReveals(): HasMany
+    {
+        return $this->hasMany(PhoneReveal::class);
     }
 
     public function amenities(): BelongsToMany

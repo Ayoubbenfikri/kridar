@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
+  AlertCircle,
   ArrowLeft,
   Bath,
   BedDouble,
@@ -8,6 +9,7 @@ import {
   CalendarRange,
   Check,
   ImageOff,
+  Lock,
   MapPin,
   Phone,
   Ruler,
@@ -16,13 +18,15 @@ import {
   Users,
 } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
-import { useProperty } from '@/features/properties/useProperties'
+import { useProperty, useRevealPhone } from '@/features/properties/useProperties'
+import { useSettings } from '@/features/settings/useSettings'
+import { getErrorMessage } from '@/lib/apiErrors'
 import { formatMad, primaryPrice } from '@/lib/formatPrice'
 import ReviewsSection from '@/components/reviews/ReviewsSection'
 import FavoriteButton from '@/components/properties/FavoriteButton'
 import ContactOwnerCard from '@/components/properties/ContactOwnerCard'
 import BookingPanel from '@/components/reservations/BookingPanel'
-import { Card, EmptyState, Skeleton, buttonClasses } from '@/components/ui'
+import { Button, Card, EmptyState, Skeleton, buttonClasses } from '@/components/ui'
 import type { Property, PropertyType, RentalType } from '@/types/property'
 
 const TYPE_LABELS: Record<PropertyType, string> = {
@@ -53,20 +57,27 @@ function Fact({ icon, label }: { icon: React.ReactNode; label: string }) {
 /**
  * The owner's phone line, in the "Propriétaire" section.
  *
- * Every decision about WHETHER to show a number is made by the backend
- * (Property::listsOwnerPhone + the viewer check in PropertyResource).
- * This component only decides how to present the three outcomes:
+ * Every decision about WHETHER a number could ever be shown is made by
+ * the backend (Property::listsOwnerPhone + the viewer check in
+ * PropertyResource). This component presents each outcome:
  *
- *   owner_phone set        -> the number, as a tel: link
- *   available but withheld -> say why, and what would unlock it
- *   not available          -> nothing at all
+ *   owner_phone set              -> the number, as a tel: link
+ *   available, not authenticated -> "log in to see it"
+ *   available, email unverified  -> "verify your email"
+ *   available, not yet unlocked  -> "reveal for X MAD" (Phase 29)
+ *   not available at all         -> nothing
  *
- * The middle case is why `owner_phone_available` exists: without it
- * the page could not tell "log in to see it" from "there is nothing",
- * and would end up promising a number the owner never agreed to show.
+ * `owner_phone_available` is what lets the page tell "log in to see it"
+ * from "there is nothing" without promising a number the owner never
+ * agreed to show. `owner_phone_unlocked` (Phase 29) is the newer split:
+ * being logged in and verified is no longer enough on its own, the
+ * viewer also has to have paid the one-off reveal fee — independent of
+ * messaging credits entirely.
  */
 function OwnerPhone({ property }: { property: Property }) {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const { data: settings } = useSettings()
+  const revealPhone = useRevealPhone()
 
   if (property.owner_phone) {
     return (
@@ -84,21 +95,73 @@ function OwnerPhone({ property }: { property: Property }) {
     return null
   }
 
-  return (
-    <p className="mt-4 flex items-center gap-2 text-sm text-gray-500">
-      <Phone className="size-4 shrink-0 text-gray-400" aria-hidden />
-      {isAuthenticated ? (
-        'Vérifiez votre email pour voir le numéro du propriétaire.'
-      ) : (
+  if (!isAuthenticated) {
+    return (
+      <p className="mt-4 flex items-center gap-2 text-sm text-gray-500">
+        <Phone className="size-4 shrink-0 text-gray-400" aria-hidden />
         <span>
           <Link to="/login" className="font-semibold text-brand-600 transition hover:text-brand-700">
             Connectez-vous
           </Link>{' '}
           pour voir le numéro du propriétaire.
         </span>
-      )}
-    </p>
-  )
+      </p>
+    )
+  }
+
+  if (!user?.email_verified) {
+    return (
+      <p className="mt-4 flex items-center gap-2 text-sm text-gray-500">
+        <Phone className="size-4 shrink-0 text-gray-400" aria-hidden />
+        Vérifiez votre email pour voir le numéro du propriétaire.
+      </p>
+    )
+  }
+
+  // Logged in, verified, a number exists — but (Phase 29) this viewer
+  // hasn't paid to reveal THIS listing's number yet. Independent of
+  // messaging: someone out of free contacts can still reveal a number.
+  if (!property.owner_phone_unlocked) {
+    const handleReveal = () => {
+      revealPhone.mutate(property.id, {
+        onSuccess: ({ redirectUrl }) => {
+          // Full navigation, not a router push: the destination is the
+          // payment provider, outside this app. Nothing to do when null
+          // — the invalidation in useRevealPhone already refreshed the
+          // property, and the number will appear on its own.
+          if (redirectUrl) {
+            window.location.href = redirectUrl
+          }
+        },
+      })
+    }
+
+    return (
+      <div className="mt-4">
+        <Button
+          variant="secondary"
+          size="sm"
+          icon={<Lock className="size-4" />}
+          isLoading={revealPhone.isPending}
+          onClick={handleReveal}
+        >
+          {revealPhone.isPending
+            ? '...'
+            : settings
+              ? `Voir le numéro — ${formatMad(settings.phone_reveal_fee)}`
+              : 'Voir le numéro'}
+        </Button>
+        {revealPhone.isError && (
+          <p className="mt-2 flex items-start gap-2 text-sm text-red-600">
+            <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+            {getErrorMessage(revealPhone.error)}
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  return null
 }
 
 export default function PropertyDetailsPage() {

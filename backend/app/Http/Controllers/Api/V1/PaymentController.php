@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Messaging\StoreMessagingPackRequest;
 use App\Http\Resources\PaymentResource;
 use App\Models\Payment;
 use App\Models\Property;
@@ -38,7 +39,8 @@ class PaymentController extends Controller
 
     /**
      * POST /properties/{property}/publication-payment — the owner pays
-     * the one-off fee that lets a long-term listing go live.
+     * the fee for an ADDITIONAL listing (Phase 29 — the first one is
+     * always free, see PropertyService::create()).
      *
      * Authorized by PropertyPolicy::update() (owner or admin), the same
      * gate as publishing — whoever may publish the listing may pay for
@@ -58,6 +60,49 @@ class PaymentController extends Controller
             'message' => $result['redirect_url'] === null
                 ? 'Publication is currently free — the listing is now live.'
                 : 'Payment initiated. Redirect the owner to redirect_url to complete it.',
+            'payment' => new PaymentResource($result['payment']),
+            'redirect_url' => $result['redirect_url'],
+        ], 201);
+    }
+
+    /**
+     * POST /properties/{property}/phone-reveal — Phase 29 (monetization
+     * overhaul). Pay once to see this listing's owner phone number.
+     * Completely independent of messaging credits.
+     *
+     * Authorized by PropertyPolicy::view() — anyone who may see the
+     * listing at all may pay to reveal its number. Whether the listing
+     * actually publishes a number, and whether this viewer is the
+     * property's own owner (refused, 409), is decided by
+     * PaymentService::initiatePhoneReveal(), not here — that keeps the
+     * business rule in one place instead of duplicated in the controller.
+     */
+    public function storePhoneReveal(Request $request, Property $property): JsonResponse
+    {
+        $this->authorize('view', $property);
+
+        $result = $this->payments->initiatePhoneReveal($property, $request->user());
+
+        return response()->json([
+            'message' => 'Payment initiated. Redirect to redirect_url to complete it.',
+            'payment' => new PaymentResource($result['payment']),
+            'redirect_url' => $result['redirect_url'],
+        ], 201);
+    }
+
+    /**
+     * POST /messaging/packs — Phase 29. Buy a 7 or 15 day unlimited
+     * messaging pass, once the 5 free contacts are used up.
+     */
+    public function storeMessagingPack(StoreMessagingPackRequest $request): JsonResponse
+    {
+        $result = $this->payments->initiateMessagingPack(
+            $request->user(),
+            $request->validated('duration'),
+        );
+
+        return response()->json([
+            'message' => 'Payment initiated. Redirect to redirect_url to complete it.',
             'payment' => new PaymentResource($result['payment']),
             'redirect_url' => $result['redirect_url'],
         ], 201);
@@ -148,14 +193,23 @@ class PaymentController extends Controller
      * Send the browser back to the React app, which lives on another
      * origin in dev (Vite on :5173, Laravel on :8000).
      *
-     * The landing page depends on who was paying: an owner paying a
-     * publication fee wants their listings, a guest paying a booking
-     * wants their reservations.
+     * The landing page depends on what was being paid for: an owner
+     * paying a publication fee wants their listings, a guest paying a
+     * booking wants their reservations, someone who just paid to reveal
+     * a phone number wants to land back on that exact listing (numeric
+     * id, not slug — the frontend routes properties by id), and someone
+     * who just bought a messaging pack wants their inbox.
      */
     private function backToFrontend(Payment $payment, string $status): RedirectResponse
     {
         $base = rtrim((string) config('payments.frontend_url'), '/');
-        $path = $payment->isListingPublication() ? '/owner/properties' : '/reservations';
+
+        $path = match (true) {
+            $payment->isListingPublication() => '/owner/properties',
+            $payment->isPhoneReveal() => "/properties/{$payment->property_id}",
+            $payment->isMessagingPack() => '/messages',
+            default => '/reservations',
+        };
 
         return redirect()->away("{$base}{$path}?payment={$status}");
     }

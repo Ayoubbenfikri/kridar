@@ -88,3 +88,20 @@ export function useDeletePropertyImage(propertyId: number) {
     },
   })
 }
+
+/**
+ * Phase 29 (monetization overhaul) — pay to reveal one listing's owner
+ * phone number. The invalidation here is mostly harmless housekeeping:
+ * a real payment sends the browser away to the gateway right after this
+ * resolves, and the number only actually unlocks once the payer comes
+ * back through the return URL and this query is refetched.
+ */
+export function useRevealPhone() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (propertyId: number) => propertiesApi.revealPhone(propertyId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['properties'] })
+    },
+  })
+}

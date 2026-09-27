@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowRight, Building2, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowRight, Building2, Heart, ShieldCheck, Sparkles } from 'lucide-react'
 import SearchBar from '@/components/search/SearchBar'
 import PropertyCard from '@/components/properties/PropertyCard'
 import { useProperties } from '@/features/properties/useProperties'
@@ -160,6 +160,33 @@ export default function HomePage() {
           </div>
           <Link to="/owner" className={buttonClasses({ className: 'shrink-0' })}>
             {t('home.ownerCta')}
+          </Link>
+        </Card>
+
+        {/* ---------------------------------------------------------------
+            SUPPORT (Phase 28)
+
+            Kridar launches free, so this is the only ask on the page. It
+            sits BELOW the owner call to action deliberately: getting a
+            listing published is worth more to the project right now than a
+            donation, and putting the money ask first would compete with
+            it. Quieter styling than the card above for the same reason.
+            --------------------------------------------------------------- */}
+        <Card className="mt-4 flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+              <Heart className="size-4.5" aria-hidden />
+            </span>
+            <div>
+              <h2 className="font-semibold text-gray-900">{t('home.supportTitle')}</h2>
+              <p className="mt-1 text-sm text-gray-500">{t('home.supportText')}</p>
+            </div>
+          </div>
+          <Link
+            to="/support"
+            className={buttonClasses({ variant: 'secondary', size: 'sm', className: 'shrink-0' })}
+          >
+            {t('home.supportCta')}
           </Link>
         </Card>
       </section>

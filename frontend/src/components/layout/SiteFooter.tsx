@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { KeyRound } from 'lucide-react'
+import { Heart, KeyRound } from 'lucide-react'
 
 /**
  * Minimal footer: identity, the few links that matter, one legal line.
@@ -36,6 +36,16 @@ export default function SiteFooter() {
             </Link>
             <Link to="/favorites" className="text-gray-600 transition hover:text-brand-600">
               {t('nav.favorites')}
+            </Link>
+            {/* Phase 28. In the footer rather than the navbar on purpose:
+                a guest looking for a flat should not be asked for money in
+                the main navigation. */}
+            <Link
+              to="/support"
+              className="flex items-center gap-1.5 text-gray-600 transition hover:text-brand-600"
+            >
+              <Heart className="size-3.5 shrink-0" aria-hidden />
+              {t('footer.support')}
             </Link>
           </nav>
 

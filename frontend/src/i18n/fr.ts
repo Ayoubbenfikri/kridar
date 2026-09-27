@@ -67,7 +67,48 @@ export const fr = {
     explore: 'Explorer',
     allProperties: 'Toutes les propriétés',
     mySpace: 'Mon espace',
+    support: 'Soutenir Kridar',
     rights: '© {{year}} Kridar. Tous droits réservés.',
+  },
+
+  /**
+   * Free mode (Phase 28). Shown wherever a price used to be, while
+   * payments_enabled is false. Said out loud rather than hidden: free is
+   * the strongest argument Kridar has before it has any reviews.
+   */
+  free: {
+    badge: 'Gratuit',
+    publishFree: 'Publication gratuite',
+    noCommission: 'Kridar ne prend aucune commission.',
+    ownerNotice:
+      "Kridar est gratuit pour le moment : publier une annonce ne coûte rien, et aucune commission n'est prélevée sur vos locations.",
+  },
+
+  support: {
+    title: 'Soutenir Kridar',
+    intro:
+      "Kridar est gratuit, et le restera le temps de comprendre ce dont le marché a vraiment besoin. Il n'y a ni investisseur ni budget derrière : juste un développeur à Marrakech.",
+    whyTitle: "Pourquoi je demande de l'aide",
+    whyText:
+      "Un site a des frais qui tombent chaque mois, même quand personne ne paie pour l'utiliser. Un coup de main permet de garder la plateforme en ligne et gratuite plus longtemps.",
+    costsTitle: "À quoi sert l'argent",
+    costsText: "L'hébergement, le nom de domaine, les emails, et le stockage des photos.",
+    donateButton: 'Faire un don',
+    paypalTitle: 'PayPal',
+    paypalText:
+      'Choisissez un montant, le paiement se fait sur PayPal. Kridar ne voit jamais vos informations bancaires.',
+    otherAmount: 'Un autre montant',
+    bankTitle: 'Virement bancaire',
+    cryptoTitle: 'Crypto',
+    contactTitle: 'Aider autrement',
+    contactText:
+      "Du temps, une traduction, un bug signalé ou un hébergement offert valent autant qu'un don.",
+    copy: 'Copier',
+    copied: 'Copié',
+    noMethodsTitle: 'Rien de configuré pour le moment',
+    noMethodsText:
+      "Aucun moyen de soutien n'est encore renseigné. Merci quand même d'être passé — utiliser Kridar et en parler aide déjà.",
+    thanks: 'Merci. Sincèrement.',
   },
 
   common: {
@@ -136,6 +177,10 @@ export const fr = {
     ownerText:
       'Publiez votre annonce, gérez vos disponibilités et vos réservations depuis un seul espace. Sans intermédiaire.',
     ownerCta: 'Devenir propriétaire',
+    supportTitle: 'Kridar est gratuit',
+    supportText:
+      "Pas de frais de publication, pas de commission. Si le projet vous plaît, vous pouvez l'aider à grandir.",
+    supportCta: 'Soutenir le projet',
   },
 
   properties: {

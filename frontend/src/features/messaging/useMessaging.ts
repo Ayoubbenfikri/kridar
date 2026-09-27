@@ -1,5 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { messagingApi } from './messagingApi'
+import type { MessagingPackDuration } from './messagingApi'
 
 /**
  * Messaging reads are namespaced under 'conversations', so one
@@ -88,5 +89,19 @@ export function useMarkConversationRead() {
       queryClient.invalidateQueries({ queryKey: ['conversations', 'unread-count'] })
       queryClient.invalidateQueries({ queryKey: ['conversations', 'list'] })
     },
+  })
+}
+
+/**
+ * Phase 29 (monetization overhaul) — buy a 7 or 15 day unlimited
+ * messaging pass. Does not touch the 'conversations' cache (nothing
+ * about messaging changed yet, only a payment was started) — the auth
+ * profile (free_contacts_remaining / messaging_pack_expires_at) only
+ * actually changes once the payer returns from the gateway and GET
+ * /auth/me is refetched.
+ */
+export function useBuyMessagingPack() {
+  return useMutation({
+    mutationFn: (duration: MessagingPackDuration) => messagingApi.buyMessagingPack(duration),
   })
 }

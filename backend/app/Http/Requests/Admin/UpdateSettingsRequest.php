@@ -32,13 +32,20 @@ class UpdateSettingsRequest extends FormRequest
             SettingService::LISTING_FEE => ['required', 'numeric', 'min:0', 'max:100000'],
 
             // Percent. Capped at 100 — Kridar can never take more than
-            // the guest actually pays.
+            // the guest actually pays. Dormant since Phase 29, kept
+            // configurable — see PricingService.
             SettingService::COMMISSION_RATE => ['required', 'numeric', 'min:0', 'max:100'],
 
             // MAD per one unit of the PayPal currency. min:0.01, never 0:
             // the gateway divides by this, and a zero would be a division
             // by zero rather than a "free" setting.
             SettingService::PAYPAL_RATE => ['required', 'numeric', 'min:0.01', 'max:1000'],
+
+            // Phase 29 (monetization overhaul) — 0 allowed on all three,
+            // same reasoning as the listing fee above.
+            SettingService::PHONE_REVEAL_FEE => ['required', 'numeric', 'min:0', 'max:100000'],
+            SettingService::MESSAGING_PACK_7D_FEE => ['required', 'numeric', 'min:0', 'max:100000'],
+            SettingService::MESSAGING_PACK_15D_FEE => ['required', 'numeric', 'min:0', 'max:100000'],
         ];
     }
 
@@ -53,6 +60,9 @@ class UpdateSettingsRequest extends FormRequest
             SettingService::COMMISSION_RATE.'.max' => 'The commission rate cannot exceed 100%.',
             SettingService::PAYPAL_RATE.'.required' => 'The MAD conversion rate is required.',
             SettingService::PAYPAL_RATE.'.min' => 'The conversion rate must be greater than zero.',
+            SettingService::PHONE_REVEAL_FEE.'.required' => 'The phone reveal fee is required.',
+            SettingService::MESSAGING_PACK_7D_FEE.'.required' => 'The 7-day messaging pack fee is required.',
+            SettingService::MESSAGING_PACK_15D_FEE.'.required' => 'The 15-day messaging pack fee is required.',
         ];
     }
 }

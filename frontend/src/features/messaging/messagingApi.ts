@@ -63,6 +63,27 @@ async function markRead(conversationId: number): Promise<number> {
   return data.marked
 }
 
+export type MessagingPackDuration = '7d' | '15d'
+
+/** Same PaymentStart shape used across owner/property payments. */
+export interface MessagingPackStart {
+  redirectUrl: string | null
+}
+
+/**
+ * POST /messaging/packs — Phase 29 (monetization overhaul). Buy a 7 or
+ * 15 day unlimited messaging pass once the 5 free contacts run out. Same
+ * "starts, does not settle" rule as every other payment here: only the
+ * gateway return URL actually activates it.
+ */
+async function buyMessagingPack(duration: MessagingPackDuration): Promise<MessagingPackStart> {
+  const { data } = await axiosClient.post<{ message: string; redirect_url: string | null }>(
+    '/api/v1/messaging/packs',
+    { duration },
+  )
+  return { redirectUrl: data.redirect_url }
+}
+
 export const messagingApi = {
   fetchConversations,
   fetchUnreadCount,
@@ -70,4 +91,5 @@ export const messagingApi = {
   startConversation,
   sendMessage,
   markRead,
+  buyMessagingPack,
 }

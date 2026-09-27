@@ -4,6 +4,40 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Is Kridar charging for anything at all?
+    |--------------------------------------------------------------------------
+    |
+    | FALSE is the default, and that is the deliberate launch position
+    | (Phase 28). Kridar goes live free while we learn what the Moroccan
+    | market will actually pay for, and pricing is decided with real usage
+    | data instead of a guess.
+    |
+    | Nothing was deleted to make that happen. With this off:
+    |
+    |   - PropertyService::publish() stops demanding the long-term
+    |     publication fee (Property::isBlockedByPublicationFee()).
+    |   - PricingService forces the short-term commission to 0, so a
+    |     booking snapshots 0 rather than a 10% cut nobody collects.
+    |   - PaymentService refuses to start any payment at all.
+    |   - PropertyResource reports requires_publication_fee = false, which
+    |     is what makes the owner's "pay the fee" button disappear without
+    |     a single frontend condition.
+    |   - GET /settings publishes this flag, so the frontend can say
+    |     "free" instead of guessing.
+    |
+    | Turning it back on is this one line. Every table, column, service,
+    | admin setting and the whole PayPal integration are still here and
+    | still tested — see tests/Feature/Pricing (paid model) and
+    | FreeModeTest (this one).
+    |
+    | The suite runs with it ON (phpunit.xml), so the paid model stays
+    | covered while it is dormant.
+    |
+    */
+    'enabled' => env('PAYMENTS_ENABLED', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Active payment gateway
     |--------------------------------------------------------------------------
     |
@@ -15,6 +49,8 @@ return [
     |                              as the default and switch to paypal in
     |                              .env only while testing the real flow.
     |   'paypal' PaypalGateway   - real PayPal Orders v2 calls (sandbox).
+    |
+    | Irrelevant while 'enabled' is false — nothing reaches a gateway.
     |
     */
     'gateway' => env('PAYMENT_GATEWAY', 'fake'),

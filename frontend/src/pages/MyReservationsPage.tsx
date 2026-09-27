@@ -15,6 +15,7 @@ import {
   usePayReservation,
 } from '@/features/reservations/useReservations'
 import { usePaymentResult } from '@/hooks/usePaymentResult'
+import { usePaymentsEnabled } from '@/features/settings/useSettings'
 import { getErrorMessage } from '@/lib/apiErrors'
 import { formatMad } from '@/lib/formatPrice'
 import ReservationStatusBadge from '@/components/reservations/ReservationStatusBadge'
@@ -32,12 +33,19 @@ import type { Reservation } from '@/types/reservation'
  * turns into a toast. Whether a booking is settled is read from
  * reservation.is_paid — server truth, because no local state survives
  * that round trip.
+ *
+ * Phase 28: while Kridar is free there is nothing to pay, so the pay
+ * button is not rendered at all. The "Payé" badge on an already-settled
+ * booking IS still shown — those payments really happened, and hiding
+ * them would make a guest's own history look wrong.
  */
 export default function MyReservationsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Number(searchParams.get('page') ?? '1')
 
   usePaymentResult()
+
+  const paymentsEnabled = usePaymentsEnabled()
 
   const { data, isError, isFetching } = useMyReservations(page)
   const cancelReservation = useCancelReservation()
@@ -160,7 +168,7 @@ export default function MyReservationsPage() {
                   )}
 
                   <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-4">
-                    {reservation.status === 'confirmed' && !reservation.is_paid && (
+                    {paymentsEnabled && reservation.status === 'confirmed' && !reservation.is_paid && (
                       <Button
                         size="sm"
                         icon={<CreditCard className="size-4" />}

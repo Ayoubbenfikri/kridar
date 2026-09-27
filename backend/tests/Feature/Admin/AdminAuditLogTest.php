@@ -127,6 +127,13 @@ class AdminAuditLogTest extends TestCase
             SettingService::LISTING_FEE => 20,
             SettingService::COMMISSION_RATE => 15,
             SettingService::PAYPAL_RATE => 10.80,
+            // Phase 29 (monetization overhaul) — UpdateSettingsRequest
+            // requires every setting in one PUT, not just the three this
+            // test originally cared about. Values are arbitrary; this
+            // test is about the audit log, not these numbers.
+            SettingService::PHONE_REVEAL_FEE => 5,
+            SettingService::MESSAGING_PACK_7D_FEE => 15,
+            SettingService::MESSAGING_PACK_15D_FEE => 25,
         ])->assertOk();
 
         $log = $this->lastLog();

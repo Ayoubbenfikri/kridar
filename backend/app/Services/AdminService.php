@@ -7,7 +7,6 @@ use App\Enums\PaymentStatus;
 use App\Enums\PaymentType;
 use App\Enums\PropertyStatus;
 use App\Enums\PublicationStatus;
-use App\Enums\RentalType;
 use App\Enums\ReservationStatus;
 use App\Enums\UserStatus;
 use App\Exceptions\AdminActionNotAllowedException;
@@ -320,12 +319,15 @@ class AdminService
             // from the PROPERTY, not from payment rows: a listing whose
             // owner never even started a payment has no payment row at
             // all, and it still owes the fee.
+            //
+            // Phase 29: no longer restricted to long-term/both — any
+            // rental_type can be an owner's paid "additional listing"
+            // now. A null publication_status is a pre-Phase-29 row that
+            // never owed anything (grandfathered free), so it is
+            // deliberately NOT counted here — only PendingPayment is an
+            // actual unpaid fee.
             'unpaid_publications_count' => Property::query()
-                ->whereIn('rental_type', [RentalType::LongTerm->value, RentalType::Both->value])
-                ->where(function ($query) {
-                    $query->whereNull('publication_status')
-                        ->orWhere('publication_status', '!=', PublicationStatus::Paid);
-                })
+                ->where('publication_status', PublicationStatus::PendingPayment)
                 ->count(),
 
             // Phase 26 — the queue. Listings waiting on a human decision

@@ -9,9 +9,12 @@ use App\Enums\PropertyStatus;
 use App\Enums\PublicationStatus;
 use App\Enums\ReservationStatus;
 use App\Exceptions\PaymentNotAllowedException;
+use App\Models\MessagingPass;
 use App\Models\Payment;
+use App\Models\PhoneReveal;
 use App\Models\Property;
 use App\Models\Reservation;
+use App\Models\User;
 use App\Repositories\Contracts\PaymentRepositoryInterface;
 use App\Repositories\Contracts\PropertyRepositoryInterface;
 use App\Services\Gateways\PaymentGatewayInterface;
@@ -43,6 +46,27 @@ class PaymentService
     ) {}
 
     /**
+     * Refuse to start any payment while Kridar is free (Phase 28).
+     *
+     * The frontend already hides every pay button in free mode, which is
+     * exactly why this exists: a hidden button is not a rule. A stale tab,
+     * a bookmarked URL or curl can still POST to the payment endpoints,
+     * and without this they would happily create a payment row — and for
+     * a publication fee, publish the listing as a side effect.
+     *
+     * 409 rather than 404: the endpoint exists and will work again; it is
+     * the current state of the platform that makes the request invalid.
+     */
+    private function ensurePaymentsAreEnabled(): void
+    {
+        if (! config('payments.enabled')) {
+            throw new PaymentNotAllowedException(
+                'Kridar is free at the moment — there is nothing to pay.'
+            );
+        }
+    }
+
+    /**
      * Start a payment for a reservation. Who is ALLOWED to call this
      * (must be the reservation's own guest) is checked by
      * ReservationPolicy::initiatePayment() at the controller level — this
@@ -52,6 +76,8 @@ class PaymentService
      */
     public function initiate(Reservation $reservation): array
     {
+        $this->ensurePaymentsAreEnabled();
+
         if ($reservation->status !== ReservationStatus::Confirmed) {
             throw new PaymentNotAllowedException(
                 'This reservation must be confirmed by the owner before it can be paid.'
@@ -83,7 +109,9 @@ class PaymentService
     }
 
     /**
-     * The long-term listing publication fee.
+     * The fee for an ADDITIONAL listing (Phase 29 — the owner's first
+     * one is always free, whatever its rental_type; see
+     * PropertyService::create()).
      *
      * Who is allowed to call this (the owner, or an admin) is checked by
      * PropertyPolicy::update() at the controller level. This method only
@@ -101,11 +129,7 @@ class PaymentService
      */
     public function initiateListingPublication(Property $property): array
     {
-        if (! $property->requiresPublicationFee()) {
-            throw new PaymentNotAllowedException(
-                'This listing is short-term only — it has no publication fee to pay.'
-            );
-        }
+        $this->ensurePaymentsAreEnabled();
 
         if ($property->publicationFeePaid()) {
             throw new PaymentNotAllowedException(
@@ -138,6 +162,109 @@ class PaymentService
 
         $this->properties->update($property, [
             'publication_status' => PublicationStatus::PendingPayment,
+        ]);
+
+        $gatewayData = $this->gateway->initiate($payment);
+        $payment = $this->persistGatewayData($payment, $gatewayData);
+
+        return [
+            'payment' => $payment,
+            'redirect_url' => $gatewayData['redirect_url'],
+        ];
+    }
+
+    /**
+     * Phase 29 — pay once to reveal one owner's phone number on one
+     * listing. Completely independent of messaging credits: a user out
+     * of free contacts can still reveal a number, and this never touches
+     * free_contacts_remaining.
+     *
+     * @return array{payment: Payment, redirect_url: string}
+     */
+    public function initiatePhoneReveal(Property $property, User $user): array
+    {
+        $this->ensurePaymentsAreEnabled();
+
+        // Loaded explicitly rather than trusted from the caller: this is
+        // the one place that decides whether there is anything to reveal
+        // at all, and it must not silently say "no" just because nobody
+        // eager-loaded the owner columns before calling in.
+        $property->loadMissing('owner:id,phone,show_phone_on_listings');
+
+        if (! $property->listsOwnerPhone()) {
+            throw new PaymentNotAllowedException(
+                'This listing does not publish a phone number.'
+            );
+        }
+
+        if ($property->owner_id === $user->id) {
+            throw new PaymentNotAllowedException(
+                'You cannot pay to reveal your own phone number.'
+            );
+        }
+
+        if (PhoneReveal::query()->where('user_id', $user->id)->where('property_id', $property->id)->exists()) {
+            throw new PaymentNotAllowedException(
+                'You have already unlocked this phone number.'
+            );
+        }
+
+        $fee = $this->settings->phoneRevealFee();
+
+        $payment = $this->payments->create([
+            'type' => PaymentType::PhoneReveal,
+            'property_id' => $property->id,
+            'user_id' => $user->id,
+            'amount' => $fee,
+            'currency' => $property->currency ?? 'MAD',
+            'provider' => $this->currentProvider(),
+            'status' => PaymentStatus::Pending,
+        ]);
+
+        $gatewayData = $this->gateway->initiate($payment);
+        $payment = $this->persistGatewayData($payment, $gatewayData);
+
+        return [
+            'payment' => $payment,
+            'redirect_url' => $gatewayData['redirect_url'],
+        ];
+    }
+
+    /**
+     * Phase 29 — a 7 or 15 day unlimited messaging pass, bought once the
+     * 5 free contacts run out. See MessagingPass for why the row is
+     * created here, upfront, rather than in handleCallback().
+     *
+     * @param  '7d'|'15d'  $duration
+     * @return array{payment: Payment, redirect_url: string}
+     */
+    public function initiateMessagingPack(User $user, string $duration): array
+    {
+        $this->ensurePaymentsAreEnabled();
+
+        $days = match ($duration) {
+            '7d' => 7,
+            '15d' => 15,
+            default => throw new PaymentNotAllowedException('Unknown messaging pack duration.'),
+        };
+
+        $fee = $this->settings->messagingPackFee($duration);
+
+        $payment = $this->payments->create([
+            'type' => PaymentType::MessagingPack,
+            'user_id' => $user->id,
+            'amount' => $fee,
+            'currency' => 'MAD',
+            'provider' => $this->currentProvider(),
+            'status' => PaymentStatus::Pending,
+        ]);
+
+        // duration_days is fixed now; starts_at/expires_at stay null until
+        // handleCallback() confirms this payment actually went through.
+        MessagingPass::create([
+            'user_id' => $user->id,
+            'payment_id' => $payment->id,
+            'duration_days' => $days,
         ]);
 
         $gatewayData = $this->gateway->initiate($payment);
@@ -186,6 +313,14 @@ class PaymentService
 
         if ($payment->isListingPublication() && $payment->property !== null) {
             $this->markPublicationPaid($payment->property);
+        }
+
+        if ($payment->isPhoneReveal() && $payment->property !== null) {
+            $this->grantPhoneReveal($payment);
+        }
+
+        if ($payment->isMessagingPack()) {
+            $this->grantMessagingPack($payment);
         }
 
         return $payment;
@@ -266,5 +401,43 @@ class PaymentService
         }
 
         $this->properties->update($property, $attributes);
+    }
+
+    /**
+     * Phase 29 — the phone-reveal payment settled: record that this user
+     * may now see this owner's number.
+     *
+     * firstOrCreate rather than create(): handleCallback() already
+     * refuses to re-process an already-Paid payment (see the top of that
+     * method), but this is the second, cheap lock — the unique
+     * (user_id, property_id) constraint means a duplicate call can never
+     * produce two rows even if this were somehow reached twice.
+     */
+    private function grantPhoneReveal(Payment $payment): void
+    {
+        PhoneReveal::firstOrCreate(
+            ['user_id' => $payment->user_id, 'property_id' => $payment->property_id],
+            ['payment_id' => $payment->id],
+        );
+    }
+
+    /**
+     * Phase 29 — the messaging-pack payment settled: start its clock. The
+     * MessagingPass row already exists (created in initiateMessagingPack,
+     * with duration_days but no dates yet) — this fills in starts_at/
+     * expires_at exactly once. The `starts_at === null` guard is what
+     * makes a second callback for the same payment a no-op instead of
+     * pushing the expiry further out.
+     */
+    private function grantMessagingPack(Payment $payment): void
+    {
+        $pass = MessagingPass::query()->where('payment_id', $payment->id)->first();
+
+        if ($pass !== null && $pass->starts_at === null) {
+            $pass->update([
+                'starts_at' => now(),
+                'expires_at' => now()->addDays($pass->duration_days),
+            ]);
+        }
     }
 }

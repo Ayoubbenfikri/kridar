@@ -52,7 +52,29 @@ class PricingService
         $unitPrice = (float) $property->price_per_night;
         $nights = $startDate->diffInDays($endDate);
 
-        return $this->split($unitPrice, $nights, $this->settings->commissionRate());
+        return $this->split($unitPrice, $nights, $this->currentCommissionRate());
+    }
+
+    /**
+     * Kridar's cut of a short-term booking, right now.
+     *
+     * Phase 28: zero while the platform is free, whatever the admin has
+     * left in the settings table. That matters more than it looks — the
+     * rate is SNAPSHOTTED onto every reservation (see ReservationService),
+     * so returning the stored 10% here would write a commission Kridar
+     * never collects onto real bookings, and the owner's payout figure in
+     * their dashboard would understate what they are actually owed.
+     *
+     * The stored setting is deliberately left untouched: when payments
+     * come back on, the rate the admin configured is still there.
+     */
+    private function currentCommissionRate(): float
+    {
+        if (! config('payments.enabled')) {
+            return 0.0;
+        }
+
+        return $this->settings->commissionRate();
     }
 
     /**

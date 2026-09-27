@@ -42,11 +42,11 @@ export const ary: TranslationSchema = {
     myReservations: 'الحجوزات ديالي',
     ownerSpace: 'فضاء الملّاك',
     admin: 'الإدارة',
-    favorites: 'المفضّلة ',
+    favorites: 'المفضّلة ديالي',
     account: 'الحساب ديالي',
     settings: 'الإعدادات',
     logout: 'خروج',
-    loggingOut: 'خروج...',
+    loggingOut: 'كنخرجو...',
     login: 'دخول',
     register: 'دير حساب',
     openMenu: 'حلّ القائمة',
@@ -62,17 +62,52 @@ export const ary: TranslationSchema = {
     explore: 'تصفّح',
     allProperties: 'گاع الديور',
     mySpace: 'الفضاء ديالي',
+    support: 'عاون Kridar',
     rights: '© {{year}} Kridar. گاع الحقوق محفوظة.',
   },
 
+  free: {
+    badge: 'بلا فلوس',
+    publishFree: 'النشر بلا فلوس',
+    noCommission: 'Kridar ما كتاخدش حتى عمولة.',
+    ownerNotice:
+      'Kridar دابا بلا فلوس: نشر الإعلان ما كيكلّفش شي حاجة، وما كناخدو حتى عمولة على الكراء ديالك.',
+  },
+
+  support: {
+    title: 'عاون Kridar',
+    intro:
+      'Kridar بلا فلوس، وغادي يبقى هكاك حتى نفهم شنو محتاج السوق بجدّ. ماكاين لا مستثمر لا ميزانية: غير مطوّر واحد فمراكش.',
+    whyTitle: 'علاش كنطلب المعاونة',
+    whyText:
+      'السيت عندو مصاريف كل شهر، حتى ملي حتى واحد ما كيخلّص. شي معاونة كتخلّي المنصة أونلاين وبلا فلوس مدة أطول.',
+    costsTitle: 'فين كتمشي الفلوس',
+    costsText: 'الهيبرجمون، اسم النطاق، الإيميلات، وتخزين التصاور.',
+    donateButton: 'عاون',
+    paypalTitle: 'PayPal',
+    paypalText:
+      'ختار شحال بغيتي، والخلاص كيتم فـ PayPal. Kridar عمرو ما كيشوف المعلومات البنكية ديالك.',
+    otherAmount: 'مبلغ آخر',
+    bankTitle: 'تحويل بنكي',
+    cryptoTitle: 'كريبتو',
+    contactTitle: 'طرق أخرى للمعاونة',
+    contactText: 'الوقت، ترجمة، بلاغ على شي مشكل، ولا هيبرجمون مجاني — كيسوى بحال الفلوس.',
+    copy: 'كوپي',
+    copied: 'تكوپيا',
+    noMethodsTitle: 'مازال ماكاين تا شي حاجة',
+    noMethodsText:
+      'مازال ما تسجّلت تا طريقة للمعاونة. شكراً حتى هكاك — تستعمل Kridar وتهضر عليه راه كيعاون بزاف.',
+    thanks: 'شكراً. بجدّ.',
+  },
+
   common: {
-    close: 'اغلق',
+    close: 'سدّ',
     currency: 'درهم',
     backToHome: 'رجع للرئيسية',
   },
 
   propertyType: {
-    all: 'جميع الأنواع',
+    all: 'گاع الأنواع',
     apartment: 'شقة',
     villa: 'فيلا',
     studio: 'ستوديو',
@@ -83,13 +118,13 @@ export const ary: TranslationSchema = {
   rentalType: {
     short_term: 'قصيرة المدة',
     long_term: 'مديدة المدة',
-    both: 'قصيرة و طويلة',
+    both: 'قصيرة ولا مديدة',
   },
 
   price: {
     perNight: 'فـ الليلة',
     perMonth: 'فـ الشهر',
-    notSet: 'الثمن ممحددش',
+    notSet: 'الثمن ماشي محدّد',
   },
 
   card: {
@@ -102,44 +137,48 @@ export const ary: TranslationSchema = {
   },
 
   search: {
-    destination: 'المكان',
+    destination: 'لفين؟',
     destinationPlaceholder: 'مراكش، الدار البيضاء...',
     propertyType: 'نوع الدار',
     guests: 'شحال ديال الناس',
     guestsPlaceholder: '2',
-    submit: 'ابحث',
+    submit: 'قلّب',
   },
 
   home: {
-    badge: 'كراء قصير وطويل المدة فالمغرب',
+    badge: 'كراء قصير ومديد المدة فالمغرب',
     title: 'لقا الدار الجاية ديالك فالمغرب',
     subtitle:
       'شقق، فيلات ورياضات فمراكش، الدار البيضاء، الرباط وفين ما بغيتي. حجز مباشر مع المالك.',
     latest: 'آخر الديور',
     latestSubtitle: 'الديور لي تنشرو مؤخراً',
-    seeAll: 'شوف كولشي',
+    seeAll: 'شوف گاع',
     seeAllProperties: 'شوف گاع الديور',
     loadError:
-      'load Error',
+      'ما قدرناش نجيبو الديور دابا. تأكد بلي الـ API خدّام (php artisan serve)، من بعد عاود حمّل الصفحة.',
     emptyTitle: 'ماكاين حتى دار منشورة دابا',
     emptyDescription: 'الديور غادي يبانو هنا ملي شي مالك ينشر وحدة.',
     publishCta: 'نشر الدار ديالي',
     ownerTitle: 'عندك شي دار باش تكريها؟',
-    ownerText: 'نشر الإعلان ديالك، دبّر المواعيد والحجوزات من بلاصة وحدة. بلا سمسار.',
+    ownerText: 'نشر الإعلان ديالك، دبّر المواعيد والحجوزات من بلاصة وحدة. بلا وسيط.',
     ownerCta: 'ولّي مالك',
+    supportTitle: 'Kridar بلا فلوس',
+    supportText: 'لا فلوس النشر، لا عمولة. إلا عجبك المشروع، تقدر تعاونو يكبر.',
+    supportCta: 'عاون المشروع',
   },
 
   properties: {
     title: 'گاع الديور',
     available: 'الديور المتاحة: {{n}}',
-    loading: 'loading ...',
+    loading: 'كنجيبو الديور...',
     serverDown: 'السيرفر ما كيجاوبش',
     searchPlaceholder: 'قلّب بالعنوان ولا بالمدينة...',
     searchLabel: 'قلّب',
     filters: 'الفلاتر',
-    removeFilter: 'حيد هاد الفلتر',
-    clearAll: 'مسح كلشي',
-    loadError:'loading ERRor',
+    removeFilter: 'نحّي هاد الفلتر',
+    clearAll: 'مسح گاع',
+    loadError:
+      'ما قدرناش نجيبو الديور. تأكد بلي الـ API خدّام (php artisan serve)، من بعد عاود حمّل الصفحة.',
     emptyTitle: 'ماكاين حتى دار مناسبة',
     emptyDescription: 'جرّب توسّع البحث: فلاتر أقل، ثمن أوسع، ولا مدينة أخرى.',
     clearFilters: 'مسح الفلاتر',
@@ -170,33 +209,33 @@ export const ary: TranslationSchema = {
     amenities: 'التجهيزات',
     amenitiesHint: 'خاص الدار يكونو فيها گاع التجهيزات لي خترتي باش تبان.',
     apply: 'طبّق الفلاتر',
-    reset: 'مسح كلشي',
+    reset: 'مسح گاع',
   },
 
   auth: {
     loginTitle: 'مرحبا بيك من جديد',
     loginSubtitle: 'دخل باش تدبّر الحجوزات ديالك',
     registerTitle: 'دير حساب جديد',
-    registerSubtitle: ' ثواني، وتقدر تحجز',
+    registerSubtitle: 'شي ثواني، وتقدر تحجز',
 
     email: 'الإيميل',
     emailPlaceholder: 'nta@exemple.com',
     password: 'كلمة السر',
     passwordHint: '8 حروف على الأقل',
-    showPassword: 'اضهر كلمة السر',
+    showPassword: 'وري كلمة السر',
     hidePassword: 'خبّي كلمة السر',
 
     fullName: 'الاسم الكامل',
-    namePlaceholder: 'أيوب بنفكري',
+    namePlaceholder: 'أيوب بنفقري',
     phone: 'التيليفون (اختياري)',
     phonePlaceholder: '+212 6 12 34 56 78',
     confirmPassword: 'عاود كلمة السر',
     passwordsDoNotMatch: 'كلمتين السر ماشي بحال بحال.',
 
     login: 'دخول',
-    loggingIn: 'دخول...',
+    loggingIn: 'كندخلو...',
     register: 'دير حساب',
-    registering: 'تسجيل...',
+    registering: 'كنسجلو...',
     noAccount: 'مازال ماعندكش حساب؟',
     haveAccount: 'عندك حساب؟',
   },

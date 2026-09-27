@@ -3,12 +3,14 @@
 namespace App\Services;
 
 use App\Enums\PropertyStatus;
+use App\Enums\PublicationStatus;
 use App\Exceptions\PropertySuspendedException;
 use App\Exceptions\PublicationFeeRequiredException;
 use App\Models\Property;
 use App\Models\User;
 use App\Repositories\Contracts\PropertyRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class PropertyService
@@ -43,7 +45,47 @@ class PropertyService
         $data['status'] = PropertyStatus::Draft; // every listing starts as a draft, see Phase 5 plan
         $data['currency'] = 'MAD';
 
-        $property = $this->properties->create($data);
+        // Phase 29 (monetization) — decide, ONCE, whether THIS listing is
+        // the owner's free one, and insert the property, IN THE SAME
+        // transaction. Locking the owner row is what keeps two parallel
+        // "create a property" requests from both reading
+        // has_used_free_listing as false and both getting a free
+        // listing; doing the insert in the same transaction is what
+        // keeps a failed insert (e.g. a slug collision) from spending the
+        // free slot for a property that was never actually created.
+        //
+        // Deliberately independent of rental_type: every owner's very
+        // first property is free, whatever kind it is; every one after
+        // that owes the fee. This is the only place that flag is ever
+        // set, and it is never unset again (PropertyService has no
+        // "restore the free slot" path) — deleting the free listing
+        // later does not hand out a second one.
+        $property = DB::transaction(function () use ($data, $owner) {
+            $lockedOwner = User::query()->lockForUpdate()->findOrFail($owner->id);
+
+            if ($lockedOwner->has_used_free_listing) {
+                $data['publication_status'] = PublicationStatus::PendingPayment;
+                $data['publication_paid_at'] = null;
+            } else {
+                // Direct assignment + save(), NOT ->update([...]) — the
+                // same reason AdminService sets $user->status directly
+                // instead of $user->update(['status' => ...]):
+                // has_used_free_listing is deliberately absent from
+                // User::$fillable (system-controlled, see that class), so
+                // ->update() would silently no-op on it. That bug shipped
+                // once already (caught by
+                // PublicationFeeTest::test_an_owners_second_listing_owes_the_fee
+                // — every listing was coming back free) and direct
+                // assignment is the fix, not adding the column back to
+                // $fillable, which would let a request body set it too.
+                $lockedOwner->has_used_free_listing = true;
+                $lockedOwner->save();
+                $data['publication_status'] = PublicationStatus::Paid;
+                $data['publication_paid_at'] = now();
+            }
+
+            return $this->properties->create($data);
+        });
 
         if (! empty($amenityIds)) {
             $this->properties->syncAmenities($property, $amenityIds);
@@ -73,19 +115,13 @@ class PropertyService
             $this->properties->syncAmenities($property, $amenityIds);
         }
 
-        // Phase 22 (pricing) — close the back door. Publishing a
-        // short-term listing is free, so without this an owner could
-        // publish as short_term and then edit rental_type to long_term,
-        // landing in paid long-term search for nothing. If the edit
-        // makes the fee owed and it isn't paid, the listing drops back
-        // to draft until it is.
-        if ($property->status === PropertyStatus::Published && $property->isBlockedByPublicationFee()) {
-            $property = $this->properties->update($property, [
-                'status' => PropertyStatus::Draft,
-                'published_at' => null,
-            ]);
-        }
-
+        // Phase 22 had a "back door" here: publish as short-term (free),
+        // then edit rental_type to long-term to reach paid search for
+        // nothing. Phase 29 removes it instead of patching it further —
+        // the fee no longer depends on rental_type at all (it is decided
+        // once, per OWNER, at Property::create() time), so editing
+        // rental_type on an already-published, already-paid-for listing
+        // has nothing left to dodge.
         return $property->load(['amenities', 'images']);
     }
 

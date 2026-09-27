@@ -7,6 +7,7 @@ import HomePage from '@/pages/HomePage'
 import LoginPage from '@/pages/LoginPage'
 import RegisterPage from '@/pages/RegisterPage'
 import PropertiesPage from '@/pages/PropertiesPage'
+import SupportPage from '@/pages/SupportPage'
 import PropertyDetailsPage from '@/pages/PropertyDetailsPage'
 import LeaveReviewPage from '@/pages/LeaveReviewPage'
 import OwnerReplyPage from '@/pages/OwnerReplyPage'
@@ -46,6 +47,9 @@ export const router = createBrowserRouter([
       { path: 'properties', element: <PropertiesPage /> },
       { path: 'ui', element: <UiKitPage /> },
       { path: 'properties/:id', element: <PropertyDetailsPage /> },
+      // Public (Phase 28): anyone can support the project, and the page
+      // works with no account and no payment method configured.
+      { path: 'support', element: <SupportPage /> },
       {
         element: <ProtectedRoute />,
         children: [
