@@ -40,7 +40,7 @@ export const fr = {
   nav: {
     home: 'Accueil',
     properties: 'Propriétés',
-    myReservations: 'Mes réservations',
+    myReservations: 'réservations',
     ownerSpace: 'Espace propriétaire',
     admin: 'Administration',
     favorites: 'Mes favoris',

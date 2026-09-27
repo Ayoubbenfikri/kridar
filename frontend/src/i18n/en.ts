@@ -20,10 +20,10 @@ export const en: TranslationSchema = {
   nav: {
     home: 'Home',
     properties: 'Properties',
-    myReservations: 'My bookings',
+    myReservations: 'bookings',
     ownerSpace: 'Owner space',
     admin: 'Administration',
-    favorites: 'My favourites',
+    favorites: 'favourites',
     account: 'My account',
     settings: 'Settings',
     logout: 'Log out',
