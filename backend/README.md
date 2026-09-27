@@ -1,6 +1,6 @@
-# Kridar — Backend
+# Krihouse — Backend
 
-Laravel 12 JSON API for Kridar (see `/kridar-architecture.md` at the project root for the full architecture, database schema and roadmap).
+Laravel 12 JSON API for Krihouse (see `/kridar-architecture.md` at the project root for the full architecture, database schema and roadmap).
 
 **Phase 2 status:** project initialized — Laravel skeleton, Sanctum wired for SPA (cookie) auth, CORS configured for the React dev server, and the folder structure (`Repositories`, `Services`, `Enums`, `Policies`, ...) is in place. No business logic yet — that starts in Phase 3 (migrations, models, factories, seeders).
 
@@ -37,13 +37,13 @@ php artisan serve
 This starts the API at **http://localhost:8000**. Visiting it in a browser should show:
 
 ```json
-{"app":"Kridar","status":"Kridar API is running."}
+{"app":"Krihouse","status":"Krihouse API is running."}
 ```
 
 And to confirm the `/api/v1` routing works, visit **http://localhost:8000/api/v1/ping** — you should see:
 
 ```json
-{"status":"ok","app":"Kridar"}
+{"status":"ok","app":"Krihouse"}
 ```
 
 ## What's already configured

@@ -22,7 +22,7 @@ export default function SiteFooter() {
               <span className="flex size-8 items-center justify-center rounded-[9px] bg-brand-600 text-white">
                 <KeyRound className="size-4" aria-hidden />
               </span>
-              Kridar
+              Krihouse
             </div>
             <p className="mt-3 text-sm text-gray-500">{t('footer.tagline')}</p>
           </div>

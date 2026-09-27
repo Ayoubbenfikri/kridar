@@ -44,22 +44,22 @@ export const en: TranslationSchema = {
     explore: 'Explore',
     allProperties: 'All properties',
     mySpace: 'My space',
-    support: 'Support Kridar',
-    rights: '© {{year}} Kridar. All rights reserved.',
+    support: 'Support Krihouse',
+    rights: '© {{year}} Krihouse. All rights reserved.',
   },
 
   free: {
     badge: 'Free',
     publishFree: 'Publishing is free',
-    noCommission: 'Kridar takes no commission.',
+    noCommission: 'Krihouse takes no commission.',
     ownerNotice:
-      'Kridar is free for now: listing a property costs nothing, and no commission is taken from your rentals.',
+      'Krihouse is free for now: listing a property costs nothing, and no commission is taken from your rentals.',
   },
 
   support: {
-    title: 'Support Kridar',
+    title: 'Support Krihouse',
     intro:
-      'Kridar is free, and it stays that way while I work out what the market actually needs. There is no investor and no budget behind it — just one developer in Marrakech.',
+      'Krihouse is free, and it stays that way while I work out what the market actually needs. There is no investor and no budget behind it — just one developer in Marrakech.',
     whyTitle: 'Why I am asking',
     whyText:
       'A site has bills every month even when nobody pays to use it. A hand keeps the platform online and free for longer.',
@@ -68,7 +68,7 @@ export const en: TranslationSchema = {
     donateButton: 'Donate',
     paypalTitle: 'PayPal',
     paypalText:
-      'Pick an amount and pay on PayPal. Kridar never sees your card or your PayPal login.',
+      'Pick an amount and pay on PayPal. Krihouse never sees your card or your PayPal login.',
     otherAmount: 'Another amount',
     bankTitle: 'Bank transfer',
     cryptoTitle: 'Crypto',
@@ -79,7 +79,7 @@ export const en: TranslationSchema = {
     copied: 'Copied',
     noMethodsTitle: 'Nothing set up yet',
     noMethodsText:
-      'No support method has been configured yet. Thanks for looking anyway — using Kridar and telling people about it already helps.',
+      'No support method has been configured yet. Thanks for looking anyway — using Krihouse and telling people about it already helps.',
     thanks: 'Thank you. Really.',
   },
 
@@ -146,7 +146,7 @@ export const en: TranslationSchema = {
     ownerText:
       'Publish your listing, manage your availability and your bookings from one place. No middleman.',
     ownerCta: 'Become an owner',
-    supportTitle: 'Kridar is free',
+    supportTitle: 'Krihouse is free',
     supportText:
       'No listing fee, no commission. If you like the project, you can help it grow.',
     supportCta: 'Support the project',

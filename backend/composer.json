@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "kridar/backend",
+    "name": "krihouse/backend",
     "type": "project",
-    "description": "Kridar API backend (Laravel 12).",
-    "keywords": ["laravel", "kridar", "api"],
+    "description": "Krihouse API backend (Laravel 12).",
+    "keywords": ["laravel", "krihouse", "api"],
     "license": "MIT",
     "require": {
         "php": "^8.2",

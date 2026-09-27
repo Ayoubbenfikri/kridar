@@ -138,7 +138,7 @@ export default function Navbar() {
             <span className="flex size-8 items-center justify-center rounded-[9px] bg-brand-600 text-white">
               <KeyRound className="size-4" aria-hidden />
             </span>
-            Kridar
+            Krihouse
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex">

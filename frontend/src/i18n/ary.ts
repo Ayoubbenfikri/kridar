@@ -62,22 +62,22 @@ export const ary: TranslationSchema = {
     explore: 'تصفّح',
     allProperties: 'گاع الديور',
     mySpace: 'الفضاء ديالي',
-    support: 'عاون Kridar',
-    rights: '© {{year}} Kridar. گاع الحقوق محفوظة.',
+    support: 'عاون Krihouse',
+    rights: '© {{year}} Krihouse. گاع الحقوق محفوظة.',
   },
 
   free: {
     badge: 'بلا فلوس',
     publishFree: 'النشر بلا فلوس',
-    noCommission: 'Kridar ما كتاخدش حتى عمولة.',
+    noCommission: 'Krihouse ما كتاخدش حتى عمولة.',
     ownerNotice:
-      'Kridar دابا بلا فلوس: نشر الإعلان ما كيكلّفش شي حاجة، وما كناخدو حتى عمولة على الكراء ديالك.',
+      'Krihouse دابا بلا فلوس: نشر الإعلان ما كيكلّفش شي حاجة، وما كناخدو حتى عمولة على الكراء ديالك.',
   },
 
   support: {
-    title: 'عاون Kridar',
+    title: 'عاون Krihouse',
     intro:
-      'Kridar بلا فلوس، وغادي يبقى هكاك حتى نفهم شنو محتاج السوق بجدّ. ماكاين لا مستثمر لا ميزانية: غير مطوّر واحد فمراكش.',
+      'Krihouse بلا فلوس، وغادي يبقى هكاك حتى نفهم شنو محتاج السوق بجدّ. ماكاين لا مستثمر لا ميزانية: غير مطوّر واحد فمراكش.',
     whyTitle: 'علاش كنطلب المعاونة',
     whyText:
       'السيت عندو مصاريف كل شهر، حتى ملي حتى واحد ما كيخلّص. شي معاونة كتخلّي المنصة أونلاين وبلا فلوس مدة أطول.',
@@ -86,7 +86,7 @@ export const ary: TranslationSchema = {
     donateButton: 'عاون',
     paypalTitle: 'PayPal',
     paypalText:
-      'ختار شحال بغيتي، والخلاص كيتم فـ PayPal. Kridar عمرو ما كيشوف المعلومات البنكية ديالك.',
+      'ختار شحال بغيتي، والخلاص كيتم فـ PayPal. Krihouse عمرو ما كيشوف المعلومات البنكية ديالك.',
     otherAmount: 'مبلغ آخر',
     bankTitle: 'تحويل بنكي',
     cryptoTitle: 'كريبتو',
@@ -96,7 +96,7 @@ export const ary: TranslationSchema = {
     copied: 'تكوپيا',
     noMethodsTitle: 'مازال ماكاين تا شي حاجة',
     noMethodsText:
-      'مازال ما تسجّلت تا طريقة للمعاونة. شكراً حتى هكاك — تستعمل Kridar وتهضر عليه راه كيعاون بزاف.',
+      'مازال ما تسجّلت تا طريقة للمعاونة. شكراً حتى هكاك — تستعمل Krihouse وتهضر عليه راه كيعاون بزاف.',
     thanks: 'شكراً. بجدّ.',
   },
 
@@ -162,7 +162,7 @@ export const ary: TranslationSchema = {
     ownerTitle: 'عندك شي دار باش تكريها؟',
     ownerText: 'نشر الإعلان ديالك، دبّر المواعيد والحجوزات من بلاصة وحدة. بلا وسيط.',
     ownerCta: 'ولّي مالك',
-    supportTitle: 'Kridar بلا فلوس',
+    supportTitle: 'Krihouse بلا فلوس',
     supportText: 'لا فلوس النشر، لا عمولة. إلا عجبك المشروع، تقدر تعاونو يكبر.',
     supportCta: 'عاون المشروع',
   },

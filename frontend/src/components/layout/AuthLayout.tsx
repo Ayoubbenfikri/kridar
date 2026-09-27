@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { KeyRound } from 'lucide-react'
 
 /**
- * Shared frame for /login and /register: one centred card, the Kridar
+ * Shared frame for /login and /register: one centred card, the Krihouse
  * mark, a title and a subtitle. Having it in one place is what keeps
  * the two pages from slowly drifting apart.
  *

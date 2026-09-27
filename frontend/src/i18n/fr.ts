@@ -67,27 +67,27 @@ export const fr = {
     explore: 'Explorer',
     allProperties: 'Toutes les propriétés',
     mySpace: 'Mon espace',
-    support: 'Soutenir Kridar',
-    rights: '© {{year}} Kridar. Tous droits réservés.',
+    support: 'Soutenir Krihouse',
+    rights: '© {{year}} Krihouse. Tous droits réservés.',
   },
 
   /**
    * Free mode (Phase 28). Shown wherever a price used to be, while
    * payments_enabled is false. Said out loud rather than hidden: free is
-   * the strongest argument Kridar has before it has any reviews.
+   * the strongest argument Krihouse has before it has any reviews.
    */
   free: {
     badge: 'Gratuit',
     publishFree: 'Publication gratuite',
-    noCommission: 'Kridar ne prend aucune commission.',
+    noCommission: 'Krihouse ne prend aucune commission.',
     ownerNotice:
-      "Kridar est gratuit pour le moment : publier une annonce ne coûte rien, et aucune commission n'est prélevée sur vos locations.",
+      "Krihouse est gratuit pour le moment : publier une annonce ne coûte rien, et aucune commission n'est prélevée sur vos locations.",
   },
 
   support: {
-    title: 'Soutenir Kridar',
+    title: 'Soutenir Krihouse',
     intro:
-      "Kridar est gratuit, et le restera le temps de comprendre ce dont le marché a vraiment besoin. Il n'y a ni investisseur ni budget derrière : juste un développeur à Marrakech.",
+      "Krihouse est gratuit, et le restera le temps de comprendre ce dont le marché a vraiment besoin. Il n'y a ni investisseur ni budget derrière : juste un développeur à Marrakech.",
     whyTitle: "Pourquoi je demande de l'aide",
     whyText:
       "Un site a des frais qui tombent chaque mois, même quand personne ne paie pour l'utiliser. Un coup de main permet de garder la plateforme en ligne et gratuite plus longtemps.",
@@ -96,7 +96,7 @@ export const fr = {
     donateButton: 'Faire un don',
     paypalTitle: 'PayPal',
     paypalText:
-      'Choisissez un montant, le paiement se fait sur PayPal. Kridar ne voit jamais vos informations bancaires.',
+      'Choisissez un montant, le paiement se fait sur PayPal. Krihouse ne voit jamais vos informations bancaires.',
     otherAmount: 'Un autre montant',
     bankTitle: 'Virement bancaire',
     cryptoTitle: 'Crypto',
@@ -107,13 +107,13 @@ export const fr = {
     copied: 'Copié',
     noMethodsTitle: 'Rien de configuré pour le moment',
     noMethodsText:
-      "Aucun moyen de soutien n'est encore renseigné. Merci quand même d'être passé — utiliser Kridar et en parler aide déjà.",
+      "Aucun moyen de soutien n'est encore renseigné. Merci quand même d'être passé — utiliser Krihouse et en parler aide déjà.",
     thanks: 'Merci. Sincèrement.',
   },
 
   common: {
     close: 'Fermer',
-    /** Appended to every price. Kridar only ever prices in dirhams. */
+    /** Appended to every price. Krihouse only ever prices in dirhams. */
     currency: 'MAD',
     backToHome: "Retour à l'accueil",
   },
@@ -177,7 +177,7 @@ export const fr = {
     ownerText:
       'Publiez votre annonce, gérez vos disponibilités et vos réservations depuis un seul espace. Sans intermédiaire.',
     ownerCta: 'Devenir propriétaire',
-    supportTitle: 'Kridar est gratuit',
+    supportTitle: 'Krihouse est gratuit',
     supportText:
       "Pas de frais de publication, pas de commission. Si le projet vous plaît, vous pouvez l'aider à grandir.",
     supportCta: 'Soutenir le projet',
