@@ -16,6 +16,7 @@ use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -150,7 +151,7 @@ class AuthController extends Controller
      * check below confirms that hash really matches this user's email
      * (same check Laravel's built-in EmailVerificationRequest does).
      */
-    public function verifyEmail(Request $request, int $id, string $hash): JsonResponse
+    public function verifyEmail(Request $request, int $id, string $hash): JsonResponse|RedirectResponse
     {
         $user = User::findOrFail($id);
 
@@ -159,7 +160,7 @@ class AuthController extends Controller
         }
 
         if ($user->hasVerifiedEmail()) {
-            return response()->json(['message' => __('messages.auth.email_already_verified')]);
+            return redirect('/');
         }
 
         $user->markEmailAsVerified();
@@ -183,7 +184,12 @@ class AuthController extends Controller
             $request->session()->regenerate();
         }
 
-        return response()->json(['message' => __('messages.auth.email_verified')]);
+        // This route is only ever hit by a top-level browser navigation
+        // (the link in the verification email) — never called from the
+        // SPA via fetch/axios — so a redirect back to the app is the
+        // right response here, unlike every other endpoint in this
+        // controller.
+        return redirect('/');
     }
 
     public function resendVerificationEmail(Request $request): JsonResponse
