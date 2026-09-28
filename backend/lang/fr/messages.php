@@ -33,6 +33,7 @@ return [
         'invalid_verification_link' => 'Lien de vérification invalide.',
         'profile_updated' => 'Profil mis à jour.',
         'password_updated' => 'Mot de passe mis à jour.',
+        'terms_required' => 'Vous devez accepter les Conditions d\'Utilisation et la Politique de Confidentialité.',
     ],
 
     'admin' => [

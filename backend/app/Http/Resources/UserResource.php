@@ -37,6 +37,15 @@ class UserResource extends JsonResource
             'status' => $this->status,
             'email_verified' => ! is_null($this->email_verified_at),
 
+            // Terms of Use / Privacy Policy. True for an account that
+            // never accepted (terms_version is still null — every account
+            // created before this feature existed) OR whose accepted
+            // version no longer matches config('legal.terms_version')
+            // because the wording changed since. The frontend's
+            // AcceptTermsModal reads this on every /auth/me and blocks
+            // the app until it's false.
+            'needs_terms_acceptance' => $this->terms_version !== config('legal.terms_version'),
+
             // Phase 29 (monetization overhaul) — what the messaging
             // paywall UI needs to know about THIS account, without a
             // second request. Both are read fresh (not cached client

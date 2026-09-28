@@ -45,4 +45,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // localStorage and travels on the Accept-Language header, which is all
     // the backend needs to answer them correctly.
     Route::put('/auth/locale', [AuthController::class, 'updateLocale']);
+
+    // Terms of Use / Privacy Policy re-acceptance. Deliberately NOT behind
+    // any extra gate (no "already accepted?" check here) — calling it
+    // twice is harmless, it just re-stamps the same current version, and
+    // that keeps AcceptTermsModal on the frontend simple (always just
+    // calls this and refetches the user).
+    Route::post('/auth/accept-terms', [AuthController::class, 'acceptTerms']);
 });

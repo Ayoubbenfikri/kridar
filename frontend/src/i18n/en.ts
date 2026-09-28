@@ -46,6 +46,8 @@ export const en: TranslationSchema = {
     mySpace: 'My space',
     support: 'Support Krihouse',
     rights: '© {{year}} Krihouse. All rights reserved.',
+    terms: 'Terms of Use',
+    privacy: 'Privacy Policy',
   },
 
   free: {
@@ -227,5 +229,17 @@ export const en: TranslationSchema = {
     registering: 'Signing up...',
     noAccount: 'No account yet?',
     haveAccount: 'Already have an account?',
+
+    termsAcceptPrefix: 'I have read and accept the',
+    termsOfUse: 'Terms of Use',
+    termsAcceptMiddle: 'and the',
+    privacyPolicy: 'Privacy Policy',
+  },
+
+  legal: {
+    modalTitle: 'Before you continue',
+    modalIntro:
+      'Please read and accept our Terms of Use and Privacy Policy to keep using Krihouse.',
+    modalButton: 'I accept',
   },
 }

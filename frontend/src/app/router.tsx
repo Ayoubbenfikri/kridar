@@ -29,6 +29,8 @@ import AdminUsersPage from '@/pages/AdminUsersPage'
 import AdminPropertiesPage from '@/pages/AdminPropertiesPage'
 import AdminPaymentsPage from '@/pages/AdminPaymentsPage'
 import AdminSettingsPage from '@/pages/AdminSettingsPage'
+import TermsOfUsePage from '@/pages/legal/TermsOfUsePage'
+import PrivacyPolicyPage from '@/pages/legal/PrivacyPolicyPage'
 
 /**
  * Route definitions. AppLayout wraps every page with the Navbar + the
@@ -50,6 +52,11 @@ export const router = createBrowserRouter([
       // Public (Phase 28): anyone can support the project, and the page
       // works with no account and no payment method configured.
       { path: 'support', element: <SupportPage /> },
+      // Public and outside ProtectedRoute on purpose: a visitor filling
+      // in the registration form must be able to open these (RegisterForm
+      // links to them, target="_blank") before they even have an account.
+      { path: 'terms', element: <TermsOfUsePage /> },
+      { path: 'privacy', element: <PrivacyPolicyPage /> },
       {
         element: <ProtectedRoute />,
         children: [

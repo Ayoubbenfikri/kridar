@@ -71,6 +71,15 @@ class AuthController extends Controller
         // must not be able to 500 because APP_LOCALE was edited.
         $user->locale = Locale::tryFrom(app()->getLocale()) ?? Locale::default();
 
+        // Terms of Use / Privacy Policy acceptance. RegisterRequest
+        // already refused the request if the checkbox wasn't checked
+        // ('terms_accepted' => 'accepted'), so reaching this line means
+        // they agreed — what we stamp is WHICH version, and it comes from
+        // config, never from the request body (rule 13: never trust the
+        // frontend for that kind of value).
+        $user->terms_accepted_at = now();
+        $user->terms_version = config('legal.terms_version');
+
         $user->save();
 
         // Firing this event is enough to send the verification email —
@@ -260,6 +269,30 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => __('messages.auth.password_updated'),
+        ]);
+    }
+
+    /**
+     * POST /auth/accept-terms — for an account that either registered
+     * before this feature existed (terms_version is still null) or whose
+     * stored version no longer matches config('legal.terms_version')
+     * because the wording changed since they last agreed. Either way,
+     * UserResource::needs_terms_acceptance told the frontend to show the
+     * blocking modal, and this is what that modal's button calls.
+     *
+     * No request body is read here on purpose — same reasoning as
+     * register(): the version stamped is always the server's current
+     * one, never something the client could send.
+     */
+    public function acceptTerms(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $user->terms_accepted_at = now();
+        $user->terms_version = config('legal.terms_version');
+        $user->save();
+
+        return response()->json([
+            'user' => new UserResource($user->fresh()),
         ]);
     }
 }

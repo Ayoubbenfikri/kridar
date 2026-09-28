@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useAccountLocaleSync } from '@/features/locale/useLocale'
+import AcceptTermsModal from '@/components/legal/AcceptTermsModal'
 import Navbar from './Navbar'
 import SiteFooter from './SiteFooter'
 import VerifyEmailBanner from './VerifyEmailBanner'
@@ -31,6 +32,7 @@ export default function AppLayout() {
     <div className="flex min-h-screen flex-col bg-gray-50">
       <Navbar />
       <VerifyEmailBanner />
+      <AcceptTermsModal />
       {/* key=pathname remounts on navigation, which is what replays the
           entrance animation. */}
       <div key={pathname} className="page-enter flex-1">

@@ -8,6 +8,12 @@ export interface RegisterPayload {
   password: string
   password_confirmation: string
   phone?: string
+  /**
+   * The registration-form checkbox. Backend RegisterRequest requires this
+   * to be exactly `true` (Laravel's 'accepted' rule) - see RegisterForm.
+   * WHICH terms version gets stamped is decided server-side, never here.
+   */
+  terms_accepted: boolean
 }
 
 export interface LoginPayload {
@@ -90,5 +96,15 @@ export async function updatePassword(payload: UpdatePasswordPayload): Promise<{ 
  */
 export async function updateLocale(locale: LocaleCode): Promise<User> {
   const { data } = await axiosClient.put<{ user: User }>('/api/v1/auth/locale', { locale })
+  return data.user
+}
+
+/**
+ * What AcceptTermsModal's button calls. No payload - the version stamped
+ * is always whatever the backend's config('legal.terms_version') is right
+ * now (AuthController::acceptTerms), never something the client picks.
+ */
+export async function acceptTerms(): Promise<User> {
+  const { data } = await axiosClient.post<{ user: User }>('/api/v1/auth/accept-terms')
   return data.user
 }

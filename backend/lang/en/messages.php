@@ -28,6 +28,7 @@ return [
         'invalid_verification_link' => 'Invalid verification link.',
         'profile_updated' => 'Profile updated.',
         'password_updated' => 'Password updated.',
+        'terms_required' => 'You must accept the Terms of Use and Privacy Policy.',
     ],
 
     'admin' => [

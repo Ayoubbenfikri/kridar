@@ -69,6 +69,8 @@ export const fr = {
     mySpace: 'Mon espace',
     support: 'Soutenir Krihouse',
     rights: '© {{year}} Krihouse. Tous droits réservés.',
+    terms: "Conditions d'Utilisation",
+    privacy: 'Politique de Confidentialité',
   },
 
   /**
@@ -259,6 +261,27 @@ export const fr = {
     registering: 'Inscription...',
     noAccount: 'Pas encore de compte ?',
     haveAccount: 'Déjà un compte ?',
+
+    // The registration-form checkbox, built as prefix + two links + middle
+    // word rather than one long string with placeholders - same pattern as
+    // "haveAccount" above (text + a real <Link>, not an interpolated URL).
+    // Reused as-is inside AcceptTermsModal's two reading links.
+    termsAcceptPrefix: "J'ai lu et j'accepte les",
+    termsOfUse: "Conditions d'Utilisation",
+    termsAcceptMiddle: 'et la',
+    privacyPolicy: 'Politique de Confidentialité',
+  },
+
+  // AcceptTermsModal only (frontend/src/components/legal/). The two legal
+  // pages themselves are hardcoded French for now, same as the property
+  // details/account/owner/admin pages - not worth maintaining in three
+  // languages while the wording is still an unreviewed draft (see the
+  // notice banner on TermsOfUsePage/PrivacyPolicyPage).
+  legal: {
+    modalTitle: 'Avant de continuer',
+    modalIntro:
+      "Merci de lire et d'accepter nos Conditions d'Utilisation et notre Politique de Confidentialité pour continuer à utiliser Krihouse.",
+    modalButton: "J'accepte",
   },
 }
 

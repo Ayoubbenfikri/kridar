@@ -33,6 +33,7 @@ return [
         'invalid_verification_link' => 'رابط التأكيد ماشي صالح.',
         'profile_updated' => 'البروفيل تبدّل.',
         'password_updated' => 'كلمة السر تبدّلت.',
+        'terms_required' => 'خاصك تقبل شروط الاستعمال وسياسة الخصوصية.',
     ],
 
     'admin' => [

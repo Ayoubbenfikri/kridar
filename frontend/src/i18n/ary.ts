@@ -64,6 +64,8 @@ export const ary: TranslationSchema = {
     mySpace: 'الفضاء ديالي',
     support: 'عاون Krihouse',
     rights: '© {{year}} Krihouse. گاع الحقوق محفوظة.',
+    terms: 'شروط الاستعمال',
+    privacy: 'سياسة الخصوصية',
   },
 
   free: {
@@ -241,5 +243,16 @@ export const ary: TranslationSchema = {
     registering: 'كنسجلو...',
     noAccount: 'مازال ماعندكش حساب؟',
     haveAccount: 'عندك حساب؟',
+
+    termsAcceptPrefix: 'قريت وقبلت',
+    termsOfUse: 'شروط الاستعمال',
+    termsAcceptMiddle: 'و',
+    privacyPolicy: 'سياسة الخصوصية',
+  },
+
+  legal: {
+    modalTitle: 'قبل ما تكمل',
+    modalIntro: 'خاصك تقرا وتقبل شروط الاستعمال وسياسة الخصوصية ديالنا باش تكمل تستعمل Krihouse.',
+    modalButton: 'قبلت',
   },
 }

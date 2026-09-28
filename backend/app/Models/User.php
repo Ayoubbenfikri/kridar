@@ -43,6 +43,12 @@ class User extends Authenticatable implements MustVerifyEmailContract
      *   - free_contacts_remaining  only MessagingCreditsService writes it
      *   - has_used_free_listing   only PropertyService::create() writes it
      *
+     * Terms of Use / Privacy Policy acceptance added two more, same
+     * reasoning — a request body must never be able to fake an
+     * acceptance:
+     *   - terms_accepted_at  only AuthController::register()/acceptTerms()
+     *   - terms_version      write these
+     *
      * Factories are unaffected: Eloquent factories build models inside
      * Model::unguarded(), so UserFactory's role/status defaults and its
      * admin() state keep working.
@@ -87,6 +93,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
         return [
             'email_verified_at' => 'datetime',
             'owner_verified_at' => 'datetime',
+            'terms_accepted_at' => 'datetime',
             'password' => 'hashed',
             'show_phone_on_listings' => 'boolean',
             'role' => UserRole::class,

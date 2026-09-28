@@ -62,9 +62,17 @@ export default function SiteFooter() {
           </nav>
         </div>
 
-        <p className="mt-8 border-t border-gray-100 pt-6 text-xs text-gray-400">
-          {t('footer.rights', { year: new Date().getFullYear() })}
-        </p>
+        <div className="mt-8 flex flex-col gap-3 border-t border-gray-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-gray-400">{t('footer.rights', { year: new Date().getFullYear() })}</p>
+          <nav className="flex items-center gap-4 text-xs text-gray-400">
+            <Link to="/terms" className="transition hover:text-brand-600">
+              {t('footer.terms')}
+            </Link>
+            <Link to="/privacy" className="transition hover:text-brand-600">
+              {t('footer.privacy')}
+            </Link>
+          </nav>
+        </div>
       </div>
     </footer>
   )

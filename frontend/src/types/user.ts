@@ -34,6 +34,16 @@ export interface User {
   email_verified: boolean
 
   /**
+   * Terms of Use / Privacy Policy. True means the blocking
+   * AcceptTermsModal must show - either this account never accepted at
+   * all (registered before this feature existed) or the wording changed
+   * since it last accepted. A brand-new registration always accepts the
+   * current version as part of signing up, so this is false immediately
+   * after RegisterForm succeeds.
+   */
+  needs_terms_acceptance: boolean
+
+  /**
    * Messaging paywall (Phase 29). Starts at 5, spent one at a time by
    * starting a genuinely NEW conversation — replying is always free, so
    * this only ever goes down on the FIRST message to a given owner.

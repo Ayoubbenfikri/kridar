@@ -76,6 +76,18 @@ export function useAuth() {
     },
   })
 
+  /**
+   * AcceptTermsModal's button. Same reseed-the-cache pattern as every
+   * other mutation here - the response's needs_terms_acceptance is what
+   * makes the modal unmount right after this resolves, no extra state.
+   */
+  const acceptTermsMutation = useMutation({
+    mutationFn: authApi.acceptTerms,
+    onSuccess: (user) => {
+      queryClient.setQueryData(ME_QUERY_KEY, user)
+    },
+  })
+
   // A 401 on GET /auth/me just means "nobody is logged in" - that's an
   // expected, normal state, not something to show as an error.
   const isUnauthenticated = isAxiosError(meQuery.error) && meQuery.error.response?.status === 401
@@ -92,5 +104,6 @@ export function useAuth() {
     updateProfile: updateProfileMutation,
     updatePassword: updatePasswordMutation,
     updateLocale: updateLocaleMutation,
+    acceptTerms: acceptTermsMutation,
   }
 }
