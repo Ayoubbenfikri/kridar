@@ -1,6 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { AlertCircle, Banknote, Building2, MapPin, Sparkles, Users } from 'lucide-react'
 import { useAmenities } from '@/features/amenities/useAmenities'
+import LocationPicker from '@/components/map/LocationPicker'
 import { Button, Card, Input, Select, Skeleton, Textarea } from '@/components/ui'
 import type { PropertyFormPayload } from '@/features/properties/propertiesApi'
 import type { ValidationErrors } from '@/lib/apiErrors'
@@ -92,6 +93,16 @@ function formStateFromProperty(property: Property): FormState {
 
 function toOptionalNumber(value: string): number | undefined {
   return value.trim() === '' ? undefined : Number(value)
+}
+
+/** Same rule as toOptionalNumber, but returns null (not undefined) for
+ * LocationPicker - it needs a real "no position yet" value to fall back
+ * to its default map center, not "field omitted". */
+function toOptionalCoordinate(value: string): number | null {
+  const trimmed = value.trim()
+  if (trimmed === '') return null
+  const parsed = Number(trimmed)
+  return Number.isNaN(parsed) ? null : parsed
 }
 
 function buildPayload(form: FormState): PropertyFormPayload {
@@ -292,23 +303,40 @@ export default function PropertyForm({
             error={fieldError('region')}
           />
 
-          <Input
-            label="Latitude (optionnel)"
-            type="number"
-            step="any"
-            value={form.latitude}
-            onChange={(event) => update('latitude', event.target.value)}
-            error={fieldError('latitude')}
-          />
-
-          <Input
-            label="Longitude (optionnel)"
-            type="number"
-            step="any"
-            value={form.longitude}
-            onChange={(event) => update('longitude', event.target.value)}
-            error={fieldError('longitude')}
-          />
+          <div className="sm:col-span-2 space-y-2">
+            <span className="block text-sm font-semibold text-gray-900">
+              Position sur la carte (optionnel)
+            </span>
+            <LocationPicker
+              // Forces a fresh Leaflet map instance whenever this form is
+              // showing a different property (e.g. PropertyCreatePage
+              // redirects straight into PropertyEditPage for the property
+              // it just created, without a full page reload) - see the
+              // note in LocationPicker.tsx for why this is necessary.
+              key={initialProperty?.id ?? 'new'}
+              latitude={toOptionalCoordinate(form.latitude)}
+              longitude={toOptionalCoordinate(form.longitude)}
+              onChange={(lat, lng) => {
+                update('latitude', String(lat))
+                update('longitude', String(lng))
+              }}
+            />
+            <p className="text-xs text-gray-500">
+              Cliquez sur la carte ou deplacez le repere pour definir la position exacte du bien.
+              {form.latitude && form.longitude && (
+                <>
+                  {' '}
+                  Position actuelle : {Number(form.latitude).toFixed(5)}, {Number(form.longitude).toFixed(5)}
+                </>
+              )}
+            </p>
+            {(fieldError('latitude') || fieldError('longitude')) && (
+              <p className="flex items-center gap-1.5 text-xs text-red-600">
+                <AlertCircle className="size-3.5 shrink-0" aria-hidden />
+                {fieldError('latitude') ?? fieldError('longitude')}
+              </p>
+            )}
+          </div>
         </div>
       </Section>
 

@@ -178,6 +178,9 @@ export const en: TranslationSchema = {
     chipBathrooms: '{{n}}+ bathrooms',
     chipGuests: '{{n}}+ guests',
     chipAmenity: 'Amenity {{id}}',
+    viewList: 'List',
+    viewMap: 'Map',
+    mapLoading: 'Loading map...',
   },
 
   filters: {

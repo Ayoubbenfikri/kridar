@@ -8,13 +8,18 @@ import type { FetchPropertiesParams, PropertyFormPayload } from './propertiesApi
  * page stays visible (slightly dimmed by isFetching in the UI) until
  * the new one is ready.
  */
-export function useProperties(params: FetchPropertiesParams = {}) {
+export function useProperties(params: FetchPropertiesParams = {}, options?: { enabled?: boolean }) {
   return useQuery({
     // The params object IS the cache key, so two different searches are
     // two different cache entries and never overwrite each other.
     queryKey: ['properties', params],
     queryFn: () => propertiesApi.fetchProperties(params),
     placeholderData: keepPreviousData,
+    // Sub-phase #3 (map view): PropertiesPage uses this to skip fetching
+    // the up-to-50-results map query entirely while the grid view is
+    // showing - undefined (every existing caller) behaves as enabled,
+    // same as omitting the option, so this is backward compatible.
+    enabled: options?.enabled,
   })
 }
 

@@ -210,6 +210,9 @@ export const fr = {
     chipBathrooms: '{{n}}+ sdb',
     chipGuests: '{{n}}+ voyageurs',
     chipAmenity: 'Équipement {{id}}',
+    viewList: 'Liste',
+    viewMap: 'Carte',
+    mapLoading: 'Chargement de la carte...',
   },
 
   filters: {

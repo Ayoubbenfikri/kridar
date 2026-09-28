@@ -26,6 +26,7 @@ import ReviewsSection from '@/components/reviews/ReviewsSection'
 import FavoriteButton from '@/components/properties/FavoriteButton'
 import ContactOwnerCard from '@/components/properties/ContactOwnerCard'
 import BookingPanel from '@/components/reservations/BookingPanel'
+import PropertyLocationMap from '@/components/map/PropertyLocationMap'
 import { Button, Card, EmptyState, Skeleton, buttonClasses } from '@/components/ui'
 import type { Property, PropertyType, RentalType } from '@/types/property'
 
@@ -210,6 +211,14 @@ export default function PropertyDetailsPage() {
   const images = property.images
   const cover = images[activeImage] ?? images[0] ?? null
 
+  // Decimal-cast fields come back from the backend as strings (see
+  // types/property.ts) - both must be present (a property can be saved
+  // with no location at all, they're nullable) before the map is worth
+  // showing.
+  const latitude = property.latitude !== null ? Number(property.latitude) : null
+  const longitude = property.longitude !== null ? Number(property.longitude) : null
+  const hasLocation = latitude !== null && longitude !== null && !Number.isNaN(latitude) && !Number.isNaN(longitude)
+
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
       <Link
@@ -332,6 +341,22 @@ export default function PropertyDetailsPage() {
                   </li>
                 ))}
               </ul>
+            </section>
+          )}
+
+          {/* Only shown once a real position was picked on the map when
+              the listing was created/edited - address/city text above
+              already covers a property with no coordinates. */}
+          {hasLocation && (
+            <section className="mt-8">
+              <h2 className="text-xl font-semibold tracking-tight text-gray-900">Localisation</h2>
+              <p className="mt-1 text-sm text-gray-500">
+                {property.address}, {property.city}
+                {property.region ? `, ${property.region}` : ''}
+              </p>
+              <div className="mt-3">
+                <PropertyLocationMap latitude={latitude} longitude={longitude} />
+              </div>
             </section>
           )}
 

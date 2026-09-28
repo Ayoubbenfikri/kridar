@@ -1,6 +1,13 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import '@/index.css'
+// Leaflet ships its own CSS for the map container, tiles, markers and
+// controls - without it the map renders as a blank grey box with the
+// tiles stacked in the top-left corner instead of filling the container.
+// Imported once here, globally, so every map component in the app
+// (LocationPicker now, others later) can rely on it already being
+// loaded rather than each importing it themselves.
+import 'leaflet/dist/leaflet.css'
 // Imported for its side effects, and BEFORE App: i18next has to be
 // initialised before the first component renders, or useTranslation()
 // runs against an empty instance and the first paint is untranslated.

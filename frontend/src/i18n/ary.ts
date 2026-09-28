@@ -192,6 +192,9 @@ export const ary: TranslationSchema = {
     chipBathrooms: '{{n}}+ حمامات',
     chipGuests: '{{n}}+ ضياف',
     chipAmenity: 'تجهيز {{id}}',
+    viewList: 'اللائحة',
+    viewMap: 'الخريطة',
+    mapLoading: 'كنجيبو الخريطة...',
   },
 
   filters: {

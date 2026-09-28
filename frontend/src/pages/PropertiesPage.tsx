@@ -1,10 +1,20 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ChevronLeft, ChevronRight, Search, SearchX, SlidersHorizontal, X } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
+  Map as MapIcon,
+  Search,
+  SearchX,
+  SlidersHorizontal,
+  X,
+} from 'lucide-react'
 import PropertyCard from '@/components/properties/PropertyCard'
 import PropertyFilters from '@/components/properties/PropertyFilters'
 import type { FilterValues } from '@/components/properties/PropertyFilters'
+import PropertiesMapView from '@/components/map/PropertiesMapView'
 import { useProperties } from '@/features/properties/useProperties'
 import { useAmenities } from '@/features/amenities/useAmenities'
 import { Button, Card, EmptyState, Skeleton } from '@/components/ui'
@@ -34,6 +44,7 @@ export default function PropertiesPage() {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [showFilters, setShowFilters] = useState(false)
+  const [view, setView] = useState<'list' | 'map'>('list')
   const { data: amenities } = useAmenities()
 
   const get = (key: string) => searchParams.get(key) ?? ''
@@ -59,6 +70,17 @@ export default function PropertiesPage() {
 
   const { data, isError, isFetching } = useProperties(query)
   const properties = data?.data ?? []
+
+  // Sub-phase #3 (map view): a SEPARATE query, only fetched once the
+  // owner actually switches to map view, using the same active filters
+  // but its own per_page (the backend's max, see PropertySearchRequest)
+  // and no page number - the map wants every matching result it can
+  // get, not one grid page. Kept apart from `query`/`data` above so the
+  // grid's own pagination is completely unaffected by this.
+  const mapQuery = { ...query, page: undefined, per_page: 50 }
+  const { data: mapData, isFetching: isMapFetching } = useProperties(mapQuery, {
+    enabled: view === 'map',
+  })
 
   const filterValues: FilterValues = {
     property_type: get('property_type'),
@@ -199,6 +221,34 @@ export default function PropertiesPage() {
             </span>
           )}
         </Button>
+
+        {/* Sub-phase #3: list/map toggle. A segmented control rather
+            than a permanent side-by-side split - works the same on
+            mobile and desktop with no extra responsive layout. */}
+        <div className="flex shrink-0 rounded-lg border border-gray-200 bg-white p-1">
+          <button
+            type="button"
+            onClick={() => setView('list')}
+            aria-pressed={view === 'list'}
+            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition ${
+              view === 'list' ? 'bg-brand-50 text-brand-700' : 'text-gray-500 hover:text-gray-900'
+            }`}
+          >
+            <LayoutGrid className="size-4" aria-hidden />
+            {t('properties.viewList')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setView('map')}
+            aria-pressed={view === 'map'}
+            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition ${
+              view === 'map' ? 'bg-brand-50 text-brand-700' : 'text-gray-500 hover:text-gray-900'
+            }`}
+          >
+            <MapIcon className="size-4" aria-hidden />
+            {t('properties.viewMap')}
+          </button>
+        </div>
       </div>
 
       {showFilters && (
@@ -265,6 +315,21 @@ export default function PropertiesPage() {
               ) : undefined
             }
           />
+        ) : view === 'map' ? (
+          // Sub-phase #3: mapData is its OWN query (see above), separate
+          // from the grid's `data` - it only starts fetching once the
+          // owner switches to this view, so it can still be loading here
+          // even though the grid's `data` (checked above) already
+          // resolved.
+          mapData ? (
+            <div className={`transition-opacity ${isMapFetching ? 'opacity-60' : ''}`}>
+              <PropertiesMapView properties={mapData.data} />
+            </div>
+          ) : (
+            <div className="flex h-[520px] items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-500">
+              {t('properties.mapLoading')}
+            </div>
+          )
         ) : (
           <>
             <div
