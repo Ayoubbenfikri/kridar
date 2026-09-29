@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -20,6 +21,11 @@ Route::get('/', function () {
         'status' => 'Krihouse API is running.',
     ]);
 });
+
+// SEO. Generated, not a static file, because it has to list every
+// published property (see SitemapController) - a hand-written file
+// would go stale the moment a listing is added or removed.
+Route::get('/sitemap.xml', [SitemapController::class, 'index']);
 
 // React Router owns every other frontend path (e.g. /properties,
 // /properties/5) client-side, but that only works once the SPA's JS has

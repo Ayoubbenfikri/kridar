@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Helmet } from 'react-helmet-async'
 import {
   ChevronLeft,
   ChevronRight,
@@ -181,6 +182,14 @@ export default function PropertiesPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+      <Helmet>
+        <title>Propriétés à louer au Maroc — Krihouse</title>
+        <meta
+          name="description"
+          content="Parcourez les appartements, villas, studios et riads disponibles à la location au Maroc, avec filtres par ville, prix et type de bien."
+        />
+      </Helmet>
+
       <h1 className="text-3xl font-bold tracking-tight text-gray-900">{t('properties.title')}</h1>
       <p className="mt-1.5 text-gray-500">
         {isError

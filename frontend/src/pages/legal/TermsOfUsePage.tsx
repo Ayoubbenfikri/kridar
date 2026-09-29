@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Helmet } from 'react-helmet-async'
 import { AlertTriangle, ArrowLeft, FileText } from 'lucide-react'
 
 /**
@@ -29,6 +30,11 @@ export default function TermsOfUsePage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6">
+      <Helmet>
+        <title>Conditions d'Utilisation — Krihouse</title>
+        <meta name="robots" content="noindex, follow" />
+      </Helmet>
+
       <Link
         to="/"
         className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-brand-600"

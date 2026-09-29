@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Helmet } from 'react-helmet-async'
 import { ArrowRight, Building2, Heart, ShieldCheck, Sparkles } from 'lucide-react'
 import SearchBar from '@/components/search/SearchBar'
 import PropertyCard from '@/components/properties/PropertyCard'
@@ -40,6 +41,14 @@ export default function HomePage() {
 
   return (
     <main>
+      <Helmet>
+        <title>Krihouse — Location courte et longue durée au Maroc</title>
+        <meta
+          name="description"
+          content="Trouvez ou publiez un appartement, une villa, un studio ou un riad à louer au Maroc. Réservation directe entre voyageurs et propriétaires, sans commission."
+        />
+      </Helmet>
+
       {/* ---------------------------------------------------------------
           HERO
           --------------------------------------------------------------- */}

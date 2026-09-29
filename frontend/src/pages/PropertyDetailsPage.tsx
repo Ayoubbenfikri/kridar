@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import {
   AlertCircle,
   ArrowLeft,
@@ -219,8 +220,18 @@ export default function PropertyDetailsPage() {
   const longitude = property.longitude !== null ? Number(property.longitude) : null
   const hasLocation = latitude !== null && longitude !== null && !Number.isNaN(latitude) && !Number.isNaN(longitude)
 
+  // A plain-text, single-line version of the description for <meta
+  // description> - the field itself can contain line breaks and runs
+  // to any length, neither of which belongs in a search snippet.
+  const metaDescription = property.description.replace(/\s+/g, ' ').trim().slice(0, 155)
+
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+      <Helmet>
+        <title>{`${property.title} — ${property.city} | Krihouse`}</title>
+        <meta name="description" content={metaDescription} />
+      </Helmet>
+
       <Link
         to="/properties"
         className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-brand-600"

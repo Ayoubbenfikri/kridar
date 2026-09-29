@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Helmet } from 'react-helmet-async'
 import {
   ArrowLeft,
   Check,
@@ -117,6 +118,14 @@ export default function SupportPage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6">
+      <Helmet>
+        <title>Soutenir Krihouse</title>
+        <meta
+          name="description"
+          content="Krihouse est gratuit : pas de frais de publication, pas de commission. Aidez le projet à couvrir ses frais d'hébergement."
+        />
+      </Helmet>
+
       <Link
         to="/"
         className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-brand-600"

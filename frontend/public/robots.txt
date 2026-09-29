@@ -1,0 +1,27 @@
+# Krihouse (Phase: SEO basics)
+#
+# Everything public stays open. Everything that needs an account is
+# disallowed here too - a crawler landing there just gets a login wall
+# anyway, and this keeps that off crawl budget and search results.
+# The real access control is still the backend (auth middleware) - this
+# file is only a hint to well-behaved crawlers, not a security boundary.
+
+User-agent: *
+Allow: /
+
+Disallow: /login
+Disallow: /register
+Disallow: /account
+Disallow: /account/
+Disallow: /favorites
+Disallow: /reservations
+Disallow: /messages
+Disallow: /messages/
+Disallow: /notifications
+Disallow: /owner
+Disallow: /owner/
+Disallow: /admin
+Disallow: /admin/
+Disallow: /ui
+
+Sitemap: https://krihouse.com/sitemap.xml
