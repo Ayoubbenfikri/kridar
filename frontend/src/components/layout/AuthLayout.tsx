@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { KeyRound } from 'lucide-react'
 
 /**
  * Shared frame for /login and /register: one centred card, the Krihouse
@@ -34,10 +33,10 @@ export default function AuthLayout({
         <div className="mb-6 flex flex-col items-center text-center">
           <Link
             to="/"
-            className="flex size-11 items-center justify-center rounded-xl bg-brand-600 text-white transition hover:-translate-y-px hover:shadow-md"
+            className="flex size-16 items-center justify-center transition hover:-translate-y-px"
             aria-label={t('common.backToHome')}
           >
-            <KeyRound className="size-5" aria-hidden />
+            <img src="/logo-icon.png" alt="" aria-hidden="true" className="size-16" />
           </Link>
           <h1 className="mt-4 text-2xl font-bold tracking-tight text-gray-900">{title}</h1>
           <p className="mt-1.5 text-sm text-gray-500">{subtitle}</p>
