@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Heart, KeyRound } from 'lucide-react'
+import { Heart } from 'lucide-react'
 
 /**
  * Minimal footer: identity, the few links that matter, one legal line.
@@ -19,9 +19,7 @@ export default function SiteFooter() {
         <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-xs">
             <div className="flex items-center gap-2.5 text-lg font-bold tracking-tight text-gray-900">
-              <span className="flex size-8 items-center justify-center rounded-[9px] bg-brand-600 text-white">
-                <KeyRound className="size-4" aria-hidden />
-              </span>
+              <img src="/logo-icon.png" alt="" aria-hidden="true" className="size-8" />
               Krihouse
             </div>
             <p className="mt-3 text-sm text-gray-500">{t('footer.tagline')}</p>

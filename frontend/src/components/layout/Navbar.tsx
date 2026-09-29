@@ -6,7 +6,6 @@ import {
   CalendarCheck,
   Heart,
   HeartHandshake,
-  KeyRound,
   LogOut,
   Menu,
   Settings,
@@ -136,9 +135,7 @@ export default function Navbar() {
         {/* Logo + primary links */}
         <div className="flex items-center gap-6">
           <Link to="/" className="flex items-center gap-2.5 text-lg font-bold tracking-tight text-gray-900">
-            <span className="flex size-8 items-center justify-center rounded-[9px] bg-brand-600 text-white">
-              <KeyRound className="size-4" aria-hidden />
-            </span>
+            <img src="/logo-icon.png" alt="" aria-hidden="true" className="size-8" />
             Krihouse
           </Link>
 
