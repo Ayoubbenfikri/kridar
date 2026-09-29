@@ -5,6 +5,7 @@ import {
   Building2,
   CalendarCheck,
   Heart,
+  HeartHandshake,
   KeyRound,
   LogOut,
   Menu,
@@ -169,6 +170,18 @@ export default function Navbar() {
             <LanguageSwitcher compact />
           </div>
 
+          {/* Support link, visible whether or not you're logged in -
+              unlike Favorites/Messages/etc below, which only make sense
+              for an account. Icon-only, same treatment as Favorites, so
+              it stays out of the way of someone just browsing listings. */}
+          <Link
+            to="/support"
+            aria-label={t('nav.support')}
+            className="hidden size-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-brand-600 sm:flex"
+          >
+            <HeartHandshake className="size-5" aria-hidden />
+          </Link>
+
           {isLoadingUser ? null : isAuthenticated ? (
             <>
               <Link
@@ -290,6 +303,11 @@ export default function Navbar() {
               {t(link.labelKey)}
             </NavLink>
           ))}
+
+          {/* Same as above: shown whether or not you're logged in. */}
+          <NavLink to="/support" className={mobileLinkClass}>
+            <HeartHandshake className="size-4.5 text-gray-400" aria-hidden /> {t('nav.support')}
+          </NavLink>
 
           {isLoadingUser ? null : isAuthenticated ? (
             <>

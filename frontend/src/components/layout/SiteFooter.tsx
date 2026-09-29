@@ -37,9 +37,9 @@ export default function SiteFooter() {
             <Link to="/favorites" className="text-gray-600 transition hover:text-brand-600">
               {t('nav.favorites')}
             </Link>
-            {/* Phase 28. In the footer rather than the navbar on purpose:
-                a guest looking for a flat should not be asked for money in
-                the main navigation. */}
+            {/* Phase 28. Kept here too even though the navbar now also has
+                a support icon (added later) - this text link is what
+                shows up when someone scans the footer, so it stays. */}
             <Link
               to="/support"
               className="flex items-center gap-1.5 text-gray-600 transition hover:text-brand-600"

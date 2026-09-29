@@ -43,6 +43,7 @@ export const ary: TranslationSchema = {
     ownerSpace: 'فضاء الملّاك',
     admin: 'الإدارة',
     favorites: 'المفضّلة ديالي',
+    support: 'عاون Krihouse',
     account: 'الحساب ديالي',
     settings: 'الإعدادات',
     logout: 'خروج',

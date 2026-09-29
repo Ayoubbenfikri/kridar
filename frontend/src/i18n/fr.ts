@@ -44,6 +44,7 @@ export const fr = {
     ownerSpace: 'Espace propriétaire',
     admin: 'Administration',
     favorites: 'Mes favoris',
+    support: 'Soutenir Krihouse',
     account: 'Mon compte',
     settings: 'Paramètres',
     logout: 'Se déconnecter',

@@ -24,6 +24,7 @@ export const en: TranslationSchema = {
     ownerSpace: 'Owner space',
     admin: 'Administration',
     favorites: 'favourites',
+    support: 'Support Krihouse',
     account: 'My account',
     settings: 'Settings',
     logout: 'Log out',
