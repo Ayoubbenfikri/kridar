@@ -3,15 +3,19 @@
 namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Enums\Locale;
+use App\Enums\PropertyStatus;
+use App\Enums\ReservationStatus;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\DeleteAccountRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\UpdateLocaleRequest;
 use App\Http\Requests\Auth\UpdatePasswordRequest;
 use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Http\Resources\UserResource;
+use App\Models\Reservation;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Events\Verified;
@@ -293,6 +297,79 @@ class AuthController extends Controller
 
         return response()->json([
             'user' => new UserResource($user->fresh()),
+        ]);
+    }
+
+    /**
+     * DELETE /auth/account — the current user deletes their own account.
+     *
+     * User already uses SoftDeletes, so this is a soft delete (deleted_at
+     * is set, the row stays), not a hard wipe. Guarded two ways:
+     *
+     *   1. Admin accounts can't self-delete from here. Losing the only
+     *      admin by accident would lock the admin dashboard out; admin
+     *      accounts are managed by AdminService instead.
+     *   2. Blocked while there is an upcoming reservation on EITHER side
+     *      — as a guest, or as an owner via one of their properties.
+     *      Deleting mid-booking would strand the other party with no way
+     *      to reach them. "Upcoming" reuses ReservationStatus::
+     *      blocksAvailability() (pending or confirmed) plus an end_date
+     *      that hasn't passed yet, so an old confirmed-but-finished stay
+     *      never blocks a deletion it has nothing to do with.
+     *
+     * No current_password check (dropped per Ayoub's request - the
+     * frontend asks the user to type a confirmation word instead). Worth
+     * knowing: that means anyone with an open, unattended session can
+     * delete the account with no extra proof it's really them, same
+     * exposure logout already has. DeleteAccountRequest still exists (with
+     * empty rules) so that protection can come back with a one-line
+     * change if this ever needs to be tightened again.
+     *
+     * Published listings are NOT a blocker: they are archived
+     * automatically below so they disappear from search instead of
+     * showing a ghost owner, rather than forcing the user to go and
+     * unpublish each one by hand first.
+     */
+    public function deleteAccount(DeleteAccountRequest $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->isAdmin()) {
+            return response()->json([
+                'message' => __('messages.auth.account_deletion_forbidden_admin'),
+            ], 403);
+        }
+
+        $hasUpcomingReservationAsGuest = $user->reservations()
+            ->whereIn('status', ReservationStatus::blocksAvailability())
+            ->where('end_date', '>=', now()->toDateString())
+            ->exists();
+
+        $hasUpcomingReservationAsOwner = Reservation::whereIn('status', ReservationStatus::blocksAvailability())
+            ->where('end_date', '>=', now()->toDateString())
+            ->whereHas('property', fn ($query) => $query->where('owner_id', $user->id))
+            ->exists();
+
+        if ($hasUpcomingReservationAsGuest || $hasUpcomingReservationAsOwner) {
+            return response()->json([
+                'message' => __('messages.auth.account_deletion_blocked_reservations'),
+            ], 422);
+        }
+
+        // Owner leaves -> listings disappear from search, but the rows
+        // (and their reviews/images) are kept rather than deleted.
+        $user->properties()
+            ->where('status', PropertyStatus::Published)
+            ->update(['status' => PropertyStatus::Archived]);
+
+        $user->delete();
+
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return response()->json([
+            'message' => __('messages.auth.account_deleted'),
         ]);
     }
 }

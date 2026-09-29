@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 class RegisterRequest extends FormRequest
@@ -20,7 +21,21 @@ class RegisterRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+
+            // whereNull('deleted_at'): plain 'unique:users,email' checks
+            // EVERY row, soft-deleted ones included, so a deleted account
+            // (User uses SoftDeletes) would keep its email permanently
+            // blocked from ever registering again. Scoping the check to
+            // only live rows is what makes an email free again once its
+            // account is deleted.
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->whereNull('deleted_at'),
+            ],
+
             'password' => ['required', 'confirmed', Password::defaults()],
             'phone' => ['nullable', 'string', 'max:30'],
 

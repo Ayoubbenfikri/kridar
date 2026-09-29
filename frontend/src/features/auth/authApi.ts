@@ -108,3 +108,14 @@ export async function acceptTerms(): Promise<User> {
   const { data } = await axiosClient.post<{ user: User }>('/api/v1/auth/accept-terms')
   return data.user
 }
+
+/**
+ * The "Danger zone" button on AccountSettingsPage, after the user has
+ * typed the confirmation word. No payload - the backend doesn't ask for
+ * a password here (see AuthController::deleteAccount), the confirmation
+ * word is checked entirely on the frontend before this is even called.
+ */
+export async function deleteAccount(): Promise<{ message: string }> {
+  const { data } = await axiosClient.delete('/api/v1/auth/account')
+  return data
+}

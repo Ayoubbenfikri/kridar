@@ -1,9 +1,14 @@
 import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
-import { AlertCircle, ArrowLeft, CheckCircle2, Lock, Phone, User } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { AlertCircle, AlertTriangle, ArrowLeft, CheckCircle2, Lock, Phone, Trash2, User } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
 import { getErrorMessage, getValidationErrors } from '@/lib/apiErrors'
 import { Button, Card, Input } from '@/components/ui'
+
+// What the user must type, exactly, before the delete button is enabled.
+// Uppercase in the UI (a visual "this is serious" cue); compared
+// case-insensitively so a lowercase "supprimer" still counts.
+const DELETE_CONFIRMATION_WORD = 'SUPPRIMER'
 
 /**
  * /account/settings - profile (name, phone) and password, as two
@@ -11,7 +16,8 @@ import { Button, Card, Input } from '@/components/ui'
  * result, so a failed password change never loses a typed name.
  */
 export default function AccountSettingsPage() {
-  const { user, updateProfile, updatePassword } = useAuth()
+  const navigate = useNavigate()
+  const { user, updateProfile, updatePassword, deleteAccount } = useAuth()
 
   const [name, setName] = useState(user?.name ?? '')
   const [phone, setPhone] = useState(user?.phone ?? '')
@@ -20,6 +26,15 @@ export default function AccountSettingsPage() {
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [newPasswordConfirmation, setNewPasswordConfirmation] = useState('')
+
+  // Two-step reveal: the danger zone starts as just a warning + a button,
+  // and only shows the confirmation field + the real "confirm" button
+  // once that button has been clicked. No window.confirm() popup - this
+  // stays inside the page instead of a browser dialog.
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const isDeleteConfirmTextValid =
+    deleteConfirmText.trim().toUpperCase() === DELETE_CONFIRMATION_WORD
 
   const profileErrors = getValidationErrors(updateProfile.error)
   const passwordErrors = getValidationErrors(updatePassword.error)
@@ -57,6 +72,21 @@ export default function AccountSettingsPage() {
         },
       },
     )
+  }
+
+  function handleDeleteSubmit(event: FormEvent) {
+    event.preventDefault()
+    if (!isDeleteConfirmTextValid) return
+
+    deleteAccount.mutate(undefined, {
+      onSuccess: () => {
+        // Clearing the cache (useAuth) alone doesn't move the user off
+        // this page on its own - nothing here re-reads it until
+        // something forces a re-render. Navigating explicitly is what
+        // makes the deletion feel instant instead of needing a refresh.
+        navigate('/', { replace: true })
+      },
+    })
   }
 
   return (
@@ -211,6 +241,76 @@ export default function AccountSettingsPage() {
             {updatePassword.isPending ? 'Enregistrement...' : 'Changer le mot de passe'}
           </Button>
         </form>
+      </Card>
+
+      {/* ---------------- Danger zone ---------------- */}
+      {/* border-l-4 (not a border-color override) - Card's `cn` helper is
+          a plain string join with no Tailwind conflict resolution, so
+          fighting its own `border-gray-200` here would be a coin flip on
+          which class wins. A left accent never collides with it. */}
+      <Card className="mt-5 border-l-4 border-l-red-400 p-5 sm:p-6">
+        <h2 className="flex items-center gap-2 font-semibold text-red-700">
+          <AlertTriangle className="size-5" aria-hidden />
+          Supprimer mon compte
+        </h2>
+        <p className="mt-0.5 mb-5 text-sm text-gray-500">
+          Cette action est irréversible. Vos annonces publiées seront automatiquement archivées.
+          Impossible si vous avez une réservation à venir, comme voyageur ou comme propriétaire.
+        </p>
+
+        {!showDeleteConfirm && (
+          <Button
+            type="button"
+            variant="danger"
+            icon={<Trash2 className="size-4" aria-hidden />}
+            onClick={() => setShowDeleteConfirm(true)}
+          >
+            Supprimer mon compte
+          </Button>
+        )}
+
+        {showDeleteConfirm && (
+          <form onSubmit={handleDeleteSubmit} className="space-y-4">
+            <Input
+              label={`Tapez ${DELETE_CONFIRMATION_WORD} pour confirmer`}
+              type="text"
+              required
+              autoComplete="off"
+              placeholder={DELETE_CONFIRMATION_WORD}
+              value={deleteConfirmText}
+              onChange={(event) => setDeleteConfirmText(event.target.value)}
+            />
+
+            {deleteAccount.isError && (
+              <p className="flex items-start gap-2 text-sm text-red-600">
+                <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+                {getErrorMessage(deleteAccount.error)}
+              </p>
+            )}
+
+            <div className="flex flex-wrap gap-3">
+              <Button
+                type="submit"
+                variant="danger"
+                isLoading={deleteAccount.isPending}
+                disabled={!isDeleteConfirmTextValid}
+              >
+                {deleteAccount.isPending ? 'Suppression...' : 'Oui, supprimer définitivement mon compte'}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setShowDeleteConfirm(false)
+                  setDeleteConfirmText('')
+                }}
+                disabled={deleteAccount.isPending}
+              >
+                Annuler
+              </Button>
+            </div>
+          </form>
+        )}
       </Card>
     </main>
   )

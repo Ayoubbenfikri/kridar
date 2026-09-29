@@ -34,6 +34,9 @@ return [
         'profile_updated' => 'البروفيل تبدّل.',
         'password_updated' => 'كلمة السر تبدّلت.',
         'terms_required' => 'خاصك تقبل شروط الاستعمال وسياسة الخصوصية.',
+        'account_deleted' => 'الحساب ديالك تحيد.',
+        'account_deletion_forbidden_admin' => 'ما يمكنش تحيد حساب الأدمين من هاد الصفحة.',
+        'account_deletion_blocked_reservations' => 'عندك حجز جاي (كمسافر ولا كصاحب دار). تسنى حتى يسالي، ولا لغيه، قبل ما تحيد الحساب ديالك.',
     ],
 
     'admin' => [

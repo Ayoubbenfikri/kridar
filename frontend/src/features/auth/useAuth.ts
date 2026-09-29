@@ -88,6 +88,21 @@ export function useAuth() {
     },
   })
 
+  /**
+   * The "Danger zone" section on AccountSettingsPage. Same cache-clearing
+   * as logout on success - the account is gone, so "who is logged in"
+   * goes back to nobody. AccountSettingsPage still navigates away itself
+   * on success: clearing this cache alone was not enough to move the
+   * user off the settings page in practice, since nothing re-reads it
+   * until something forces a re-render.
+   */
+  const deleteAccountMutation = useMutation({
+    mutationFn: authApi.deleteAccount,
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: ME_QUERY_KEY })
+    },
+  })
+
   // A 401 on GET /auth/me just means "nobody is logged in" - that's an
   // expected, normal state, not something to show as an error.
   const isUnauthenticated = isAxiosError(meQuery.error) && meQuery.error.response?.status === 401
@@ -105,5 +120,6 @@ export function useAuth() {
     updatePassword: updatePasswordMutation,
     updateLocale: updateLocaleMutation,
     acceptTerms: acceptTermsMutation,
+    deleteAccount: deleteAccountMutation,
   }
 }

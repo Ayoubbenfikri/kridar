@@ -37,6 +37,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
     Route::put('/auth/password', [AuthController::class, 'updatePassword']);
 
+    // Account deletion. DELETE (not POST) because it's the semantically
+    // correct verb for "remove this resource" and matches how the SPA's
+    // axios client calls it (see authApi.deleteAccount).
+    Route::delete('/auth/account', [AuthController::class, 'deleteAccount']);
+
     // The language switcher (Phase 27). Its own route rather than a field
     // on /auth/profile, because that endpoint requires `name` and the
     // switcher sends only the language — see UpdateLocaleRequest.

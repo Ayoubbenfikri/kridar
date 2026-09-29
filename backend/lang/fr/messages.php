@@ -34,6 +34,9 @@ return [
         'profile_updated' => 'Profil mis à jour.',
         'password_updated' => 'Mot de passe mis à jour.',
         'terms_required' => 'Vous devez accepter les Conditions d\'Utilisation et la Politique de Confidentialité.',
+        'account_deleted' => 'Votre compte a été supprimé.',
+        'account_deletion_forbidden_admin' => 'Les comptes administrateur ne peuvent pas être supprimés depuis cette page.',
+        'account_deletion_blocked_reservations' => 'Vous avez une réservation à venir (comme voyageur ou comme propriétaire). Attendez qu\'elle soit terminée, ou annulez-la, avant de supprimer votre compte.',
     ],
 
     'admin' => [
