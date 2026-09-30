@@ -8,6 +8,7 @@ use App\Enums\PaymentType;
 use App\Enums\PropertyStatus;
 use App\Enums\PublicationStatus;
 use App\Enums\ReservationStatus;
+use App\Enums\RoommateListingStatus;
 use App\Enums\UserStatus;
 use App\Exceptions\AdminActionNotAllowedException;
 use App\Models\AdminActivityLog;
@@ -15,8 +16,10 @@ use App\Models\Payment;
 use App\Models\Property;
 use App\Models\Reservation;
 use App\Models\Review;
+use App\Models\RoommateListing;
 use App\Models\User;
 use App\Repositories\Contracts\PropertyRepositoryInterface;
+use App\Repositories\Contracts\RoommateListingRepositoryInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -39,6 +42,7 @@ class AdminService
 {
     public function __construct(
         private readonly PropertyRepositoryInterface $properties,
+        private readonly RoommateListingRepositoryInterface $roommateListings,
         private readonly SettingService $settings,
         private readonly AdminActivityLogger $audit,
     ) {}
@@ -202,6 +206,69 @@ class AdminService
         ]);
 
         return $property;
+    }
+
+    /**
+     * GET /admin/roommate-listings — every roommate post, any status, any
+     * poster. Same shape as listProperties(): queried directly (not
+     * through the repository) since this is an admin-only read with no
+     * equivalent method on RoommateListingRepositoryInterface.
+     */
+    public function listRoommateListings(int $perPage = 15): LengthAwarePaginator
+    {
+        return RoommateListing::query()
+            ->with([
+                'user:id,name',
+                'images' => fn ($query) => $query->where('is_cover', true),
+            ])
+            ->latest()
+            ->paginate($perPage);
+    }
+
+    /**
+     * Publishes a roommate post regardless of its current status — the
+     * admin-only path back to Published for a suspended post. No
+     * publication-fee bookkeeping here (unlike approveProperty()):
+     * roommate posts are fee-exempt, so there is nothing to override.
+     */
+    public function approveRoommateListing(User $admin, RoommateListing $listing): RoommateListing
+    {
+        if ($listing->status === RoommateListingStatus::Published) {
+            throw new AdminActionNotAllowedException('This post is already published.');
+        }
+
+        $previousStatus = $listing->status;
+
+        $listing = $this->roommateListings->update($listing, [
+            'status' => RoommateListingStatus::Published,
+            'published_at' => now(),
+        ]);
+
+        $this->audit->record($admin, AdminAction::RoommateListingApproved, $listing, [
+            'previous_status' => $previousStatus->value,
+        ]);
+
+        return $listing;
+    }
+
+    public function suspendRoommateListing(User $admin, RoommateListing $listing): RoommateListing
+    {
+        if ($listing->status === RoommateListingStatus::Suspended) {
+            throw new AdminActionNotAllowedException('This post is already suspended.');
+        }
+
+        $previousStatus = $listing->status;
+
+        $listing = $this->roommateListings->update($listing, [
+            'status' => RoommateListingStatus::Suspended,
+        ]);
+
+        $this->audit->record($admin, AdminAction::RoommateListingSuspended, $listing, [
+            'previous_status' => $previousStatus->value,
+            'user_id' => $listing->user_id,
+        ]);
+
+        return $listing;
     }
 
     /**

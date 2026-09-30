@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Enums\PropertyStatus;
+use App\Enums\RoommateListingStatus;
 use App\Exceptions\MessagingNotAllowedException;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\Property;
+use App\Models\RoommateListing;
 use App\Models\User;
 use App\Notifications\NewMessageNotification;
 use App\Repositories\Contracts\ConversationRepositoryInterface;
@@ -14,7 +16,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Messaging between an interested person and a property owner.
+ * Messaging between an interested person and the owner of a listing — a
+ * property, or (since Phase R2) a roommate post.
  *
  * Every thread is scoped to a listing, which is what keeps this safe
  * without a moderation team: nobody can write to a stranger, only about
@@ -48,7 +51,7 @@ class MessagingService
     }
 
     /**
-     * Open the thread about this listing, or continue the existing one,
+     * Open the thread about this property, or continue the existing one,
      * and post the first/next message.
      *
      * Who may call this is NOT a Policy question — there is no
@@ -103,6 +106,63 @@ class MessagingService
             // above had thrown (e.g. the unique constraint losing a race
             // against a parallel request), the whole transaction — the
             // row lock included — rolls back and nothing is ever spent.
+            if ($accessPath === MessagingCreditsService::FREE_CREDIT) {
+                $this->credits->consumeFreeCredit($sender);
+            }
+
+            $this->conversations->addMessage($conversation, $sender->id, $body);
+
+            return $this->conversations->touchLastMessageAt($conversation);
+        });
+
+        $this->notifyCounterpart($conversation, $sender);
+
+        return $conversation;
+    }
+
+    /**
+     * Same as startOrContinue() above, but for a roommate post instead
+     * of a property.
+     *
+     * Deliberately a separate method rather than one generic method
+     * taking Property|RoommateListing: the two have nothing in common
+     * except "has an owner and a published state", and bending that into
+     * a shared interface would cost more clarity — for the next person
+     * reading this class — than the handful of duplicated lines save.
+     * Same trade-off this codebase already makes elsewhere (property and
+     * roommate listings are fully separate models, not a shared base
+     * class).
+     */
+    public function startOrContinueRoommate(RoommateListing $listing, User $sender, string $body): Conversation
+    {
+        if ($listing->status !== RoommateListingStatus::Published) {
+            throw new MessagingNotAllowedException(
+                'This post is not published, so it cannot be contacted about.'
+            );
+        }
+
+        if ($listing->user_id === $sender->id) {
+            throw new MessagingNotAllowedException(
+                'You cannot start a conversation about your own post.'
+            );
+        }
+
+        $conversation = DB::transaction(function () use ($listing, $sender, $body): Conversation {
+            $existing = $this->conversations->findForRoommateListingAndGuest($listing->id, $sender->id);
+
+            if ($existing !== null) {
+                $this->conversations->addMessage($existing, $sender->id, $body);
+
+                return $this->conversations->touchLastMessageAt($existing);
+            }
+
+            $accessPath = $this->credits->checkAccess($sender);
+
+            $conversation = $this->conversations->create([
+                'roommate_listing_id' => $listing->id,
+                'guest_id' => $sender->id,
+            ]);
+
             if ($accessPath === MessagingCreditsService::FREE_CREDIT) {
                 $this->credits->consumeFreeCredit($sender);
             }

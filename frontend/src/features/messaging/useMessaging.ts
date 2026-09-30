@@ -67,6 +67,19 @@ export function useStartConversation() {
   })
 }
 
+/** Same as useStartConversation() above, but for a roommate post. */
+export function useStartRoommateConversation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ roommateListingId, body }: { roommateListingId: number; body: string }) =>
+      messagingApi.startRoommateConversation(roommateListingId, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] })
+    },
+  })
+}
+
 export function useSendMessage(conversationId: number) {
   const queryClient = useQueryClient()
 

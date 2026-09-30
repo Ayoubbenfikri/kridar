@@ -9,6 +9,7 @@ use App\Repositories\Contracts\PaymentRepositoryInterface;
 use App\Repositories\Contracts\PropertyRepositoryInterface;
 use App\Repositories\Contracts\ReservationRepositoryInterface;
 use App\Repositories\Contracts\ReviewRepositoryInterface;
+use App\Repositories\Contracts\RoommateListingRepositoryInterface;
 use App\Repositories\Eloquent\EloquentConversationRepository;
 use App\Repositories\Eloquent\EloquentFavoriteRepository;
 use App\Repositories\Eloquent\EloquentNotificationRepository;
@@ -16,6 +17,7 @@ use App\Repositories\Eloquent\EloquentPaymentRepository;
 use App\Repositories\Eloquent\EloquentPropertyRepository;
 use App\Repositories\Eloquent\EloquentReservationRepository;
 use App\Repositories\Eloquent\EloquentReviewRepository;
+use App\Repositories\Eloquent\EloquentRoommateListingRepository;
 use App\Services\Gateways\FakeCmiGateway;
 use App\Services\Gateways\PaymentGatewayInterface;
 use App\Services\Gateways\PaypalGateway;
@@ -45,6 +47,7 @@ class RepositoryServiceProvider extends ServiceProvider
      */
     public array $bindings = [
         PropertyRepositoryInterface::class => EloquentPropertyRepository::class,
+        RoommateListingRepositoryInterface::class => EloquentRoommateListingRepository::class,
         ReservationRepositoryInterface::class => EloquentReservationRepository::class,
         PaymentRepositoryInterface::class => EloquentPaymentRepository::class,
         ReviewRepositoryInterface::class => EloquentReviewRepository::class,

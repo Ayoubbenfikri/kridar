@@ -119,6 +119,16 @@ class User extends Authenticatable implements MustVerifyEmailContract
     }
 
     /**
+     * Roommate posts (offers or requests) this user has made. Same
+     * "implicit role" idea as properties() — anyone with a row here has
+     * posted, no separate flag needed.
+     */
+    public function roommateListings(): HasMany
+    {
+        return $this->hasMany(RoommateListing::class);
+    }
+
+    /**
      * Reservations this user made as a guest.
      */
     public function reservations(): HasMany

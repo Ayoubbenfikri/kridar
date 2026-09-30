@@ -75,6 +75,8 @@ export type AdminActionValue =
   | 'user.activated'
   | 'property.approved'
   | 'property.suspended'
+  | 'roommate_listing.approved'
+  | 'roommate_listing.suspended'
   | 'settings.updated'
 
 /**
@@ -93,8 +95,9 @@ export interface AdminActivityLog {
   admin: { id: number; name: string; email: string } | null
 
   /**
-   * 'User' | 'Property', or null for an action with no single target
-   * (a settings change). Deliberately not a foreign key on the backend:
+   * 'User' | 'Property' | 'RoommateListing', or null for an action with
+   * no single target (a settings change). Deliberately not a foreign
+   * key on the backend:
    * a log row has to survive its target being deleted, which is why
    * target_label exists as a snapshot of the name at the time.
    */

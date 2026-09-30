@@ -54,6 +54,7 @@ Route::prefix('v1')->middleware(['locale', 'active'])->group(function () {
 
     require __DIR__.'/api/auth.php';
     require __DIR__.'/api/properties.php';
+    require __DIR__.'/api/roommate-listings.php';
     require __DIR__.'/api/reservations.php';
     require __DIR__.'/api/payments.php';
     require __DIR__.'/api/reviews.php';

@@ -9,8 +9,10 @@ use App\Http\Requests\Admin\UpdateSettingsRequest;
 use App\Http\Resources\AdminActivityLogResource;
 use App\Http\Resources\PaymentResource;
 use App\Http\Resources\PropertyResource;
+use App\Http\Resources\RoommateListingResource;
 use App\Http\Resources\UserResource;
 use App\Models\Property;
+use App\Models\RoommateListing;
 use App\Models\User;
 use App\Services\AdminActivityLogger;
 use App\Services\AdminService;
@@ -103,6 +105,41 @@ class AdminController extends Controller
         return response()->json([
             'message' => 'Property suspended.',
             'property' => new PropertyResource($property),
+        ]);
+    }
+
+    /**
+     * GET /admin/roommate-listings — every roommate post, any status, any
+     * poster.
+     */
+    public function roommateListings(): JsonResponse
+    {
+        return RoommateListingResource::collection($this->admin->listRoommateListings())->response();
+    }
+
+    /**
+     * PATCH /admin/roommate-listings/{roommate_listing}/approve
+     */
+    public function approveRoommateListing(Request $request, RoommateListing $roommateListing): JsonResponse
+    {
+        $roommateListing = $this->admin->approveRoommateListing($request->user(), $roommateListing);
+
+        return response()->json([
+            'message' => 'Post approved and published.',
+            'roommate_listing' => new RoommateListingResource($roommateListing),
+        ]);
+    }
+
+    /**
+     * PATCH /admin/roommate-listings/{roommate_listing}/suspend
+     */
+    public function suspendRoommateListing(Request $request, RoommateListing $roommateListing): JsonResponse
+    {
+        $roommateListing = $this->admin->suspendRoommateListing($request->user(), $roommateListing);
+
+        return response()->json([
+            'message' => 'Post suspended.',
+            'roommate_listing' => new RoommateListingResource($roommateListing),
         ]);
     }
 

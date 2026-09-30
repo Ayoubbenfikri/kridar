@@ -35,6 +35,10 @@ Route::middleware(['auth:sanctum', 'admin', 'throttle:60,1'])->prefix('admin')->
     Route::patch('/properties/{property}/approve', [AdminController::class, 'approveProperty']);
     Route::patch('/properties/{property}/suspend', [AdminController::class, 'suspendProperty']);
 
+    Route::get('/roommate-listings', [AdminController::class, 'roommateListings']);
+    Route::patch('/roommate-listings/{roommate_listing}/approve', [AdminController::class, 'approveRoommateListing']);
+    Route::patch('/roommate-listings/{roommate_listing}/suspend', [AdminController::class, 'suspendRoommateListing']);
+
     Route::get('/stats', [AdminController::class, 'stats']);
 
     // Phase 22 (pricing).

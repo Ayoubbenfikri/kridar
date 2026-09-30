@@ -26,6 +26,15 @@ class ConversationResource extends JsonResource
         return [
             'id' => $this->id,
 
+            // Which kind of listing this thread is about, so the
+            // frontend can pick the right block below without having to
+            // guess from which one is null.
+            'listing_type' => $this->property_id !== null ? 'property' : 'roommate_listing',
+
+            // Unchanged since Phase 24 — every existing property
+            // conversation keeps exactly this same shape. Null on a
+            // roommate-listing thread, same as it always was for any
+            // conversation missing its property relation.
             'property' => [
                 'id' => $this->property?->id,
                 'title' => $this->property?->title,
@@ -33,7 +42,16 @@ class ConversationResource extends JsonResource
                 'city' => $this->property?->city,
             ],
 
-            // Who the viewer is talking to. Null would mean the property
+            // Added in Phase R2 alongside `property`, not instead of it.
+            // Filled in only for a roommate-listing thread.
+            'roommate_listing' => [
+                'id' => $this->roommateListing?->id,
+                'title' => $this->roommateListing?->title,
+                'type' => $this->roommateListing?->type,
+                'city' => $this->roommateListing?->city,
+            ],
+
+            // Who the viewer is talking to. Null would mean the listing
             // relation was not loaded — every repository query loads it.
             'counterpart' => $counterpart === null ? null : [
                 'id' => $counterpart->id,

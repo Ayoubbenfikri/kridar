@@ -20,10 +20,31 @@ export interface ConversationPropertySummary {
   city: string | null
 }
 
+/**
+ * Phase R2 (roommate listings) — the equivalent of
+ * ConversationPropertySummary for a thread about a roommate post
+ * instead of a property. Only one of `property`/`roommate_listing` is
+ * ever non-null on a given Conversation — see `listing_type`.
+ */
+export interface ConversationRoommateListingSummary {
+  id: number | null
+  title: string | null
+  type: 'offer' | 'request' | null
+  city: string | null
+}
+
 export interface Conversation {
   id: number
+  /**
+   * Which of `property` / `roommate_listing` actually applies to this
+   * thread — read this first rather than checking which block is
+   * non-null, so a reader never has to guess.
+   */
+  listing_type: 'property' | 'roommate_listing'
   property: ConversationPropertySummary
-  /** The other person. Null only if the property relation failed to load. */
+  /** Populated only when listing_type is 'roommate_listing'. */
+  roommate_listing: ConversationRoommateListingSummary
+  /** The other person. Null only if the listing relation failed to load. */
   counterpart: ConversationCounterpart | null
   /** True when the viewer owns the listing this thread is about. */
   viewer_is_owner: boolean

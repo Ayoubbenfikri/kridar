@@ -19,14 +19,32 @@ class EloquentConversationRepository implements ConversationRepositoryInterface
      */
     private const PROPERTY_COLUMNS = 'property:id,owner_id,title,slug,city';
 
+    /** Same idea as PROPERTY_COLUMNS, for the roommate-post side. */
+    private const ROOMMATE_LISTING_COLUMNS = 'roommateListing:id,user_id,title,type,city';
+
+    /**
+     * Every relation a conversation row might need, for either listing
+     * kind. Harmless to eager-load both: whichever id is null on a given
+     * row simply resolves to a null relation, no extra query is run for
+     * it, and no error is raised.
+     */
+    private const WITH = [
+        self::PROPERTY_COLUMNS,
+        'property.owner:id,name',
+        self::ROOMMATE_LISTING_COLUMNS,
+        'roommateListing.user:id,name',
+        'guest:id,name',
+    ];
+
     public function paginateForUser(int $userId, int $perPage = 15): LengthAwarePaginator
     {
         return Conversation::query()
             ->where(function ($query) use ($userId) {
                 $query->where('guest_id', $userId)
-                    ->orWhereHas('property', fn ($property) => $property->where('owner_id', $userId));
+                    ->orWhereHas('property', fn ($property) => $property->where('owner_id', $userId))
+                    ->orWhereHas('roommateListing', fn ($listing) => $listing->where('user_id', $userId));
             })
-            ->with([self::PROPERTY_COLUMNS, 'property.owner:id,name', 'guest:id,name'])
+            ->with(self::WITH)
             ->withCount([
                 'messages as unread_count' => fn ($query) => $query
                     ->whereNull('read_at')
@@ -45,7 +63,16 @@ class EloquentConversationRepository implements ConversationRepositoryInterface
         return Conversation::query()
             ->where('property_id', $propertyId)
             ->where('guest_id', $guestId)
-            ->with([self::PROPERTY_COLUMNS, 'property.owner:id,name', 'guest:id,name'])
+            ->with(self::WITH)
+            ->first();
+    }
+
+    public function findForRoommateListingAndGuest(int $roommateListingId, int $guestId): ?Conversation
+    {
+        return Conversation::query()
+            ->where('roommate_listing_id', $roommateListingId)
+            ->where('guest_id', $guestId)
+            ->with(self::WITH)
             ->first();
     }
 
@@ -53,7 +80,7 @@ class EloquentConversationRepository implements ConversationRepositoryInterface
     {
         $conversation = Conversation::create($attributes);
 
-        return $conversation->load([self::PROPERTY_COLUMNS, 'property.owner:id,name', 'guest:id,name']);
+        return $conversation->load(self::WITH);
     }
 
     public function touchLastMessageAt(Conversation $conversation): Conversation
@@ -96,7 +123,8 @@ class EloquentConversationRepository implements ConversationRepositoryInterface
             ->where('sender_id', '!=', $userId)
             ->whereHas('conversation', function ($conversation) use ($userId) {
                 $conversation->where('guest_id', $userId)
-                    ->orWhereHas('property', fn ($property) => $property->where('owner_id', $userId));
+                    ->orWhereHas('property', fn ($property) => $property->where('owner_id', $userId))
+                    ->orWhereHas('roommateListing', fn ($listing) => $listing->where('user_id', $userId));
             })
             ->count();
     }

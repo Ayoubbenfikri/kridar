@@ -2,6 +2,7 @@ import axiosClient from '@/api/axiosClient'
 import type { AdminActionValue, AdminActivityLog, AdminPayment, AdminStats } from '@/types/admin'
 import type { PaymentTypeValue } from '@/types/payment'
 import type { PaginatedResponse, Property } from '@/types/property'
+import type { RoommateListing } from '@/types/roommateListing'
 import type { User } from '@/types/user'
 
 /**
@@ -98,6 +99,30 @@ async function suspendProperty(propertyId: number): Promise<Property> {
   return data.property
 }
 
+async function fetchRoommateListings(page: number): Promise<PaginatedResponse<RoommateListing>> {
+  const { data } = await axiosClient.get<PaginatedResponse<RoommateListing>>(
+    '/api/v1/admin/roommate-listings',
+    { params: { page } },
+  )
+  return data
+}
+
+/** Publishes a roommate post whatever its current status - this is the
+    only way back to Published for a suspended post. */
+async function approveRoommateListing(listingId: number): Promise<RoommateListing> {
+  const { data } = await axiosClient.patch<{ roommate_listing: RoommateListing }>(
+    `/api/v1/admin/roommate-listings/${listingId}/approve`,
+  )
+  return data.roommate_listing
+}
+
+async function suspendRoommateListing(listingId: number): Promise<RoommateListing> {
+  const { data } = await axiosClient.patch<{ roommate_listing: RoommateListing }>(
+    `/api/v1/admin/roommate-listings/${listingId}/suspend`,
+  )
+  return data.roommate_listing
+}
+
 export const adminApi = {
   fetchUsers,
   fetchProperties,
@@ -108,4 +133,7 @@ export const adminApi = {
   activateUser,
   approveProperty,
   suspendProperty,
+  fetchRoommateListings,
+  approveRoommateListing,
+  suspendRoommateListing,
 }

@@ -9,6 +9,8 @@ import RegisterPage from '@/pages/RegisterPage'
 import PropertiesPage from '@/pages/PropertiesPage'
 import SupportPage from '@/pages/SupportPage'
 import PropertyDetailsPage from '@/pages/PropertyDetailsPage'
+import RoommateListingsPage from '@/pages/RoommateListingsPage'
+import RoommateListingDetailsPage from '@/pages/RoommateListingDetailsPage'
 import LeaveReviewPage from '@/pages/LeaveReviewPage'
 import OwnerReplyPage from '@/pages/OwnerReplyPage'
 import FavoritesPage from '@/pages/FavoritesPage'
@@ -23,10 +25,14 @@ import OwnerPropertiesPage from '@/pages/OwnerPropertiesPage'
 import OwnerReservationsPage from '@/pages/OwnerReservationsPage'
 import PropertyCreatePage from '@/pages/PropertyCreatePage'
 import PropertyEditPage from '@/pages/PropertyEditPage'
+import OwnerRoommateListingsPage from '@/pages/OwnerRoommateListingsPage'
+import RoommateListingCreatePage from '@/pages/RoommateListingCreatePage'
+import RoommateListingEditPage from '@/pages/RoommateListingEditPage'
 import UiKitPage from '@/pages/UiKitPage'
 import AdminDashboardPage from '@/pages/AdminDashboardPage'
 import AdminUsersPage from '@/pages/AdminUsersPage'
 import AdminPropertiesPage from '@/pages/AdminPropertiesPage'
+import AdminRoommateListingsPage from '@/pages/AdminRoommateListingsPage'
 import AdminPaymentsPage from '@/pages/AdminPaymentsPage'
 import AdminSettingsPage from '@/pages/AdminSettingsPage'
 import TermsOfUsePage from '@/pages/legal/TermsOfUsePage'
@@ -49,6 +55,12 @@ export const router = createBrowserRouter([
       { path: 'properties', element: <PropertiesPage /> },
       { path: 'ui', element: <UiKitPage /> },
       { path: 'properties/:id', element: <PropertyDetailsPage /> },
+      // Shared Accommodation / Roommates (Phase R5) — public browse +
+      // details, same as properties above. Create/edit/manage (Phase R6)
+      // are the /owner/roommates* routes below, mirroring properties/new
+      // and properties/:id/edit under /owner.
+      { path: 'roommates', element: <RoommateListingsPage /> },
+      { path: 'roommates/:id', element: <RoommateListingDetailsPage /> },
       // Public (Phase 28): anyone can support the project, and the page
       // works with no account and no payment method configured.
       { path: 'support', element: <SupportPage /> },
@@ -82,6 +94,16 @@ export const router = createBrowserRouter([
               { path: 'reservations', element: <OwnerReservationsPage /> },
               { path: 'properties/new', element: <PropertyCreatePage /> },
               { path: 'properties/:id/edit', element: <PropertyEditPage /> },
+              // Shared Accommodation / Roommates (Phase R6 part 2) — same
+              // "list + new + edit" shape as properties above, just for
+              // roommate posts. Not gated by property ownership even
+              // though it lives under this layout: OwnerLayout itself
+              // only requires being logged in (ProtectedRoute), the
+              // stricter 'owner' middleware is applied per-route on the
+              // backend, and these three routes don't carry it.
+              { path: 'roommates', element: <OwnerRoommateListingsPage /> },
+              { path: 'roommates/new', element: <RoommateListingCreatePage /> },
+              { path: 'roommates/:id/edit', element: <RoommateListingEditPage /> },
             ],
           },
           {
@@ -94,6 +116,7 @@ export const router = createBrowserRouter([
               { index: true, element: <AdminDashboardPage /> },
               { path: 'users', element: <AdminUsersPage /> },
               { path: 'properties', element: <AdminPropertiesPage /> },
+              { path: 'roommate-listings', element: <AdminRoommateListingsPage /> },
               { path: 'payments', element: <AdminPaymentsPage /> },
               { path: 'settings', element: <AdminSettingsPage /> },
             ],

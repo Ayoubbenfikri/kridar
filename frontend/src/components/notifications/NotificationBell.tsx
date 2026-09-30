@@ -5,8 +5,13 @@ import { useUnreadCount } from '@/features/notifications/useNotifications'
 
 /**
  * Bell + unread dot, linking to /notifications - no dropdown panel, kept
- * simple on purpose. `showLabel` adds the text label for the navbar's
- * mobile panel, where an icon alone in a vertical list would be unclear.
+ * simple on purpose.
+ *
+ * `showLabel` (nav redesign) is the sidebar's row style now — same
+ * padding/rounding/hover as every other sidebar link (Navbar's
+ * sidebarLinkClass) — since the sidebar is the only place this renders
+ * with a label; the icon-only variant is unused for now but kept in case
+ * a future compact/collapsed state needs it.
  *
  * RTL (Phase 27): same treatment as MessagesLink — the dot is pinned to
  * the trailing corner with -end-0.5 so it mirrors with the layout.
@@ -24,7 +29,7 @@ export default function NotificationBell({ showLabel = false }: { showLabel?: bo
       }
       className={
         showLabel
-          ? 'flex items-center gap-3 text-[15px] font-medium text-gray-600 transition hover:text-gray-900'
+          ? 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-900'
           : 'relative flex size-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-900'
       }
     >

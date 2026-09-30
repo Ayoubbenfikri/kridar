@@ -14,6 +14,13 @@ use Illuminate\Notifications\Notification;
  * In-app only (database channel), like every other notification here.
  * The shape matches the rest: a ready-to-render `message`, plus the ids
  * the frontend needs to link somewhere useful.
+ *
+ * Since Phase R2 a thread can be about a property OR a roommate post.
+ * `property_title` is kept as the payload key name on purpose, even for
+ * a roommate thread — the frontend notification dropdown reads that key
+ * today and this file cannot see whether it was updated yet, so
+ * renaming it would risk silently breaking it for every property
+ * notification too. `roommate_listing_id` is new/additive only.
  */
 class NewMessageNotification extends Notification
 {
@@ -35,15 +42,18 @@ class NewMessageNotification extends Notification
      */
     public function toArray(object $notifiable): array
     {
-        $propertyTitle = $this->conversation->property?->title ?? 'une annonce';
+        $listingTitle = $this->conversation->property?->title
+            ?? $this->conversation->roommateListing?->title
+            ?? 'une annonce';
 
         return [
             'type' => 'new_message',
             'conversation_id' => $this->conversation->id,
             'property_id' => $this->conversation->property_id,
-            'property_title' => $propertyTitle,
+            'roommate_listing_id' => $this->conversation->roommate_listing_id,
+            'property_title' => $listingTitle,
             'sender_name' => $this->sender->name,
-            'message' => "{$this->sender->name} vous a envoyé un message à propos de \"{$propertyTitle}\".",
+            'message' => "{$this->sender->name} vous a envoyé un message à propos de \"{$listingTitle}\".",
         ];
     }
 }

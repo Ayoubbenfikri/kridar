@@ -112,7 +112,13 @@ export interface Property {
   average_rating: number | null
   reviews_count: number
 
-  owner: PropertyOwner
+  /**
+   * Null when the owner's account was soft-deleted (PropertyResource) —
+   * owner_id's restrictOnDelete() only guards a real SQL DELETE, not a
+   * soft delete. Realistically only hit on the admin moderation list
+   * (the one screen showing every property, any owner).
+   */
+  owner: PropertyOwner | null
   amenities: Amenity[]
   images: PropertyImage[]
 

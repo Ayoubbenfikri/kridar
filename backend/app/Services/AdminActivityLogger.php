@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AdminAction;
 use App\Models\AdminActivityLog;
 use App\Models\Property;
+use App\Models\RoommateListing;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
@@ -57,6 +58,7 @@ class AdminActivityLogger
         return match (true) {
             $target instanceof User => $target->name,
             $target instanceof Property => $target->title,
+            $target instanceof RoommateListing => $target->title,
             default => null,
         };
     }

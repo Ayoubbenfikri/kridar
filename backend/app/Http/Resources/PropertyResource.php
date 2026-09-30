@@ -108,10 +108,17 @@ class PropertyResource extends JsonResource
             // feature needs — would have published every owner's email
             // and phone to anonymous visitors. Only id and name can ever
             // come out of this key now, whatever the query loads.
-            'owner' => $this->whenLoaded('owner', fn () => [
+            // $this->owner can be null even when the relation IS loaded:
+            // owner_id has restrictOnDelete(), but that only blocks a real
+            // SQL DELETE — it does nothing for User's SoftDeletes (just an
+            // UPDATE), so a listing whose owner was soft-deleted still
+            // exists with an owner_id that no longer resolves. Explicit
+            // null here, never a half-filled ['id' => null, 'name' => null]
+            // (same fix as RoommateListingResource::user).
+            'owner' => $this->whenLoaded('owner', fn () => $this->owner ? [
                 'id' => $this->owner->id,
                 'name' => $this->owner->name,
-            ]),
+            ] : null),
 
             // Safe to send to anyone: it says THAT a number exists, not
             // what it is. It lets the page tell an anonymous visitor
@@ -130,7 +137,7 @@ class PropertyResource extends JsonResource
             // off). Verified rather than merely logged in, because a
             // throwaway account is free to create — that is what a
             // scraper would use.
-            'owner_phone' => $listsPhone && $viewerMaySeePhone && $viewerHasRevealed ? $this->owner->phone : null,
+            'owner_phone' => $listsPhone && $viewerMaySeePhone && $viewerHasRevealed ? $this->owner?->phone : null,
 
             'amenities' => AmenityResource::collection($this->whenLoaded('amenities')),
             'images' => PropertyImageResource::collection($this->whenLoaded('images')),

@@ -133,7 +133,7 @@ export default function AdminPropertiesPage() {
                             {property.title}
                           </Link>
                           <p className="truncate text-sm text-gray-500">
-                            {property.city} · {property.owner.name}
+                            {property.city} · {property.owner?.name ?? 'Propriétaire supprimé'}
                             {price && ` · ${formatMad(price.amount)} / ${price.unit}`}
                           </p>
                         </div>

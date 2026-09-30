@@ -138,7 +138,21 @@ export default function ConversationPage() {
               {data.conversation.counterpart?.name ?? 'Utilisateur'}
             </p>
             <p className="mt-0.5 text-sm text-gray-500">
-              {data.conversation.property.id !== null ? (
+              {/* Phase R2 (roommate listings) — same listing_type branch
+                  as MessagesPage's ConversationRow, plus the right link
+                  target for each kind. */}
+              {data.conversation.listing_type === 'roommate_listing' ? (
+                data.conversation.roommate_listing.id !== null ? (
+                  <Link
+                    to={`/roommates/${data.conversation.roommate_listing.id}`}
+                    className="transition hover:text-brand-600"
+                  >
+                    {data.conversation.roommate_listing.title}
+                  </Link>
+                ) : (
+                  'Annonce supprimée'
+                )
+              ) : data.conversation.property.id !== null ? (
                 <Link
                   to={`/properties/${data.conversation.property.id}`}
                   className="transition hover:text-brand-600"

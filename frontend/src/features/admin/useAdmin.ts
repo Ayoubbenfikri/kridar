@@ -101,3 +101,33 @@ export function useSuspendProperty() {
     },
   })
 }
+
+export function useAdminRoommateListings(page: number) {
+  return useQuery({
+    queryKey: ['admin', 'roommateListings', { page }],
+    queryFn: () => adminApi.fetchRoommateListings(page),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useApproveRoommateListing() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (listingId: number) => adminApi.approveRoommateListing(listingId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin'] })
+      queryClient.invalidateQueries({ queryKey: ['roommateListings'] })
+    },
+  })
+}
+
+export function useSuspendRoommateListing() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (listingId: number) => adminApi.suspendRoommateListing(listingId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin'] })
+      queryClient.invalidateQueries({ queryKey: ['roommateListings'] })
+    },
+  })
+}

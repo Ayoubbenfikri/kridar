@@ -32,6 +32,13 @@ function formatActivity(value: string | null): string {
 function ConversationRow({ conversation }: { conversation: Conversation }) {
   const hasUnread = conversation.unread_count > 0
 
+  // Phase R2 (roommate listings) — a thread is about a property OR a
+  // roommate post, never both. listing_type says which one to read.
+  const listingTitle =
+    conversation.listing_type === 'roommate_listing'
+      ? conversation.roommate_listing.title
+      : conversation.property.title
+
   return (
     <Link
       to={`/messages/${conversation.id}`}
@@ -42,9 +49,7 @@ function ConversationRow({ conversation }: { conversation: Conversation }) {
           <p className={hasUnread ? 'truncate font-semibold text-gray-900' : 'truncate font-medium text-gray-900'}>
             {conversation.counterpart?.name ?? 'Utilisateur'}
           </p>
-          <p className="mt-0.5 truncate text-sm text-gray-500">
-            {conversation.property.title ?? 'Annonce supprimée'}
-          </p>
+          <p className="mt-0.5 truncate text-sm text-gray-500">{listingTitle ?? 'Annonce supprimée'}</p>
           {/* Which hat the viewer is wearing in this thread. Without it,
               an inbox mixing "listings I asked about" and "people asking
               about my listings" is confusing. */}

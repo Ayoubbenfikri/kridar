@@ -4,13 +4,18 @@ import { MessageSquare } from 'lucide-react'
 import { useMessagesUnreadCount } from '@/features/messaging/useMessaging'
 
 /**
- * Messages icon + unread dot for the navbar, deliberately built to match
- * NotificationBell exactly — same shape, same `showLabel` prop for the
- * mobile panel, same dot. Two indicators sitting side by side should not
- * look like they came from different apps.
+ * Messages icon + unread dot, deliberately built to match NotificationBell
+ * exactly — same shape, same `showLabel` prop, same dot. Two indicators
+ * sitting side by side should not look like they came from different apps.
  *
  * Only rendered for a logged-in user (see Navbar), which is also why
  * the unread query can be enabled unconditionally here.
+ *
+ * `showLabel` (nav redesign) is the sidebar's row style now — same
+ * padding/rounding/hover as every other sidebar link (Navbar's
+ * sidebarLinkClass) — since the sidebar is the only place this renders
+ * with a label; the icon-only variant is unused for now but kept in case
+ * a future compact/collapsed state needs it.
  *
  * RTL (Phase 27): the dot sits on the icon's TRAILING corner — -end-0.5
  * rather than -right-0.5 — so it stays on the outside edge in Darija
@@ -27,7 +32,7 @@ export default function MessagesLink({ showLabel = false }: { showLabel?: boolea
       aria-label={hasUnread ? t('nav.messagesUnread', { n: unreadCount }) : t('nav.messages')}
       className={
         showLabel
-          ? 'flex items-center gap-3 text-[15px] font-medium text-gray-600 transition hover:text-gray-900'
+          ? 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-900'
           : 'relative flex size-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-900'
       }
     >

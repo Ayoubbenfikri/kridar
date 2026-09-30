@@ -18,5 +18,7 @@ enum AdminAction: string
     case UserActivated = 'user.activated';
     case PropertyApproved = 'property.approved';
     case PropertySuspended = 'property.suspended';
+    case RoommateListingApproved = 'roommate_listing.approved';
+    case RoommateListingSuspended = 'roommate_listing.suspended';
     case SettingsUpdated = 'settings.updated';
 }

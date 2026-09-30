@@ -1,11 +1,15 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Building2, CalendarCheck, LayoutDashboard, Plus } from 'lucide-react'
+import { Building2, CalendarCheck, HeartHandshake, LayoutDashboard, Plus } from 'lucide-react'
 import { buttonClasses } from '@/components/ui'
 import { cn } from '@/lib/cn'
 
 const LINKS = [
   { to: '/owner', label: 'Tableau de bord', icon: LayoutDashboard, end: true },
   { to: '/owner/properties', label: 'Mes propriétés', icon: Building2, end: false },
+  // Phase R6 part 2 — same layout shell, own section: unlike Mes
+  // propriétés, reaching this tab has nothing to do with owning a
+  // property (see the routing note in router.tsx).
+  { to: '/owner/roommates', label: 'Mes colocations', icon: HeartHandshake, end: false },
   { to: '/owner/reservations', label: 'Réservations', icon: CalendarCheck, end: false },
 ]
 

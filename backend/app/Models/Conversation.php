@@ -9,9 +9,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * A message thread between one interested person and the owner of one
- * property (Phase 24).
+ * listing — a property (Phase 24) or, since Phase R2, a roommate post.
  *
- * The owner side is derived, never stored — see owner().
+ * Exactly one of property_id / roommate_listing_id is ever set for a
+ * given row (enforced in MessagingService, not the database — same
+ * convention as the rest of this codebase). Every method below reads
+ * through "whichever listing relation is set", so the rest of the app
+ * (ConversationPolicy, notifications, the inbox query) did not need to
+ * learn there are now two kinds of listing.
  */
 class Conversation extends Model
 {
@@ -19,6 +24,7 @@ class Conversation extends Model
 
     protected $fillable = [
         'property_id',
+        'roommate_listing_id',
         'guest_id',
         'last_message_at',
     ];
@@ -35,6 +41,11 @@ class Conversation extends Model
         return $this->belongsTo(Property::class);
     }
 
+    public function roommateListing(): BelongsTo
+    {
+        return $this->belongsTo(RoommateListing::class);
+    }
+
     /** The person who started the thread — never the owner. */
     public function guest(): BelongsTo
     {
@@ -47,13 +58,12 @@ class Conversation extends Model
     }
 
     /**
-     * The owner's id, read through the property. Null only if the
-     * property relation has not been loaded and cannot be — in practice
-     * always present.
+     * The owner's id, read through whichever listing is set. Null only
+     * if that relation has not been loaded — in practice always present.
      */
     public function ownerId(): ?int
     {
-        return $this->property?->owner_id;
+        return $this->property?->owner_id ?? $this->roommateListing?->user_id;
     }
 
     /**
@@ -63,7 +73,7 @@ class Conversation extends Model
     public function counterpartFor(int $userId): ?User
     {
         return $userId === $this->guest_id
-            ? $this->property?->owner
+            ? ($this->property?->owner ?? $this->roommateListing?->user)
             : $this->guest;
     }
 

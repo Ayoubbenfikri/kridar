@@ -19,10 +19,15 @@ interface ConversationRepositoryInterface
     public function paginateForUser(int $userId, int $perPage = 15): LengthAwarePaginator;
 
     /**
-     * The one thread between this person and this listing, or null.
+     * The one thread between this person and this property, or null.
      * There can only ever be one — unique(property_id, guest_id).
      */
     public function findForPropertyAndGuest(int $propertyId, int $guestId): ?Conversation;
+
+    /**
+     * Same as above, for a roommate post — unique(roommate_listing_id, guest_id).
+     */
+    public function findForRoommateListingAndGuest(int $roommateListingId, int $guestId): ?Conversation;
 
     public function create(array $attributes): Conversation;
 

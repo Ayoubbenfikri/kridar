@@ -40,6 +40,9 @@ export const fr = {
   nav: {
     home: 'Accueil',
     properties: 'Propriétés',
+    // Same word as roommates.title (Phase R5) — one term for this
+    // feature across the whole site, not a second name in the nav.
+    roommates: 'Colocations',
     myReservations: 'réservations',
     ownerSpace: 'Espace propriétaire',
     admin: 'Administration',
@@ -53,6 +56,10 @@ export const fr = {
     register: "S'inscrire",
     openMenu: 'Ouvrir le menu',
     closeMenu: 'Fermer le menu',
+    // The sidebar show/hide toggle (nav redesign) - separate from
+    // openMenu/closeMenu above, which are the mobile hamburger.
+    collapseSidebar: 'Réduire le menu',
+    expandSidebar: 'Afficher le menu',
     messages: 'Messages',
     // {{n}} and not {{count}} on purpose. `count` switches on i18next's
     // plural machinery, and Arabic has six plural forms — far more
@@ -232,6 +239,70 @@ export const fr = {
     any: 'Peu importe',
     amenities: 'Équipements',
     amenitiesHint: 'Un logement doit avoir tous les équipements cochés pour apparaître.',
+    apply: 'Appliquer les filtres',
+    reset: 'Tout effacer',
+  },
+
+  // Shared Accommodation / Roommates (Phase R5). Same i18n treatment as
+  // `properties`/`filters`/`card`/`propertyType` above — this is a public
+  // browse path, same as the property list. The roommate details page
+  // stays hardcoded French for now, same debt as PropertyDetailsPage
+  // (see the note at the top of this file).
+  roommateType: {
+    all: 'Tous les types',
+    offer: 'Cherche colocataire',
+    request: 'Cherche logement',
+  },
+
+  roommateCard: {
+    noPhoto: 'Pas de photo',
+    perPerson: '/ personne',
+    beds: '{{n}} lit(s)',
+    bedrooms: '{{n}} ch.',
+    priceNotSet: 'Prix non défini',
+  },
+
+  roommates: {
+    title: 'Colocations',
+    available: 'Annonces disponibles : {{n}}',
+    loading: 'Chargement des annonces...',
+    serverDown: 'Serveur injoignable',
+    searchPlaceholder: 'Rechercher par titre ou ville...',
+    searchLabel: 'Rechercher',
+    filters: 'Filtres',
+    removeFilter: 'Retirer ce filtre',
+    clearAll: 'Tout effacer',
+    loadError:
+      "Impossible de charger les annonces. Vérifie que l'API tourne (php artisan serve), puis recharge la page.",
+    emptyTitle: 'Aucune annonce ne correspond',
+    emptyDescription:
+      "Essaie d'élargir ta recherche : moins de filtres, une fourchette de prix plus large, ou une autre ville.",
+    clearFilters: 'Effacer les filtres',
+    previous: 'Précédent',
+    next: 'Suivant',
+    pageOf: 'Page {{current}} / {{last}}',
+    chipMin: 'Min {{value}} {{currency}}',
+    chipMax: 'Max {{value}} {{currency}}',
+    chipBeds: '{{n}}+ lits',
+    chipBedrooms: '{{n}}+ chambres',
+    chipFurnished: 'Meublé',
+    chipAvailableBy: 'Disponible avant le {{date}}',
+  },
+
+  roommateFilters: {
+    type: "Type d'annonce",
+    minPrice: 'Prix min ({{unit}})',
+    maxPrice: 'Prix max ({{unit}})',
+    perPerson: 'par personne',
+    noLimit: 'Sans limite',
+    beds: 'Lits (au moins)',
+    bedrooms: 'Chambres (au moins)',
+    furnished: 'Meublé',
+    furnishedAny: 'Peu importe',
+    furnishedYes: 'Meublé',
+    furnishedNo: 'Non meublé',
+    availableBy: 'Disponible avant le',
+    any: 'Peu importe',
     apply: 'Appliquer les filtres',
     reset: 'Tout effacer',
   },
