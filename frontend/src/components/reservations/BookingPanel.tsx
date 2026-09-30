@@ -53,6 +53,11 @@ export default function BookingPanel({ property }: BookingPanelProps) {
     return null
   }
 
+  // No owner to book with — the account was soft-deleted (PropertyResource).
+  if (!property.owner) {
+    return null
+  }
+
   if (!isAuthenticated) {
     return (
       <Card className="p-5">

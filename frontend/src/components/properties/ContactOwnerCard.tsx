@@ -130,6 +130,12 @@ export default function ContactOwnerCard({ property }: { property: Property }) {
     return null
   }
 
+  // No owner to write to — the account was soft-deleted (PropertyResource).
+  // Same "nothing to render" outcome as the your-own-listing guard below.
+  if (!property.owner) {
+    return null
+  }
+
   if (!isAuthenticated) {
     return (
       <Card className="mt-4 p-5">

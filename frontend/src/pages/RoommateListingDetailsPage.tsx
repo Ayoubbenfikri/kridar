@@ -222,7 +222,7 @@ export default function RoommateListingDetailsPage() {
                 <User className="size-5" aria-hidden />
               </span>
               <div>
-                <p className="font-medium text-gray-900">{listing.user.name}</p>
+                <p className="font-medium text-gray-900">{listing.user?.name ?? 'Compte supprimé'}</p>
                 <p className="text-sm text-gray-500">
                   {listing.type === 'offer' ? 'Propose cette annonce' : 'Cherche ce logement'}
                 </p>

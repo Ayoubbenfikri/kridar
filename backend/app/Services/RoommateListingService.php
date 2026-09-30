@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\RoommateListingStatus;
+use App\Exceptions\RoommateListingSuspendedException;
 use App\Models\RoommateListing;
 use App\Models\User;
 use App\Repositories\Contracts\RoommateListingRepositoryInterface;
@@ -11,9 +12,12 @@ use Illuminate\Pagination\LengthAwarePaginator;
 /**
  * Same shape as PropertyService, minus the publication-fee machinery —
  * roommate posts are exempt from the fee (confirmed decision), so
- * create()/publish() have nothing to check or lock the owner row for.
- * No slug either: roommate posts are not linked to by a readable URL the
- * way property listings are, so there is nothing to keep stable.
+ * create() has nothing to check or lock the owner row for. No slug
+ * either: roommate posts are not linked to by a readable URL the way
+ * property listings are, so there is nothing to keep stable.
+ *
+ * publish() does have one check — an admin suspension, same as
+ * PropertyService::publish().
  */
 class RoommateListingService
 {
@@ -61,6 +65,17 @@ class RoommateListingService
 
     public function publish(RoommateListing $listing): RoommateListing
     {
+        // A suspension is an admin-only lock (added alongside admin
+        // moderation) - the poster's own publish button can't lift it,
+        // only AdminService::approveRoommateListing() can. Otherwise
+        // suspending a post would have no real effect. Mirrors
+        // PropertyService::publish() exactly.
+        if ($listing->status === RoommateListingStatus::Suspended) {
+            throw new RoommateListingSuspendedException(
+                'This post was suspended by an administrator and can only be republished by one.'
+            );
+        }
+
         return $this->listings->update($listing, [
             'status' => RoommateListingStatus::Published,
             'published_at' => now(),

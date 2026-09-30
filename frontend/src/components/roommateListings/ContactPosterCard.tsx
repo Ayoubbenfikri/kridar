@@ -120,6 +120,11 @@ export default function ContactPosterCard({ listing }: { listing: RoommateListin
     return null
   }
 
+  // No poster to write to — the account was soft-deleted (RoommateListingResource).
+  if (!listing.user) {
+    return null
+  }
+
   if (!isAuthenticated) {
     return (
       <Card className="mt-4 p-5">

@@ -14,12 +14,14 @@ import type { RoommateListing, RoommateListingStatusValue, RoommateListingType }
 const STATUS_LABELS: Record<RoommateListingStatusValue, string> = {
   draft: 'Brouillon',
   published: 'Publié',
+  suspended: 'Suspendu',
   archived: 'Archivé',
 }
 
 const STATUS_TONES: Record<RoommateListingStatusValue, BadgeTone> = {
   draft: 'slate',
   published: 'green',
+  suspended: 'red',
   archived: 'slate',
 }
 
@@ -32,10 +34,13 @@ const TYPE_LABELS: Record<RoommateListingType, string> = {
  * /owner/roommates - every roommate post the current user has made, any
  * status (see RoommateListingController::mine()). No publication fee here
  * unlike OwnerPropertiesPage - roommate posts are exempt (confirmed
- * decision), so publish is a plain toggle, no "Payer" branch. No
- * "suspended" state either: a roommate post only has draft/published/
- * archived, and there is no unarchive action yet, so an archived post
- * just shows a static badge - same treatment as a suspended property.
+ * decision), so publish is a plain toggle, no "Payer" branch.
+ *
+ * 'suspended' (admin moderation) is treated the same as 'archived' here:
+ * a static badge, no self-service way back. RoommateListingService::publish()
+ * refuses to lift a suspension (RoommateListingSuspendedException) — this
+ * is just the UI not offering a button that would only get refused. There
+ * is no unarchive action yet either, for the same "admin-only" reason.
  */
 export default function OwnerRoommateListingsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -62,6 +67,14 @@ export default function OwnerRoommateListingsPage() {
       return (
         <span className="text-xs text-gray-400" title="Seul un administrateur peut lever une archive">
           Archivé
+        </span>
+      )
+    }
+
+    if (listing.status === 'suspended') {
+      return (
+        <span className="text-xs text-red-500" title="Suspendu par un administrateur — contactez le support">
+          Suspendu
         </span>
       )
     }

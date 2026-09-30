@@ -378,7 +378,7 @@ export default function PropertyDetailsPage() {
                 <User className="size-5" aria-hidden />
               </span>
               <div>
-                <p className="font-medium text-gray-900">{property.owner.name}</p>
+                <p className="font-medium text-gray-900">{property.owner?.name ?? 'Compte supprimé'}</p>
                 <p className="text-sm text-gray-500">Propose ce logement</p>
               </div>
             </div>
