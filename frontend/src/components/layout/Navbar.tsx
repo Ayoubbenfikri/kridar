@@ -340,18 +340,19 @@ export default function Navbar({
             Krihouse
           </Link>
 
-          <div className="flex items-center gap-1.5">
-            <LanguageSwitcher compact />
-            <button
-              type="button"
-              onClick={() => setIsMorePanelOpen((open) => !open)}
-              aria-label={isMorePanelOpen ? t('nav.closeMenu') : t('nav.openMenu')}
-              aria-expanded={isMorePanelOpen}
-              className="flex size-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
-            >
-              {isMorePanelOpen ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
-            </button>
-          </div>
+          {/* Language switcher no longer sits here - it's already at the
+              bottom of the "more" panel below, so it only needs to live
+              in one place instead of taking up room in this slim strip
+              on every page. */}
+          <button
+            type="button"
+            onClick={() => setIsMorePanelOpen((open) => !open)}
+            aria-label={isMorePanelOpen ? t('nav.closeMenu') : t('nav.openMenu')}
+            aria-expanded={isMorePanelOpen}
+            className="flex size-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
+          >
+            {isMorePanelOpen ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
+          </button>
         </div>
 
         {/* overflow-hidden + max-height keeps the open/close smooth
