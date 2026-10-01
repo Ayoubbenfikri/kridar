@@ -34,6 +34,8 @@ export interface RoommateListing {
   city: string
   neighborhood: string | null
   address: string | null
+  latitude: string | null
+  longitude: string | null
 
   price_per_person: string | null
   currency: string

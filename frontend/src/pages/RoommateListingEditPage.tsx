@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, CheckCircle2, TriangleAlert, Trash2 } from 'lucide-react'
 import RoommateListingForm from '@/components/roommateListings/RoommateListingForm'
 import RoommateListingImagesManager from '@/components/roommateListings/RoommateListingImagesManager'
@@ -23,6 +23,12 @@ import type { RoommateListingFormPayload } from '@/features/roommateListings/roo
 export default function RoommateListingEditPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  // Set by RoommateListingCreatePage when the post was created successfully
+  // but the photos picked there failed to upload — the post itself is
+  // fine, only the photo step needs a retry, which happens right below
+  // via the normal RoommateListingImagesManager.
+  const photoUploadError = (useLocation().state as { photoUploadError?: string } | null)
+    ?.photoUploadError
 
   const { data: listing, isError, error } = useRoommateListing(id)
   const updateMutation = useUpdateRoommateListing()
@@ -93,6 +99,15 @@ export default function RoommateListingEditPage() {
       />
 
       <div className="mt-5">
+        {photoUploadError && (
+          <Card className="mb-3 flex items-start gap-3 border-amber-200 bg-amber-50 p-3.5 text-sm text-amber-800">
+            <TriangleAlert className="mt-0.5 size-4.5 shrink-0" aria-hidden />
+            <span>
+              Le post a bien été créé, mais l'envoi des photos a échoué ({photoUploadError}).
+              Réessayez ci-dessous.
+            </span>
+          </Card>
+        )}
         <RoommateListingImagesManager listingId={listing.id} images={listing.images} />
       </div>
 

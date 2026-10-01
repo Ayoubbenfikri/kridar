@@ -24,6 +24,8 @@ class RoommateListingResource extends JsonResource
             'city' => $this->city,
             'neighborhood' => $this->neighborhood,
             'address' => $this->address,
+            'latitude' => $this->latitude,
+            'longitude' => $this->longitude,
 
             'price_per_person' => $this->price_per_person,
             'currency' => $this->currency,

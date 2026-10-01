@@ -16,6 +16,7 @@ import {
 import { useRoommateListing } from '@/features/roommateListings/useRoommateListings'
 import { formatMad } from '@/lib/formatPrice'
 import ContactPosterCard from '@/components/roommateListings/ContactPosterCard'
+import PropertyLocationMap from '@/components/map/PropertyLocationMap'
 import { Card, EmptyState, Skeleton, buttonClasses } from '@/components/ui'
 import type { RoommateListingType } from '@/types/roommateListing'
 
@@ -25,10 +26,13 @@ import type { RoommateListingType } from '@/types/roommateListing'
  * frontend/src/i18n/fr.ts). RoommateListingsPage (the browse/filter
  * page) IS translated, matching PropertiesPage's own split.
  *
- * No BookingPanel (no reservations for a roommate post), no map (no
- * lat/lng on this model), no amenities (not a field here), no phone
- * reveal (contact happens through messaging instead — see
- * ContactPosterCard, ContactOwnerCard's roommate-post equivalent).
+ * No BookingPanel (no reservations for a roommate post), no amenities
+ * (not a field here), no phone reveal (contact happens through
+ * messaging instead — see ContactPosterCard, ContactOwnerCard's
+ * roommate-post equivalent). The map (below) reuses PropertyLocationMap
+ * as-is — it takes plain latitude/longitude and has nothing
+ * property-specific in it, so a roommate-only copy would just be the
+ * same file twice.
  */
 const TYPE_LABELS: Record<RoommateListingType, string> = {
   offer: 'A une place, cherche un colocataire',
@@ -90,6 +94,13 @@ export default function RoommateListingDetailsPage() {
 
   const images = listing.images
   const cover = images[activeImage] ?? images[0] ?? null
+
+  // Same nullable-decimal-as-string handling as PropertyDetailsPage
+  // (types/roommateListing.ts: latitude/longitude come back as strings,
+  // both are nullable since a post can be saved with no map pin).
+  const latitude = listing.latitude !== null ? Number(listing.latitude) : null
+  const longitude = listing.longitude !== null ? Number(listing.longitude) : null
+  const hasLocation = latitude !== null && longitude !== null && !Number.isNaN(latitude) && !Number.isNaN(longitude)
 
   const metaDescription = listing.description.replace(/\s+/g, ' ').trim().slice(0, 155)
 
@@ -206,12 +217,22 @@ export default function RoommateListingDetailsPage() {
             <p className="mt-3 whitespace-pre-line text-gray-600">{listing.description}</p>
           </section>
 
-          {listing.address && (
+          {/* Same split as PropertyDetailsPage: the address line can show
+              on its own, but the map only renders once we actually have
+              both coordinates. */}
+          {(listing.address || hasLocation) && (
             <section className="mt-8">
-              <h2 className="text-xl font-semibold tracking-tight text-gray-900">Adresse</h2>
+              <h2 className="text-xl font-semibold tracking-tight text-gray-900">Localisation</h2>
               <p className="mt-1 text-sm text-gray-500">
-                {listing.address}, {listing.city}
+                {listing.address
+                  ? `${listing.address}, ${listing.city}`
+                  : `${listing.neighborhood ? `${listing.neighborhood}, ` : ''}${listing.city}`}
               </p>
+              {hasLocation && (
+                <div className="mt-3">
+                  <PropertyLocationMap latitude={latitude} longitude={longitude} />
+                </div>
+              )}
             </section>
           )}
 

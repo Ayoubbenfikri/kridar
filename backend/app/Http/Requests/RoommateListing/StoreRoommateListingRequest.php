@@ -31,6 +31,10 @@ class StoreRoommateListingRequest extends FormRequest
             'city' => ['required', 'string', 'max:120'],
             'neighborhood' => ['nullable', 'string', 'max:120'],
             'address' => ['nullable', 'string', 'max:255'],
+            // Optional even for an 'offer' — same as properties, the map
+            // pin is a nice-to-have, not a requirement to post.
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
 
             // Meaningful when you already have a place to describe (an
             // "offer") — required there. Left optional for a "request"

@@ -50,7 +50,9 @@ export default function RoommateListingCard({ listing }: { listing: RoommateList
 
           <p className="mt-1 flex items-center gap-1.5 text-sm text-gray-500">
             <MapPin className="size-3.5 shrink-0" aria-hidden />
-            <span className="truncate">{listing.city}</span>
+            <span className="truncate">
+              {listing.neighborhood ? `${listing.neighborhood}, ${listing.city}` : listing.city}
+            </span>
           </p>
 
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-gray-100 pt-3 text-[13px] text-gray-500">

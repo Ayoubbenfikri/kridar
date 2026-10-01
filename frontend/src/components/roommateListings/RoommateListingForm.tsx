@@ -1,6 +1,8 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
-import { AlertCircle, Banknote, MapPin, Users } from 'lucide-react'
+import { AlertCircle, Banknote, Home, MapPin, Search, Users } from 'lucide-react'
+import LocationPicker from '@/components/map/LocationPicker'
 import { Button, Card, Input, Select, Textarea } from '@/components/ui'
+import { cn } from '@/lib/cn'
 import type { RoommateListingFormPayload } from '@/features/roommateListings/roommateListingsApi'
 import type { ValidationErrors } from '@/lib/apiErrors'
 import type { RoommateListing, RoommateListingType } from '@/types/roommateListing'
@@ -8,6 +10,11 @@ import type { RoommateListing, RoommateListingType } from '@/types/roommateListi
 const TYPE_LABELS: Record<RoommateListingType, string> = {
   offer: "J'ai une place à offrir",
   request: 'Je cherche une colocation',
+}
+
+const TYPE_ICONS: Record<RoommateListingType, typeof Home> = {
+  offer: Home,
+  request: Search,
 }
 
 /**
@@ -23,6 +30,8 @@ interface FormState {
   city: string
   neighborhood: string
   address: string
+  latitude: string
+  longitude: string
   price_per_person: string
   beds: string
   bedrooms: string
@@ -38,6 +47,8 @@ const EMPTY_FORM: FormState = {
   city: '',
   neighborhood: '',
   address: '',
+  latitude: '',
+  longitude: '',
   price_per_person: '',
   beds: '',
   bedrooms: '',
@@ -55,6 +66,8 @@ function formStateFromListing(listing: RoommateListing): FormState {
     city: listing.city,
     neighborhood: listing.neighborhood ?? '',
     address: listing.address ?? '',
+    latitude: listing.latitude ?? '',
+    longitude: listing.longitude ?? '',
     price_per_person: listing.price_per_person ?? '',
     beds: listing.beds !== null ? String(listing.beds) : '',
     bedrooms: listing.bedrooms !== null ? String(listing.bedrooms) : '',
@@ -68,6 +81,16 @@ function toOptionalNumber(value: string): number | undefined {
   return value.trim() === '' ? undefined : Number(value)
 }
 
+/** Same rule as toOptionalNumber, but returns null (not undefined) for
+ * LocationPicker — it needs a real "no position yet" value to fall back
+ * to its default map center, not "field omitted". Mirrors PropertyForm. */
+function toOptionalCoordinate(value: string): number | null {
+  const trimmed = value.trim()
+  if (trimmed === '') return null
+  const parsed = Number(trimmed)
+  return Number.isNaN(parsed) ? null : parsed
+}
+
 function buildPayload(form: FormState): RoommateListingFormPayload {
   return {
     type: form.type as RoommateListingType,
@@ -76,6 +99,8 @@ function buildPayload(form: FormState): RoommateListingFormPayload {
     city: form.city,
     neighborhood: form.neighborhood.trim() === '' ? undefined : form.neighborhood,
     address: form.address.trim() === '' ? undefined : form.address,
+    latitude: toOptionalNumber(form.latitude),
+    longitude: toOptionalNumber(form.longitude),
     price_per_person: toOptionalNumber(form.price_per_person),
     beds: toOptionalNumber(form.beds),
     bedrooms: toOptionalNumber(form.bedrooms),
@@ -124,10 +149,10 @@ interface RoommateListingFormProps {
 
 /**
  * Create/edit form for a roommate post. Deliberately NOT a variant of
- * PropertyForm: no map (roommate listings have no lat/lng field) and no
- * amenities (not part of this feature) — same "sibling component, not a
- * forced shared abstraction" reasoning already used for
- * ContactPosterCard/ContactOwnerCard and the messaging hooks.
+ * PropertyForm: no amenities (not part of this feature) — same "sibling
+ * component, not a forced shared abstraction" reasoning already used for
+ * ContactPosterCard/ContactOwnerCard and the messaging hooks. It does
+ * reuse LocationPicker though, same as PropertyForm — a place is a place.
  */
 export default function RoommateListingForm({
   initialListing,
@@ -170,22 +195,52 @@ export default function RoommateListingForm({
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <Select
-              label="Type de post"
-              required
-              value={form.type}
-              onChange={(event) => update('type', event.target.value as RoommateListingType)}
-              error={fieldError('type')}
-            >
-              <option value="" disabled>
-                Choisir...
-              </option>
-              {Object.entries(TYPE_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </Select>
+            <span className="mb-1.5 block text-sm font-semibold text-gray-900">Type de post</span>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {(Object.entries(TYPE_LABELS) as Array<[RoommateListingType, string]>).map(
+                ([value, label]) => {
+                  const Icon = TYPE_ICONS[value]
+                  const selected = form.type === value
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => update('type', value)}
+                      className={cn(
+                        'flex items-center gap-3 rounded-lg border p-3.5 text-start transition',
+                        selected
+                          ? 'border-brand-500 bg-brand-50 ring-[3px] ring-brand-500/20'
+                          : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50',
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'flex size-9 shrink-0 items-center justify-center rounded-lg',
+                          selected ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-500',
+                        )}
+                      >
+                        <Icon className="size-4.5" aria-hidden />
+                      </span>
+                      <span
+                        className={cn(
+                          'text-sm font-medium',
+                          selected ? 'text-brand-900' : 'text-gray-700',
+                        )}
+                      >
+                        {label}
+                      </span>
+                    </button>
+                  )
+                },
+              )}
+            </div>
+            {fieldError('type') && (
+              <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-600">
+                <AlertCircle className="size-3.5 shrink-0" aria-hidden />
+                {fieldError('type')}
+              </p>
+            )}
           </div>
 
           <div className="sm:col-span-2">
@@ -240,6 +295,46 @@ export default function RoommateListingForm({
               error={fieldError('address')}
             />
           </div>
+
+          {/* Only for 'offer': there is a real place to point at. A
+              'request' post has no address either (same rule, see
+              StoreRoommateListingRequest), so a map pin makes no sense
+              there — nothing to show yet, someone else's home. */}
+          {isOffer && (
+            <div className="sm:col-span-2 space-y-2">
+              <span className="block text-sm font-semibold text-gray-900">
+                Position sur la carte (optionnel)
+              </span>
+              <LocationPicker
+                // Same reason as PropertyForm: forces a fresh Leaflet
+                // instance when this form switches to a different post
+                // without a full page reload (create -> redirect to edit).
+                key={initialListing?.id ?? 'new'}
+                latitude={toOptionalCoordinate(form.latitude)}
+                longitude={toOptionalCoordinate(form.longitude)}
+                onChange={(lat, lng) => {
+                  update('latitude', String(lat))
+                  update('longitude', String(lng))
+                }}
+              />
+              <p className="text-xs text-gray-500">
+                Cliquez sur la carte ou déplacez le repère pour indiquer la position du logement.
+                {form.latitude && form.longitude && (
+                  <>
+                    {' '}
+                    Position actuelle : {Number(form.latitude).toFixed(5)},{' '}
+                    {Number(form.longitude).toFixed(5)}
+                  </>
+                )}
+              </p>
+              {(fieldError('latitude') || fieldError('longitude')) && (
+                <p className="flex items-center gap-1.5 text-xs text-red-600">
+                  <AlertCircle className="size-3.5 shrink-0" aria-hidden />
+                  {fieldError('latitude') ?? fieldError('longitude')}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </Section>
 

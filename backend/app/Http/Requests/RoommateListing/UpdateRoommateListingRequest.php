@@ -34,6 +34,8 @@ class UpdateRoommateListingRequest extends FormRequest
             'city' => ['sometimes', 'string', 'max:120'],
             'neighborhood' => ['nullable', 'string', 'max:120'],
             'address' => ['nullable', 'string', 'max:255'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
 
             'price_per_person' => ['nullable', 'numeric', 'min:0'],
             'beds' => ['nullable', 'integer', 'min:1', 'max:20'],

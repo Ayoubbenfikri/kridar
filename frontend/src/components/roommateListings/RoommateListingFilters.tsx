@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RotateCcw } from 'lucide-react'
-import { Button } from '@/components/ui'
+import { Button, Select } from '@/components/ui'
 import type { RoommateListingType } from '@/types/roommateListing'
 
 /**
@@ -33,11 +33,12 @@ const TYPE_VALUES: Array<RoommateListingType | ''> = ['', 'offer', 'request']
 
 const COUNT_OPTIONS = ['', '1', '2', '3', '4']
 
-const SELECT_CLASS =
+// Plain <input> fields (min_price, max_price, available_by) aren't part of
+// this request — only the <select> fields switch to the shared <Select>
+// below, so this class stays for those.
+const NUMBER_CLASS =
   'h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-[15px] text-gray-900 transition ' +
   'hover:border-gray-300 focus:border-brand-500 focus:ring-[3px] focus:ring-brand-500/20 focus:outline-none'
-
-const NUMBER_CLASS = SELECT_CLASS
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -73,19 +74,17 @@ export default function RoommateListingFilters({
       className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Field label={t('roommateFilters.type')}>
-          <select
-            value={draft.type}
-            onChange={(event) => set('type', event.target.value)}
-            className={SELECT_CLASS}
-          >
-            {TYPE_VALUES.map((option) => (
-              <option key={option} value={option}>
-                {option === '' ? t('roommateType.all') : t(`roommateType.${option}`)}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <Select
+          label={t('roommateFilters.type')}
+          value={draft.type}
+          onChange={(event) => set('type', event.target.value)}
+        >
+          {TYPE_VALUES.map((option) => (
+            <option key={option} value={option}>
+              {option === '' ? t('roommateType.all') : t(`roommateType.${option}`)}
+            </option>
+          ))}
+        </Select>
 
         <Field label={t('roommateFilters.minPrice', { unit: t('roommateFilters.perPerson') })}>
           <input
@@ -121,45 +120,39 @@ export default function RoommateListingFilters({
         </Field>
 
         {/* Minimums, server-side (>=), same as PropertyFilters' bedrooms/bathrooms. */}
-        <Field label={t('roommateFilters.beds')}>
-          <select
-            value={draft.beds}
-            onChange={(event) => set('beds', event.target.value)}
-            className={SELECT_CLASS}
-          >
-            {COUNT_OPTIONS.map((count) => (
-              <option key={count} value={count}>
-                {count === '' ? t('roommateFilters.any') : `${count}+`}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <Select
+          label={t('roommateFilters.beds')}
+          value={draft.beds}
+          onChange={(event) => set('beds', event.target.value)}
+        >
+          {COUNT_OPTIONS.map((count) => (
+            <option key={count} value={count}>
+              {count === '' ? t('roommateFilters.any') : `${count}+`}
+            </option>
+          ))}
+        </Select>
 
-        <Field label={t('roommateFilters.bedrooms')}>
-          <select
-            value={draft.bedrooms}
-            onChange={(event) => set('bedrooms', event.target.value)}
-            className={SELECT_CLASS}
-          >
-            {COUNT_OPTIONS.map((count) => (
-              <option key={count} value={count}>
-                {count === '' ? t('roommateFilters.any') : `${count}+`}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <Select
+          label={t('roommateFilters.bedrooms')}
+          value={draft.bedrooms}
+          onChange={(event) => set('bedrooms', event.target.value)}
+        >
+          {COUNT_OPTIONS.map((count) => (
+            <option key={count} value={count}>
+              {count === '' ? t('roommateFilters.any') : `${count}+`}
+            </option>
+          ))}
+        </Select>
 
-        <Field label={t('roommateFilters.furnished')}>
-          <select
-            value={draft.furnished}
-            onChange={(event) => set('furnished', event.target.value)}
-            className={SELECT_CLASS}
-          >
-            <option value="">{t('roommateFilters.furnishedAny')}</option>
-            <option value="1">{t('roommateFilters.furnishedYes')}</option>
-            <option value="0">{t('roommateFilters.furnishedNo')}</option>
-          </select>
-        </Field>
+        <Select
+          label={t('roommateFilters.furnished')}
+          value={draft.furnished}
+          onChange={(event) => set('furnished', event.target.value)}
+        >
+          <option value="">{t('roommateFilters.furnishedAny')}</option>
+          <option value="1">{t('roommateFilters.furnishedYes')}</option>
+          <option value="0">{t('roommateFilters.furnishedNo')}</option>
+        </Select>
       </div>
 
       <div className="mt-5 flex flex-wrap gap-3 border-t border-gray-100 pt-5">

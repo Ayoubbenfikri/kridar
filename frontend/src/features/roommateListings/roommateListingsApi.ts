@@ -71,6 +71,8 @@ export interface RoommateListingFormPayload {
   city: string
   neighborhood?: string
   address?: string
+  latitude?: number
+  longitude?: number
   price_per_person?: number
   beds?: number
   bedrooms?: number
