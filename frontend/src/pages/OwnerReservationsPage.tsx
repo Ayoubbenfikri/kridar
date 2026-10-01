@@ -305,7 +305,7 @@ export default function OwnerReservationsPage() {
                         label="Votre message"
                         rows={3}
                         maxLength={2000}
-                        placeholder="Bonjour, je vous contacte à propos de votre réservation..."
+                        placeholder="Bonjour, je vous contacte à propos de votre réservation... (astuce : collez un lien, il deviendra cliquable)"
                         value={messageBody}
                         onChange={(event) => setMessageBody(event.target.value)}
                       />

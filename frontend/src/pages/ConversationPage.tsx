@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { AlertCircle, ArrowLeft, Send, TriangleAlert } from 'lucide-react'
 import {
@@ -20,6 +20,38 @@ function formatSentAt(value: string): string {
   })
 }
 
+// Matches an http(s) URL up to the next whitespace. Good enough for
+// "I pasted my listing's page from the address bar" — this app has no
+// rich-text composer, so a plain pattern match is all a message body
+// can ever contain anyway.
+const URL_PATTERN = /(https?:\/\/[^\s]+)/g
+
+/**
+ * Turns any http(s) URL inside a message into a clickable link.
+ * Added so the owner-initiated flow (OwnerReservationsPage's "Contacter"
+ * button, or anyone pasting a listing's link) actually lets the other
+ * side open it — message bodies are plain text otherwise, so a pasted
+ * URL just sat there unclickable. Opens in a new tab: a chat is not
+ * somewhere you want to navigate away from.
+ */
+function linkifyMessage(body: string): ReactNode[] {
+  return body.split(URL_PATTERN).map((part, index) =>
+    /^https?:\/\//.test(part) ? (
+      <a
+        key={index}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline underline-offset-2 hover:opacity-80"
+      >
+        {part}
+      </a>
+    ) : (
+      <span key={index}>{part}</span>
+    ),
+  )
+}
+
 function Bubble({ message }: { message: Message }) {
   return (
     <div className={cn('flex', message.is_mine ? 'justify-end' : 'justify-start')}>
@@ -31,7 +63,7 @@ function Bubble({ message }: { message: Message }) {
             : 'rounded-bl-md bg-gray-100 text-gray-900',
         )}
       >
-        <p className="text-[15px] whitespace-pre-line">{message.body}</p>
+        <p className="text-[15px] break-words whitespace-pre-line">{linkifyMessage(message.body)}</p>
         <p className={cn('mt-1 text-[11px]', message.is_mine ? 'text-brand-100' : 'text-gray-400')}>
           {formatSentAt(message.created_at)}
         </p>
@@ -194,6 +226,7 @@ export default function ConversationPage() {
               label="Votre message"
               rows={3}
               maxLength={2000}
+              placeholder="Astuce : collez le lien d'une annonce (copié depuis la barre d'adresse), il deviendra cliquable."
               value={body}
               onChange={(event) => setBody(event.target.value)}
               error={validationErrors?.body?.[0]}
