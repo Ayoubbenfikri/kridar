@@ -5,8 +5,8 @@ import {
   Briefcase,
   Building2,
   CalendarCheck,
+  HandCoins,
   Heart,
-  HeartHandshake,
   Home,
   LogOut,
   Menu,
@@ -42,8 +42,17 @@ const PUBLIC_LINKS = [
 const PRIVATE_LINKS = [
   { to: '/reservations', labelKey: 'nav.myReservations', icon: CalendarCheck, end: false },
   { to: '/favorites', labelKey: 'nav.favorites', icon: Heart, end: false },
-  { to: '/owner', labelKey: 'nav.ownerSpace', icon: Briefcase, end: false },
 ]
+
+/**
+ * Kept separate from PRIVATE_LINKS (not just appended to it) because it
+ * renders in a different spot: grouped with Home/Properties/Roommates at
+ * the top of the sidebar rather than with the "my account" links
+ * (reservations/favorites) below the divider — browsing and owning are
+ * both "look at properties" tasks, so they read better next to each
+ * other than next to "my bookings".
+ */
+const OWNER_LINK = { to: '/owner', labelKey: 'nav.ownerSpace', icon: Briefcase, end: false }
 
 /**
  * Site navigation. Desktop (`lg` and up) renders as a left sidebar - the
@@ -121,10 +130,16 @@ export default function Navbar({
     .map((part) => part.charAt(0).toUpperCase())
     .join('')
 
+  // Back to the plain original shape - just the active background one
+  // notch darker (brand-50 -> brand-100) and the hover a touch more
+  // visible (gray-100 -> black/5, which reads slightly stronger than flat
+  // gray-100 without turning into its own color). No border accent, no
+  // bold, no shadow, no translate - those all made this look like a
+  // different nav rather than the same one, slightly refined.
   const sidebarLinkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
       'flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition',
-      isActive ? 'bg-brand-50 text-brand-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+      isActive ? 'bg-brand-100 text-brand-700' : 'text-gray-600 hover:bg-black/5 hover:text-gray-900',
     )
 
   // Same shape as sidebarLinkClass - kept as a second function (not a
@@ -133,7 +148,17 @@ export default function Navbar({
   const panelLinkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
       'flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition',
-      isActive ? 'bg-brand-50 text-brand-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+      isActive ? 'bg-brand-100 text-brand-700' : 'text-gray-600 hover:bg-black/5 hover:text-gray-900',
+    )
+
+  // Same shape/weight as sidebarLinkClass again - only the hover tint is
+  // swapped from the neutral gray to amber, matching the HandCoins icon's
+  // own color, so the whole row warms up together on hover instead of
+  // just the icon.
+  const supportLinkClass = ({ isActive }: { isActive: boolean }) =>
+    cn(
+      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition',
+      isActive ? 'bg-brand-100 text-brand-700' : 'text-gray-600 hover:bg-amber-50 hover:text-amber-700',
     )
 
   return (
@@ -163,12 +188,34 @@ export default function Navbar({
           </div>
 
           <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-3">
+            {/* Shown whether or not you're logged in - unlike the links
+                below, supporting the project needs no account. Pinned
+                first, exact same row as the others - HandCoins (a
+                donation/support icon, not reused anywhere else in the
+                nav) in amber instead of the teal brand color, so it
+                reads as its own thing without stepping outside the same
+                "colored icon, plain row" pattern as Support used before. */}
+            <NavLink to="/support" className={supportLinkClass}>
+              <HandCoins className="size-4.5 shrink-0 text-amber-500" aria-hidden />
+              {t('nav.support')}
+            </NavLink>
+
             {PUBLIC_LINKS.map((link) => (
               <NavLink key={link.to} to={link.to} end={link.end} className={sidebarLinkClass}>
                 <link.icon className="size-4.5 shrink-0 text-gray-400" aria-hidden />
                 {t(link.labelKey)}
               </NavLink>
             ))}
+
+            {/* Owner space grouped right after Roommates, not with the
+                "my account" links below the divider - see OWNER_LINK's
+                own comment for why. */}
+            {!isLoadingUser && isAuthenticated && (
+              <NavLink to={OWNER_LINK.to} end={OWNER_LINK.end} className={sidebarLinkClass}>
+                <OWNER_LINK.icon className="size-4.5 shrink-0 text-gray-400" aria-hidden />
+                {t(OWNER_LINK.labelKey)}
+              </NavLink>
+            )}
 
             {!isLoadingUser && isAuthenticated && (
               <>
@@ -191,14 +238,6 @@ export default function Navbar({
                 )}
               </>
             )}
-
-            <div className="my-2 border-t border-gray-100" />
-            {/* Shown whether or not you're logged in - unlike the links
-                above, supporting the project needs no account. */}
-            <NavLink to="/support" className={sidebarLinkClass}>
-              <HeartHandshake className="size-4.5 shrink-0 text-gray-400" aria-hidden />
-              {t('nav.support')}
-            </NavLink>
           </nav>
 
           <div className="space-y-3 border-t border-gray-100 p-3">
@@ -324,8 +363,18 @@ export default function Navbar({
           )}
         >
           <nav className="flex flex-col gap-1 px-4 py-3 sm:px-6">
+            {/* Pinned first here too, same amber-icon treatment as the
+                desktop sidebar - see that NavLink's comment. */}
+            <NavLink to="/support" className={supportLinkClass}>
+              <HandCoins className="size-4.5 text-amber-500" aria-hidden /> {t('nav.support')}
+            </NavLink>
+
             {!isLoadingUser && isAuthenticated && (
               <>
+                <NavLink to={OWNER_LINK.to} end={OWNER_LINK.end} className={panelLinkClass}>
+                  <OWNER_LINK.icon className="size-4.5 text-gray-400" aria-hidden />
+                  {t(OWNER_LINK.labelKey)}
+                </NavLink>
                 {PRIVATE_LINKS.map((link) => (
                   <NavLink key={link.to} to={link.to} end={link.end} className={panelLinkClass}>
                     <link.icon className="size-4.5 text-gray-400" aria-hidden />
@@ -339,10 +388,6 @@ export default function Navbar({
                 )}
               </>
             )}
-
-            <NavLink to="/support" className={panelLinkClass}>
-              <HeartHandshake className="size-4.5 text-gray-400" aria-hidden /> {t('nav.support')}
-            </NavLink>
 
             {isLoadingUser ? null : isAuthenticated ? (
               <button
