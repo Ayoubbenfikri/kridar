@@ -35,7 +35,19 @@ interface ConversationRepositoryInterface
 
     public function paginateMessages(Conversation $conversation, int $perPage = 30): LengthAwarePaginator;
 
-    public function addMessage(Conversation $conversation, int $senderId, string $body): Message;
+    /**
+     * $sharedPropertyId/$sharedRoommateListingId are the optional
+     * "Partager une annonce" attachment — at most one non-null, already
+     * validated (ownership + published) by the caller
+     * (MessagingService::resolveSharedListing()) before this is called.
+     */
+    public function addMessage(
+        Conversation $conversation,
+        int $senderId,
+        string $body,
+        ?int $sharedPropertyId = null,
+        ?int $sharedRoommateListingId = null,
+    ): Message;
 
     /**
      * How many messages in this thread are waiting for $userId — i.e.

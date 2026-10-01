@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { messagingApi } from './messagingApi'
-import type { MessagingPackDuration } from './messagingApi'
+import type { MessagingPackDuration, SharedListingAttachment } from './messagingApi'
 
 /**
  * Messaging reads are namespaced under 'conversations', so one
@@ -59,8 +59,15 @@ export function useStartConversation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ propertyId, body }: { propertyId: number; body: string }) =>
-      messagingApi.startConversation(propertyId, body),
+    mutationFn: ({
+      propertyId,
+      body,
+      shared,
+    }: {
+      propertyId: number
+      body: string
+      shared?: SharedListingAttachment
+    }) => messagingApi.startConversation(propertyId, body, shared),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] })
     },
@@ -82,11 +89,13 @@ export function useStartConversationWithGuest() {
       propertyId,
       guestId,
       body,
+      shared,
     }: {
       propertyId: number
       guestId: number
       body: string
-    }) => messagingApi.startConversationWithGuest(propertyId, guestId, body),
+      shared?: SharedListingAttachment
+    }) => messagingApi.startConversationWithGuest(propertyId, guestId, body, shared),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] })
     },
@@ -98,8 +107,15 @@ export function useStartRoommateConversation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ roommateListingId, body }: { roommateListingId: number; body: string }) =>
-      messagingApi.startRoommateConversation(roommateListingId, body),
+    mutationFn: ({
+      roommateListingId,
+      body,
+      shared,
+    }: {
+      roommateListingId: number
+      body: string
+      shared?: SharedListingAttachment
+    }) => messagingApi.startRoommateConversation(roommateListingId, body, shared),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] })
     },
@@ -110,7 +126,8 @@ export function useSendMessage(conversationId: number) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (body: string) => messagingApi.sendMessage(conversationId, body),
+    mutationFn: ({ body, shared }: { body: string; shared?: SharedListingAttachment }) =>
+      messagingApi.sendMessage(conversationId, body, shared),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] })
     },

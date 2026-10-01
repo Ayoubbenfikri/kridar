@@ -62,6 +62,25 @@ class StoreConversationRequest extends FormRequest
             // that this guest actually has a reservation on it, never
             // trusting this id alone to mean "allowed to message".
             'guest_id' => ['nullable', 'integer', 'exists:users,id'],
+
+            // "Partager une annonce" — optionally attach ONE of the
+            // sender's own listings to this message. Only basic
+            // shape/existence is checked here; whether the sender
+            // actually OWNS that listing and whether it is published are
+            // state rules and live in MessagingService::resolveSharedListing(),
+            // same split as property_id/roommate_listing_id above.
+            'shared_property_id' => [
+                'nullable',
+                'prohibits:shared_roommate_listing_id',
+                'integer',
+                'exists:properties,id',
+            ],
+            'shared_roommate_listing_id' => [
+                'nullable',
+                'prohibits:shared_property_id',
+                'integer',
+                'exists:roommate_listings,id',
+            ],
         ];
     }
 
@@ -74,6 +93,7 @@ class StoreConversationRequest extends FormRequest
             'property_id.required_without' => 'Tell us which listing this is about.',
             'roommate_listing_id.required_without' => 'Tell us which listing this is about.',
             'property_id.prohibits' => 'A message can only be about one listing at a time.',
+            'shared_property_id.prohibits' => 'You can only share one listing at a time.',
             'body.required' => 'Write a message before sending.',
             'body.max' => 'A message cannot exceed 2000 characters.',
         ];

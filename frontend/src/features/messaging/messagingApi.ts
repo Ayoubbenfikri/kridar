@@ -33,16 +33,39 @@ async function fetchConversation(conversationId: number | string): Promise<Conve
 }
 
 /**
+ * "Partager une annonce" — optional, at most one of the two ids, attached
+ * to a message when the sender picks one of their own published listings
+ * via ShareListingPicker. Spread into every send call's request body as
+ * shared_property_id / shared_roommate_listing_id; the backend re-checks
+ * ownership and published status regardless of what is sent here.
+ */
+export interface SharedListingAttachment {
+  sharedPropertyId?: number
+  sharedRoommateListingId?: number
+}
+
+function sharedListingParams(shared?: SharedListingAttachment) {
+  return {
+    shared_property_id: shared?.sharedPropertyId,
+    shared_roommate_listing_id: shared?.sharedRoommateListingId,
+  }
+}
+
+/**
  * Opens the thread about this listing, or continues the existing one,
  * and posts the message — one call, because an empty thread is not
  * something anyone wants in their inbox.
  *
  * The backend refuses an unpublished listing or your own (409).
  */
-async function startConversation(propertyId: number, body: string): Promise<Conversation> {
+async function startConversation(
+  propertyId: number,
+  body: string,
+  shared?: SharedListingAttachment,
+): Promise<Conversation> {
   const { data } = await axiosClient.post<{ message: string; conversation: Conversation }>(
     '/api/v1/conversations',
-    { property_id: propertyId, body },
+    { property_id: propertyId, body, ...sharedListingParams(shared) },
   )
   return data.conversation
 }
@@ -53,10 +76,14 @@ async function startConversation(propertyId: number, body: string): Promise<Conv
  * roommate_listing_id, never both, so this is a separate call rather
  * than an optional parameter on the one above.
  */
-async function startRoommateConversation(roommateListingId: number, body: string): Promise<Conversation> {
+async function startRoommateConversation(
+  roommateListingId: number,
+  body: string,
+  shared?: SharedListingAttachment,
+): Promise<Conversation> {
   const { data } = await axiosClient.post<{ message: string; conversation: Conversation }>(
     '/api/v1/conversations',
-    { roommate_listing_id: roommateListingId, body },
+    { roommate_listing_id: roommateListingId, body, ...sharedListingParams(shared) },
   )
   return data.conversation
 }
@@ -73,18 +100,23 @@ async function startConversationWithGuest(
   propertyId: number,
   guestId: number,
   body: string,
+  shared?: SharedListingAttachment,
 ): Promise<Conversation> {
   const { data } = await axiosClient.post<{ message: string; conversation: Conversation }>(
     '/api/v1/conversations',
-    { property_id: propertyId, guest_id: guestId, body },
+    { property_id: propertyId, guest_id: guestId, body, ...sharedListingParams(shared) },
   )
   return data.conversation
 }
 
-async function sendMessage(conversationId: number, body: string): Promise<Message> {
+async function sendMessage(
+  conversationId: number,
+  body: string,
+  shared?: SharedListingAttachment,
+): Promise<Message> {
   const { data } = await axiosClient.post<{ message: string; data: Message }>(
     `/api/v1/conversations/${conversationId}/messages`,
-    { body },
+    { body, ...sharedListingParams(shared) },
   )
   return data.data
 }

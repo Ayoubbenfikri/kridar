@@ -54,6 +54,34 @@ export interface Conversation {
   created_at: string
 }
 
+/**
+ * "Partager une annonce" — a safe summary of a shared listing, hand-built
+ * on the backend (MessageResource), never the full Property/RoommateListing
+ * payload. At most one of Message's two `shared_*` fields is ever non-null.
+ */
+export interface MessageSharedProperty {
+  id: number
+  title: string
+  slug: string
+  city: string
+  price_per_night: string | null
+  price_per_month: string | null
+  currency: string
+  cover_image_url: string | null
+}
+
+export interface MessageSharedRoommateListing {
+  id: number
+  title: string
+  type: 'offer' | 'request'
+  city: string
+  price_per_person: string | null
+  budget_min: string | null
+  budget_max: string | null
+  currency: string
+  cover_image_url: string | null
+}
+
 export interface Message {
   id: number
   body: string
@@ -62,6 +90,8 @@ export interface Message {
   is_mine: boolean
   read_at: string | null
   created_at: string
+  shared_property: MessageSharedProperty | null
+  shared_roommate_listing: MessageSharedRoommateListing | null
 }
 
 /**

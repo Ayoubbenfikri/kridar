@@ -68,8 +68,13 @@ class MessagingService
      *     pass) — continuing an existing one, and every reply, is always
      *     free. See MessagingCreditsService.
      */
-    public function startOrContinue(Property $property, User $sender, string $body): Conversation
-    {
+    public function startOrContinue(
+        Property $property,
+        User $sender,
+        string $body,
+        ?int $sharedPropertyId = null,
+        ?int $sharedRoommateListingId = null,
+    ): Conversation {
         if ($property->status !== PropertyStatus::Published) {
             throw new MessagingNotAllowedException(
                 'This listing is not published, so it cannot be contacted about.'
@@ -82,11 +87,19 @@ class MessagingService
             );
         }
 
-        $conversation = DB::transaction(function () use ($property, $sender, $body): Conversation {
+        $shared = $this->resolveSharedListing($sender, $sharedPropertyId, $sharedRoommateListingId);
+
+        $conversation = DB::transaction(function () use ($property, $sender, $body, $shared): Conversation {
             $existing = $this->conversations->findForPropertyAndGuest($property->id, $sender->id);
 
             if ($existing !== null) {
-                $this->conversations->addMessage($existing, $sender->id, $body);
+                $this->conversations->addMessage(
+                    $existing,
+                    $sender->id,
+                    $body,
+                    $shared['shared_property_id'],
+                    $shared['shared_roommate_listing_id'],
+                );
 
                 return $this->conversations->touchLastMessageAt($existing);
             }
@@ -111,7 +124,13 @@ class MessagingService
                 $this->credits->consumeFreeCredit($sender);
             }
 
-            $this->conversations->addMessage($conversation, $sender->id, $body);
+            $this->conversations->addMessage(
+                $conversation,
+                $sender->id,
+                $body,
+                $shared['shared_property_id'],
+                $shared['shared_roommate_listing_id'],
+            );
 
             return $this->conversations->touchLastMessageAt($conversation);
         });
@@ -141,8 +160,14 @@ class MessagingService
      * their own booking. Same "always free" treatment as a reply in an
      * existing thread.
      */
-    public function startOrContinueAsOwner(Property $property, User $owner, User $guest, string $body): Conversation
-    {
+    public function startOrContinueAsOwner(
+        Property $property,
+        User $owner,
+        User $guest,
+        string $body,
+        ?int $sharedPropertyId = null,
+        ?int $sharedRoommateListingId = null,
+    ): Conversation {
         if ($property->owner_id !== $owner->id) {
             throw new MessagingNotAllowedException(
                 'You can only message guests about your own listings.'
@@ -160,11 +185,19 @@ class MessagingService
             );
         }
 
-        $conversation = DB::transaction(function () use ($property, $owner, $guest, $body): Conversation {
+        $shared = $this->resolveSharedListing($owner, $sharedPropertyId, $sharedRoommateListingId);
+
+        $conversation = DB::transaction(function () use ($property, $owner, $guest, $body, $shared): Conversation {
             $existing = $this->conversations->findForPropertyAndGuest($property->id, $guest->id);
 
             if ($existing !== null) {
-                $this->conversations->addMessage($existing, $owner->id, $body);
+                $this->conversations->addMessage(
+                    $existing,
+                    $owner->id,
+                    $body,
+                    $shared['shared_property_id'],
+                    $shared['shared_roommate_listing_id'],
+                );
 
                 return $this->conversations->touchLastMessageAt($existing);
             }
@@ -174,7 +207,13 @@ class MessagingService
                 'guest_id' => $guest->id,
             ]);
 
-            $this->conversations->addMessage($conversation, $owner->id, $body);
+            $this->conversations->addMessage(
+                $conversation,
+                $owner->id,
+                $body,
+                $shared['shared_property_id'],
+                $shared['shared_roommate_listing_id'],
+            );
 
             return $this->conversations->touchLastMessageAt($conversation);
         });
@@ -197,8 +236,13 @@ class MessagingService
      * roommate listings are fully separate models, not a shared base
      * class).
      */
-    public function startOrContinueRoommate(RoommateListing $listing, User $sender, string $body): Conversation
-    {
+    public function startOrContinueRoommate(
+        RoommateListing $listing,
+        User $sender,
+        string $body,
+        ?int $sharedPropertyId = null,
+        ?int $sharedRoommateListingId = null,
+    ): Conversation {
         if ($listing->status !== RoommateListingStatus::Published) {
             throw new MessagingNotAllowedException(
                 'This post is not published, so it cannot be contacted about.'
@@ -211,11 +255,19 @@ class MessagingService
             );
         }
 
-        $conversation = DB::transaction(function () use ($listing, $sender, $body): Conversation {
+        $shared = $this->resolveSharedListing($sender, $sharedPropertyId, $sharedRoommateListingId);
+
+        $conversation = DB::transaction(function () use ($listing, $sender, $body, $shared): Conversation {
             $existing = $this->conversations->findForRoommateListingAndGuest($listing->id, $sender->id);
 
             if ($existing !== null) {
-                $this->conversations->addMessage($existing, $sender->id, $body);
+                $this->conversations->addMessage(
+                    $existing,
+                    $sender->id,
+                    $body,
+                    $shared['shared_property_id'],
+                    $shared['shared_roommate_listing_id'],
+                );
 
                 return $this->conversations->touchLastMessageAt($existing);
             }
@@ -231,7 +283,13 @@ class MessagingService
                 $this->credits->consumeFreeCredit($sender);
             }
 
-            $this->conversations->addMessage($conversation, $sender->id, $body);
+            $this->conversations->addMessage(
+                $conversation,
+                $sender->id,
+                $body,
+                $shared['shared_property_id'],
+                $shared['shared_roommate_listing_id'],
+            );
 
             return $this->conversations->touchLastMessageAt($conversation);
         });
@@ -246,10 +304,23 @@ class MessagingService
      * ConversationPolicy::reply() at the controller level, so by the
      * time we are here the sender is one of the two parties.
      */
-    public function reply(Conversation $conversation, User $sender, string $body): Message
-    {
-        $message = DB::transaction(function () use ($conversation, $sender, $body): Message {
-            $message = $this->conversations->addMessage($conversation, $sender->id, $body);
+    public function reply(
+        Conversation $conversation,
+        User $sender,
+        string $body,
+        ?int $sharedPropertyId = null,
+        ?int $sharedRoommateListingId = null,
+    ): Message {
+        $shared = $this->resolveSharedListing($sender, $sharedPropertyId, $sharedRoommateListingId);
+
+        $message = DB::transaction(function () use ($conversation, $sender, $body, $shared): Message {
+            $message = $this->conversations->addMessage(
+                $conversation,
+                $sender->id,
+                $body,
+                $shared['shared_property_id'],
+                $shared['shared_roommate_listing_id'],
+            );
             $this->conversations->touchLastMessageAt($conversation);
 
             return $message;
@@ -257,7 +328,60 @@ class MessagingService
 
         $this->notifyCounterpart($conversation, $sender);
 
-        return $message->load('sender:id,name');
+        return $message->load(array_merge(['sender:id,name'], Message::SHARED_LISTING_WITH));
+    }
+
+    /**
+     * Validates the optional "Partager une annonce" attachment and
+     * returns the two columns to persist on the message.
+     *
+     * A sender may only ever share a listing they OWN, and only while it
+     * is PUBLISHED — this is a recommendation inside a conversation the
+     * other person can trust, not a way to surface someone else's (or a
+     * still-draft) listing to a stranger. StoreConversationRequest /
+     * StoreMessageRequest already guarantee at most one of the two ids is
+     * ever non-null.
+     *
+     * @return array{shared_property_id: int|null, shared_roommate_listing_id: int|null}
+     */
+    private function resolveSharedListing(
+        User $sender,
+        ?int $sharedPropertyId,
+        ?int $sharedRoommateListingId,
+    ): array {
+        if ($sharedPropertyId !== null) {
+            $owns = Property::query()
+                ->where('id', $sharedPropertyId)
+                ->where('owner_id', $sender->id)
+                ->where('status', PropertyStatus::Published)
+                ->exists();
+
+            if (! $owns) {
+                throw new MessagingNotAllowedException(
+                    'You can only share one of your own published listings.'
+                );
+            }
+
+            return ['shared_property_id' => $sharedPropertyId, 'shared_roommate_listing_id' => null];
+        }
+
+        if ($sharedRoommateListingId !== null) {
+            $owns = RoommateListing::query()
+                ->where('id', $sharedRoommateListingId)
+                ->where('user_id', $sender->id)
+                ->where('status', RoommateListingStatus::Published)
+                ->exists();
+
+            if (! $owns) {
+                throw new MessagingNotAllowedException(
+                    'You can only share one of your own published posts.'
+                );
+            }
+
+            return ['shared_property_id' => null, 'shared_roommate_listing_id' => $sharedRoommateListingId];
+        }
+
+        return ['shared_property_id' => null, 'shared_roommate_listing_id' => null];
     }
 
     public function markRead(Conversation $conversation, User $user): int

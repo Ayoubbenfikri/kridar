@@ -95,16 +95,23 @@ class EloquentConversationRepository implements ConversationRepositoryInterface
         // Newest first so page 1 is the bottom of the thread — the part
         // anyone actually wants. The frontend reverses for display.
         return $conversation->messages()
-            ->with('sender:id,name')
+            ->with(array_merge(['sender:id,name'], Message::SHARED_LISTING_WITH))
             ->latest()
             ->paginate($perPage);
     }
 
-    public function addMessage(Conversation $conversation, int $senderId, string $body): Message
-    {
+    public function addMessage(
+        Conversation $conversation,
+        int $senderId,
+        string $body,
+        ?int $sharedPropertyId = null,
+        ?int $sharedRoommateListingId = null,
+    ): Message {
         return $conversation->messages()->create([
             'sender_id' => $senderId,
             'body' => $body,
+            'shared_property_id' => $sharedPropertyId,
+            'shared_roommate_listing_id' => $sharedRoommateListingId,
         ]);
     }
 

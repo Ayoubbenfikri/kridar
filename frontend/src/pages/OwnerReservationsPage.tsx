@@ -21,6 +21,8 @@ import { useStartConversationWithGuest } from '@/features/messaging/useMessaging
 import { getErrorMessage } from '@/lib/apiErrors'
 import { formatMad } from '@/lib/formatPrice'
 import ReservationStatusBadge from '@/components/reservations/ReservationStatusBadge'
+import ShareListingPicker from '@/components/messaging/ShareListingPicker'
+import type { ShareableListing } from '@/components/messaging/ShareListingPicker'
 import { Button, Card, EmptyState, Pagination, Skeleton, Textarea, useToast } from '@/components/ui'
 import type { Reservation } from '@/types/reservation'
 
@@ -82,10 +84,12 @@ export default function OwnerReservationsPage() {
   // reservation's "Contacter" button open at a time.
   const [messagingId, setMessagingId] = useState<number | null>(null)
   const [messageBody, setMessageBody] = useState('')
+  const [sharedListing, setSharedListing] = useState<ShareableListing | null>(null)
 
   function startMessaging(reservationId: number) {
     setMessagingId(reservationId)
     setMessageBody('')
+    setSharedListing(null)
   }
 
   function sendMessage(reservation: Reservation) {
@@ -93,10 +97,36 @@ export default function OwnerReservationsPage() {
     if (trimmed === '' || !reservation.guest) return
 
     startConversation.mutate(
-      { propertyId: reservation.property.id, guestId: reservation.guest.id, body: trimmed },
+      {
+        propertyId: reservation.property.id,
+        guestId: reservation.guest.id,
+        body: trimmed,
+        shared: sharedListing?.attachment,
+      },
       {
         // Same find-or-continue as ContactOwnerCard: land on whichever
         // thread came back, new or already existing.
+        onSuccess: (conversation) => navigate(`/messages/${conversation.id}`),
+      },
+    )
+  }
+
+  /**
+   * "Envoyer l'annonce" — the picker's own dedicated button, same idea as
+   * ConversationPage's sendSharedListing(): sends the listing right away
+   * with a short default caption, with nothing required in the Textarea.
+   */
+  function sendSharedListingOnly(reservation: Reservation) {
+    if (!reservation.guest || !sharedListing) return
+
+    startConversation.mutate(
+      {
+        propertyId: reservation.property.id,
+        guestId: reservation.guest.id,
+        body: `Annonce partagée : ${sharedListing.title}`,
+        shared: sharedListing.attachment,
+      },
+      {
         onSuccess: (conversation) => navigate(`/messages/${conversation.id}`),
       },
     )
@@ -301,6 +331,15 @@ export default function OwnerReservationsPage() {
 
                   {messagingId === reservation.id && (
                     <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                      <div className="mb-3">
+                        <ShareListingPicker
+                          selected={sharedListing}
+                          onSelect={setSharedListing}
+                          onClear={() => setSharedListing(null)}
+                          onSend={() => sendSharedListingOnly(reservation)}
+                          isSending={startConversation.isPending}
+                        />
+                      </div>
                       <Textarea
                         label="Votre message"
                         rows={3}

@@ -65,6 +65,8 @@ class ConversationController extends Controller
     public function store(StoreConversationRequest $request): JsonResponse
     {
         $propertyId = $request->validated('property_id');
+        $sharedPropertyId = $request->validated('shared_property_id');
+        $sharedRoommateListingId = $request->validated('shared_roommate_listing_id');
 
         if ($propertyId !== null) {
             $guestId = $request->validated('guest_id');
@@ -75,17 +77,23 @@ class ConversationController extends Controller
                     $request->user(),
                     User::findOrFail($guestId),
                     $request->validated('body'),
+                    $sharedPropertyId,
+                    $sharedRoommateListingId,
                 )
                 : $this->messaging->startOrContinue(
                     Property::findOrFail($propertyId),
                     $request->user(),
                     $request->validated('body'),
+                    $sharedPropertyId,
+                    $sharedRoommateListingId,
                 );
         } else {
             $conversation = $this->messaging->startOrContinueRoommate(
                 RoommateListing::findOrFail($request->validated('roommate_listing_id')),
                 $request->user(),
                 $request->validated('body'),
+                $sharedPropertyId,
+                $sharedRoommateListingId,
             );
         }
 
@@ -131,6 +139,8 @@ class ConversationController extends Controller
             $conversation,
             $request->user(),
             $request->validated('body'),
+            $request->validated('shared_property_id'),
+            $request->validated('shared_roommate_listing_id'),
         );
 
         return response()->json([

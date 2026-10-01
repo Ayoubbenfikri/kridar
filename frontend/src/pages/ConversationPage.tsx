@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { AlertCircle, ArrowLeft, Send, TriangleAlert } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Home, Send, TriangleAlert, Users } from 'lucide-react'
 import {
   useConversation,
   useMarkConversationRead,
   useSendMessage,
 } from '@/features/messaging/useMessaging'
 import { getErrorMessage, getValidationErrors } from '@/lib/apiErrors'
+import { formatMad } from '@/lib/formatPrice'
+import ShareListingPicker from '@/components/messaging/ShareListingPicker'
+import type { ShareableListing } from '@/components/messaging/ShareListingPicker'
 import { Button, Card, Skeleton, Textarea } from '@/components/ui'
 import { cn } from '@/lib/cn'
 import type { Message } from '@/types/conversation'
@@ -52,6 +55,81 @@ function linkifyMessage(body: string): ReactNode[] {
   )
 }
 
+/**
+ * "Partager une annonce" preview — shown above the text when a message
+ * carries one. Always a plain white card regardless of which side sent
+ * it (the bubble itself is blue or gray): a photo + price reads fine on
+ * either background, and it keeps this from needing two color variants.
+ */
+function SharedListingCard({ message }: { message: Message }) {
+  if (message.shared_property) {
+    const listing = message.shared_property
+    const priceLabel = listing.price_per_month
+      ? `${formatMad(listing.price_per_month)} / mois`
+      : listing.price_per_night
+        ? `${formatMad(listing.price_per_night)} / nuit`
+        : null
+
+    return (
+      <Link
+        to={`/properties/${listing.id}`}
+        className="mb-2 flex items-center gap-2.5 overflow-hidden rounded-xl border border-gray-200 bg-white p-2 text-gray-900 transition hover:bg-gray-50"
+      >
+        {listing.cover_image_url ? (
+          <img src={listing.cover_image_url} alt="" className="size-11 shrink-0 rounded-lg object-cover" />
+        ) : (
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-gray-100">
+            <Home className="size-4.5 text-gray-400" aria-hidden />
+          </div>
+        )}
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">{listing.title}</p>
+          <p className="text-xs text-gray-500">
+            {listing.city}
+            {priceLabel ? ` · ${priceLabel}` : ''}
+          </p>
+        </div>
+      </Link>
+    )
+  }
+
+  if (message.shared_roommate_listing) {
+    const listing = message.shared_roommate_listing
+    const priceLabel =
+      listing.type === 'offer'
+        ? listing.price_per_person
+          ? `${formatMad(listing.price_per_person)} / mois`
+          : null
+        : listing.budget_min && listing.budget_max
+          ? `${formatMad(listing.budget_min)} - ${formatMad(listing.budget_max)} / mois`
+          : null
+
+    return (
+      <Link
+        to={`/roommates/${listing.id}`}
+        className="mb-2 flex items-center gap-2.5 overflow-hidden rounded-xl border border-gray-200 bg-white p-2 text-gray-900 transition hover:bg-gray-50"
+      >
+        {listing.cover_image_url ? (
+          <img src={listing.cover_image_url} alt="" className="size-11 shrink-0 rounded-lg object-cover" />
+        ) : (
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-gray-100">
+            <Users className="size-4.5 text-gray-400" aria-hidden />
+          </div>
+        )}
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">{listing.title}</p>
+          <p className="text-xs text-gray-500">
+            {listing.city}
+            {priceLabel ? ` · ${priceLabel}` : ''}
+          </p>
+        </div>
+      </Link>
+    )
+  }
+
+  return null
+}
+
 function Bubble({ message }: { message: Message }) {
   return (
     <div className={cn('flex', message.is_mine ? 'justify-end' : 'justify-start')}>
@@ -63,6 +141,7 @@ function Bubble({ message }: { message: Message }) {
             : 'rounded-bl-md bg-gray-100 text-gray-900',
         )}
       >
+        <SharedListingCard message={message} />
         <p className="text-[15px] break-words whitespace-pre-line">{linkifyMessage(message.body)}</p>
         <p className={cn('mt-1 text-[11px]', message.is_mine ? 'text-brand-100' : 'text-gray-400')}>
           {formatSentAt(message.created_at)}
@@ -89,6 +168,7 @@ export default function ConversationPage() {
   const markRead = useMarkConversationRead()
 
   const [body, setBody] = useState('')
+  const [sharedListing, setSharedListing] = useState<ShareableListing | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   // Mark read once per thread. A ref rather than state: this must not
@@ -121,11 +201,33 @@ export default function ConversationPage() {
     const trimmed = body.trim()
     if (trimmed === '' || conversationId === undefined) return
 
-    sendMessage.mutate(trimmed, {
-      // Clear only once the server has it — otherwise a failed send
-      // silently eats what the user typed.
-      onSuccess: () => setBody(''),
-    })
+    sendMessage.mutate(
+      { body: trimmed, shared: sharedListing?.attachment },
+      {
+        // Clear only once the server has it — otherwise a failed send
+        // silently eats what the user typed.
+        onSuccess: () => {
+          setBody('')
+          setSharedListing(null)
+        },
+      },
+    )
+  }
+
+  /**
+   * "Envoyer l'annonce" — the picker's own dedicated button. Separate
+   * from handleSubmit() above: this sends the listing right away with no
+   * text required, rather than needing something typed in the Textarea
+   * first. The backend still needs a non-empty body (messages.body is
+   * NOT NULL), so a short default caption is sent along with it.
+   */
+  function sendSharedListing() {
+    if (conversationId === undefined || !sharedListing) return
+
+    sendMessage.mutate(
+      { body: `Annonce partagée : ${sharedListing.title}`, shared: sharedListing.attachment },
+      { onSuccess: () => setSharedListing(null) },
+    )
   }
 
   if (isError) {
@@ -222,6 +324,14 @@ export default function ConversationPage() {
           </Card>
 
           <form onSubmit={handleSubmit} className="mt-4 space-y-3">
+            <ShareListingPicker
+              selected={sharedListing}
+              onSelect={setSharedListing}
+              onClear={() => setSharedListing(null)}
+              onSend={sendSharedListing}
+              isSending={sendMessage.isPending}
+            />
+
             <Textarea
               label="Votre message"
               rows={3}
