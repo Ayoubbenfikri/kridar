@@ -131,6 +131,12 @@ export default function RoommateListingsPage() {
     if (get('city')) params.set('city', get('city'))
     params.set('type', nextType)
     setSearchParams(params)
+
+    // "Looking for a place" posts never have coordinates (the form only
+    // shows the map picker for "offer"), so there is nothing to put on a
+    // map there — drop back to the list view rather than switching tabs
+    // into an always-empty map.
+    if (nextType === 'request') setView('list')
   }
 
   function removeParam(key: string) {
@@ -266,31 +272,37 @@ export default function RoommateListingsPage() {
           )}
         </Button>
 
-        {/* Same segmented list/map control as PropertiesPage. */}
-        <div className="flex shrink-0 rounded-lg border border-gray-200 bg-white p-1">
-          <button
-            type="button"
-            onClick={() => setView('list')}
-            aria-pressed={view === 'list'}
-            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition ${
-              view === 'list' ? 'bg-brand-50 text-brand-700' : 'text-gray-500 hover:text-gray-900'
-            }`}
-          >
-            <LayoutGrid className="size-4" aria-hidden />
-            {t('roommates.viewList')}
-          </button>
-          <button
-            type="button"
-            onClick={() => setView('map')}
-            aria-pressed={view === 'map'}
-            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition ${
-              view === 'map' ? 'bg-brand-50 text-brand-700' : 'text-gray-500 hover:text-gray-900'
-            }`}
-          >
-            <MapIcon className="size-4" aria-hidden />
-            {t('roommates.viewMap')}
-          </button>
-        </div>
+        {/* Same segmented list/map control as PropertiesPage — but only
+            for "offer" posts. "Looking for a place" posts never carry a
+            saved position, so a map there would just always be empty;
+            simpler to not offer that view at all than to show it and let
+            people wonder why it's blank. */}
+        {type === 'offer' && (
+          <div className="flex shrink-0 rounded-lg border border-gray-200 bg-white p-1">
+            <button
+              type="button"
+              onClick={() => setView('list')}
+              aria-pressed={view === 'list'}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                view === 'list' ? 'bg-brand-50 text-brand-700' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              <LayoutGrid className="size-4" aria-hidden />
+              {t('roommates.viewList')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setView('map')}
+              aria-pressed={view === 'map'}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                view === 'map' ? 'bg-brand-50 text-brand-700' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              <MapIcon className="size-4" aria-hidden />
+              {t('roommates.viewMap')}
+            </button>
+          </div>
+        )}
       </div>
 
       {showFilters && (
@@ -360,7 +372,7 @@ export default function RoommateListingsPage() {
               ) : undefined
             }
           />
-        ) : view === 'map' ? (
+        ) : view === 'map' && type === 'offer' ? (
           // Its own query (mapData, see above) — only starts fetching
           // once the visitor switches to this view, so it can still be
           // loading here even though the grid's `data` already resolved.
