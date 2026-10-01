@@ -336,7 +336,7 @@ export default function ConversationPage() {
               label="Votre message"
               rows={3}
               maxLength={2000}
-              placeholder="Astuce : collez le lien d'une annonce (copié depuis la barre d'adresse), il deviendra cliquable."
+              placeholder="Écrivez votre message..."
               value={body}
               onChange={(event) => setBody(event.target.value)}
               error={validationErrors?.body?.[0]}
