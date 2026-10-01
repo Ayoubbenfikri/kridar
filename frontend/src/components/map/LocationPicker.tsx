@@ -1,7 +1,10 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import type L from 'leaflet'
 import { DEFAULT_MARKER_ICON } from '@/components/map/leafletDefaultIcon'
+import MapOverlayControls from '@/components/map/MapOverlayControls'
+import { TILE_LAYERS } from '@/components/map/mapTileStyles'
+import type { MapStyle } from '@/components/map/mapTileStyles'
 
 // Marrakech - Kridar's main market in the current demo data - a sensible
 // default center when a property has no location set yet.
@@ -74,6 +77,8 @@ function ClickHandler({ onPick }: { onPick: (lat: number, lng: number) => void }
  * place. See PropertyForm.tsx for where this is applied.
  */
 export default function LocationPicker({ latitude, longitude, onChange }: LocationPickerProps) {
+  const [mapStyle, setMapStyle] = useState<MapStyle>('street')
+
   const position: [number, number] | null =
     latitude !== null && longitude !== null && !Number.isNaN(latitude) && !Number.isNaN(longitude)
       ? [latitude, longitude]
@@ -89,10 +94,13 @@ export default function LocationPicker({ latitude, longitude, onChange }: Locati
         zoom={position ? PICKED_ZOOM : DEFAULT_ZOOM}
         style={{ height: '320px', width: '100%' }}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        {/* key forces a clean remount when the provider changes, rather
+            than relying on react-leaflet's own url-prop diffing. */}
+        <TileLayer key={mapStyle} {...TILE_LAYERS[mapStyle]} />
+        {/* onLocate doubles as "use my position" here — unlike the
+            search maps, detecting a location on this form should also
+            fill in the picked coordinates, not just recenter. */}
+        <MapOverlayControls mapStyle={mapStyle} onToggleStyle={setMapStyle} showLocate onLocate={onChange} />
         <ClickHandler onPick={onChange} />
         <RecenterOnce position={position} />
         {position && (

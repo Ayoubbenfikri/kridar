@@ -1,8 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { formatMad, primaryPrice } from '@/lib/formatPrice'
+import MapOverlayControls from '@/components/map/MapOverlayControls'
+import { TILE_LAYERS } from '@/components/map/mapTileStyles'
+import type { MapStyle } from '@/components/map/mapTileStyles'
 import type { Property } from '@/types/property'
 
 // Same Marrakech default as LocationPicker - shown only when NONE of the
@@ -94,6 +97,7 @@ interface PropertiesMapViewProps {
  */
 export default function PropertiesMapView({ properties }: PropertiesMapViewProps) {
   const navigate = useNavigate()
+  const [mapStyle, setMapStyle] = useState<MapStyle>('street')
 
   const geolocated: GeolocatedProperty[] = properties.flatMap((property) => {
     if (property.latitude === null || property.longitude === null) return []
@@ -108,10 +112,10 @@ export default function PropertiesMapView({ properties }: PropertiesMapViewProps
   return (
     <div className="isolate overflow-hidden rounded-xl border border-gray-200">
       <MapContainer center={DEFAULT_CENTER} zoom={DEFAULT_ZOOM} style={{ height: '520px', width: '100%' }}>
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        {/* key forces a clean remount when the provider changes, rather
+            than relying on react-leaflet's own url-prop diffing. */}
+        <TileLayer key={mapStyle} {...TILE_LAYERS[mapStyle]} />
+        <MapOverlayControls mapStyle={mapStyle} onToggleStyle={setMapStyle} showLocate />
         <FitToMarkers points={points} />
         {geolocated.map(({ property, latitude, longitude }) => {
           const price = primaryPrice(property)
