@@ -33,6 +33,8 @@ interface FormState {
   latitude: string
   longitude: string
   price_per_person: string
+  budget_min: string
+  budget_max: string
   beds: string
   bedrooms: string
   furnished: '' | 'yes' | 'no'
@@ -50,6 +52,8 @@ const EMPTY_FORM: FormState = {
   latitude: '',
   longitude: '',
   price_per_person: '',
+  budget_min: '',
+  budget_max: '',
   beds: '',
   bedrooms: '',
   furnished: '',
@@ -69,6 +73,8 @@ function formStateFromListing(listing: RoommateListing): FormState {
     latitude: listing.latitude ?? '',
     longitude: listing.longitude ?? '',
     price_per_person: listing.price_per_person ?? '',
+    budget_min: listing.budget_min ?? '',
+    budget_max: listing.budget_max ?? '',
     beds: listing.beds !== null ? String(listing.beds) : '',
     bedrooms: listing.bedrooms !== null ? String(listing.bedrooms) : '',
     furnished: listing.furnished === null ? '' : listing.furnished ? 'yes' : 'no',
@@ -102,6 +108,8 @@ function buildPayload(form: FormState): RoommateListingFormPayload {
     latitude: toOptionalNumber(form.latitude),
     longitude: toOptionalNumber(form.longitude),
     price_per_person: toOptionalNumber(form.price_per_person),
+    budget_min: toOptionalNumber(form.budget_min),
+    budget_max: toOptionalNumber(form.budget_max),
     beds: toOptionalNumber(form.beds),
     bedrooms: toOptionalNumber(form.bedrooms),
     furnished: form.furnished === '' ? undefined : form.furnished === 'yes',
@@ -348,16 +356,46 @@ export default function RoommateListingForm({
         }
       >
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Input
-            label={isOffer ? 'Prix par personne (MAD) *' : 'Prix par personne (MAD)'}
-            type="number"
-            min={0}
-            step="any"
-            required={isOffer}
-            value={form.price_per_person}
-            onChange={(event) => update('price_per_person', event.target.value)}
-            error={fieldError('price_per_person')}
-          />
+          {/* 'offer' asks a single rent figure per roommate. 'request' has
+              no place yet, so instead of a single price it gives a budget
+              RANGE ("I'm looking for something between 1000 and 1500
+              MAD/month") — two fields, backed by budget_min/budget_max
+              (see StoreRoommateListingRequest). */}
+          {isRequest ? (
+            <>
+              <Input
+                label="Budget min (MAD / mois) *"
+                type="number"
+                min={0}
+                step="any"
+                required
+                value={form.budget_min}
+                onChange={(event) => update('budget_min', event.target.value)}
+                error={fieldError('budget_min')}
+              />
+              <Input
+                label="Budget max (MAD / mois) *"
+                type="number"
+                min={0}
+                step="any"
+                required
+                value={form.budget_max}
+                onChange={(event) => update('budget_max', event.target.value)}
+                error={fieldError('budget_max')}
+              />
+            </>
+          ) : (
+            <Input
+              label={isOffer ? 'Prix par personne (MAD) *' : 'Prix par personne (MAD)'}
+              type="number"
+              min={0}
+              step="any"
+              required={isOffer}
+              value={form.price_per_person}
+              onChange={(event) => update('price_per_person', event.target.value)}
+              error={fieldError('price_per_person')}
+            />
+          )}
 
           <Input
             label={isOffer ? 'Lits *' : 'Lits'}

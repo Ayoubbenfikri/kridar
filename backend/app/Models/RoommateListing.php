@@ -25,6 +25,8 @@ class RoommateListing extends Model
         'latitude',
         'longitude',
         'price_per_person',
+        'budget_min',
+        'budget_max',
         'currency',
         'beds',
         'bedrooms',
@@ -44,6 +46,8 @@ class RoommateListing extends Model
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
             'price_per_person' => 'decimal:2',
+            'budget_min' => 'decimal:2',
+            'budget_max' => 'decimal:2',
             'available_from' => 'date',
             'published_at' => 'datetime',
         ];

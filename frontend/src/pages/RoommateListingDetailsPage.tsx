@@ -260,13 +260,26 @@ export default function RoommateListingDetailsPage() {
         {/* ---------------- Right column ---------------- */}
         <div className="lg:col-span-1">
           <div className="lg:sticky lg:top-24">
-            {listing.price_per_person && (
-              <div className="mb-4 flex items-baseline gap-2">
-                <span className="text-2xl font-bold tracking-tight text-gray-900">
-                  {formatMad(listing.price_per_person)}
-                </span>
-                <span className="text-gray-500">/ personne</span>
-              </div>
+            {listing.type === 'request' ? (
+              (listing.budget_min || listing.budget_max) && (
+                <div className="mb-4 flex items-baseline gap-2">
+                  <span className="text-2xl font-bold tracking-tight text-gray-900">
+                    {listing.budget_min && listing.budget_max
+                      ? `${formatMad(listing.budget_min)} - ${formatMad(listing.budget_max)}`
+                      : formatMad(listing.budget_min ?? listing.budget_max ?? '0')}
+                  </span>
+                  <span className="text-gray-500">/ mois</span>
+                </div>
+              )
+            ) : (
+              listing.price_per_person && (
+                <div className="mb-4 flex items-baseline gap-2">
+                  <span className="text-2xl font-bold tracking-tight text-gray-900">
+                    {formatMad(listing.price_per_person)}
+                  </span>
+                  <span className="text-gray-500">/ personne</span>
+                </div>
+              )
             )}
             <ContactPosterCard listing={listing} />
           </div>

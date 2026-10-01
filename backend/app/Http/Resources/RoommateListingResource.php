@@ -28,6 +28,8 @@ class RoommateListingResource extends JsonResource
             'longitude' => $this->longitude,
 
             'price_per_person' => $this->price_per_person,
+            'budget_min' => $this->budget_min,
+            'budget_max' => $this->budget_max,
             'currency' => $this->currency,
             'beds' => $this->beds,
             'bedrooms' => $this->bedrooms,

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\RoommateListing;
 
 use App\Enums\RoommateListingType;
+use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -38,11 +39,36 @@ class UpdateRoommateListingRequest extends FormRequest
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
 
             'price_per_person' => ['nullable', 'numeric', 'min:0'],
+            'budget_min' => ['nullable', 'numeric', 'min:0'],
+            'budget_max' => ['nullable', 'numeric', 'min:0'],
             'beds' => ['nullable', 'integer', 'min:1', 'max:20'],
             'bedrooms' => ['nullable', 'integer', 'min:1', 'max:20'],
             'furnished' => ['nullable', 'boolean'],
             'available_from' => ['nullable', 'date'],
             'people_count' => ['nullable', 'integer', 'min:1', 'max:10'],
+        ];
+    }
+
+    /**
+     * Only checked when BOTH bounds are present in this request — same
+     * reasoning as the docblock above: a partial update might send just
+     * one of the two, and there is no "other side" to compare against
+     * without re-fetching the model, which this request deliberately
+     * doesn't do.
+     *
+     * @return array<int, callable>
+     */
+    public function after(): array
+    {
+        return [
+            function (ValidatorContract $validator): void {
+                $min = $this->input('budget_min');
+                $max = $this->input('budget_max');
+
+                if ($min !== null && $max !== null && (float) $max < (float) $min) {
+                    $validator->errors()->add('budget_max', 'budget_max must be greater than or equal to budget_min.');
+                }
+            },
         ];
     }
 }

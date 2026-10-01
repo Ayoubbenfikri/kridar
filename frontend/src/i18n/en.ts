@@ -216,6 +216,7 @@ export const en: TranslationSchema = {
   roommateCard: {
     noPhoto: 'No photo',
     perPerson: '/ person',
+    perMonth: '/ month',
     beds: '{{n}} bed(s)',
     bedrooms: '{{n}} bd',
     priceNotSet: 'Price not set',

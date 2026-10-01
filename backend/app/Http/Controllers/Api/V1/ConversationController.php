@@ -10,6 +10,7 @@ use App\Http\Resources\MessageResource;
 use App\Models\Conversation;
 use App\Models\Property;
 use App\Models\RoommateListing;
+use App\Models\User;
 use App\Services\MessagingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -50,22 +51,36 @@ class ConversationController extends Controller
      *
      * StoreConversationRequest guarantees exactly one of property_id /
      * roommate_listing_id is present, so which branch runs is decided by
-     * which one was sent.
+     * which one was sent. A property_id request additionally carries an
+     * optional guest_id — present only on the owner-initiated path (the
+     * "Contacter" button on OwnerReservationsPage) — which flips who is
+     * considered the sender's counterpart: see
+     * MessagingService::startOrContinueAsOwner().
      *
      * No Policy check: there is no conversation yet to authorize
-     * against. The rules (listing published, not your own) are state
-     * rules and live in MessagingService.
+     * against. The rules (listing published, not your own, or — for the
+     * owner path — guest has a reservation here) are state rules and
+     * live in MessagingService.
      */
     public function store(StoreConversationRequest $request): JsonResponse
     {
         $propertyId = $request->validated('property_id');
 
         if ($propertyId !== null) {
-            $conversation = $this->messaging->startOrContinue(
-                Property::findOrFail($propertyId),
-                $request->user(),
-                $request->validated('body'),
-            );
+            $guestId = $request->validated('guest_id');
+
+            $conversation = $guestId !== null
+                ? $this->messaging->startOrContinueAsOwner(
+                    Property::findOrFail($propertyId),
+                    $request->user(),
+                    User::findOrFail($guestId),
+                    $request->validated('body'),
+                )
+                : $this->messaging->startOrContinue(
+                    Property::findOrFail($propertyId),
+                    $request->user(),
+                    $request->validated('body'),
+                );
         } else {
             $conversation = $this->messaging->startOrContinueRoommate(
                 RoommateListing::findOrFail($request->validated('roommate_listing_id')),

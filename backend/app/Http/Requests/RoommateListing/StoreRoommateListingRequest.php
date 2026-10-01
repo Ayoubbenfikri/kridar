@@ -3,6 +3,7 @@
 namespace App\Http\Requests\RoommateListing;
 
 use App\Enums\RoommateListingType;
+use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -37,12 +38,19 @@ class StoreRoommateListingRequest extends FormRequest
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
 
             // Meaningful when you already have a place to describe (an
-            // "offer") — required there. Left optional for a "request"
-            // post, which has no place yet.
+            // "offer") — the rent asked per roommate. Required there,
+            // never used for a "request" post (see budget_min/budget_max
+            // below — a single figure can't say "between 1000 and 1500").
             'price_per_person' => [$isOffer ? 'required' : 'nullable', 'numeric', 'min:0'],
             'beds' => [$isOffer ? 'required' : 'nullable', 'integer', 'min:1', 'max:20'],
             'bedrooms' => [$isOffer ? 'required' : 'nullable', 'integer', 'min:1', 'max:20'],
             'furnished' => [$isOffer ? 'required' : 'nullable', 'boolean'],
+
+            // "Request" only — the poster's price range. Required there
+            // (see the after() cross-check below for max >= min); never
+            // used for an "offer".
+            'budget_min' => [$isOffer ? 'nullable' : 'required', 'numeric', 'min:0'],
+            'budget_max' => [$isOffer ? 'nullable' : 'required', 'numeric', 'min:0'],
 
             // Meaningful for both: an offer says when the room is free,
             // a request says when the poster needs to move in.
@@ -52,6 +60,23 @@ class StoreRoommateListingRequest extends FormRequest
             // together (e.g. two friends sharing one room). Optional on
             // an offer.
             'people_count' => [$isOffer ? 'nullable' : 'required', 'integer', 'min:1', 'max:10'],
+        ];
+    }
+
+    /**
+     * @return array<int, callable>
+     */
+    public function after(): array
+    {
+        return [
+            function (ValidatorContract $validator): void {
+                $min = $this->input('budget_min');
+                $max = $this->input('budget_max');
+
+                if ($min !== null && $max !== null && (float) $max < (float) $min) {
+                    $validator->errors()->add('budget_max', 'budget_max must be greater than or equal to budget_min.');
+                }
+            },
         ];
     }
 }

@@ -67,6 +67,32 @@ export function useStartConversation() {
   })
 }
 
+/**
+ * Owner-initiated version of useStartConversation() above — the
+ * "Contacter" button on OwnerReservationsPage. Never charged against
+ * the owner's free-contact credits (see
+ * MessagingService::startOrContinueAsOwner on the backend), so unlike
+ * ContactOwnerCard there is no 402/MessagingPaywall case to handle here.
+ */
+export function useStartConversationWithGuest() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      propertyId,
+      guestId,
+      body,
+    }: {
+      propertyId: number
+      guestId: number
+      body: string
+    }) => messagingApi.startConversationWithGuest(propertyId, guestId, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] })
+    },
+  })
+}
+
 /** Same as useStartConversation() above, but for a roommate post. */
 export function useStartRoommateConversation() {
   const queryClient = useQueryClient()

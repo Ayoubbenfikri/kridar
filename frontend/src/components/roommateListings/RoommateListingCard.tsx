@@ -69,7 +69,20 @@ export default function RoommateListingCard({ listing }: { listing: RoommateList
             )}
           </div>
 
-          {listing.price_per_person ? (
+          {listing.type === 'request' ? (
+            listing.budget_min || listing.budget_max ? (
+              <p className="mt-3 flex items-baseline gap-1.5">
+                <span className="text-lg font-bold tracking-tight text-gray-900">
+                  {listing.budget_min && listing.budget_max
+                    ? `${formatMad(listing.budget_min)} - ${formatMad(listing.budget_max)}`
+                    : formatMad(listing.budget_min ?? listing.budget_max ?? '0')}
+                </span>
+                <span className="text-sm text-gray-500">{t('roommateCard.perMonth')}</span>
+              </p>
+            ) : (
+              <p className="mt-3 text-sm text-gray-400">{t('roommateCard.priceNotSet')}</p>
+            )
+          ) : listing.price_per_person ? (
             <p className="mt-3 flex items-baseline gap-1.5">
               <span className="text-lg font-bold tracking-tight text-gray-900">
                 {formatMad(listing.price_per_person)}

@@ -257,6 +257,7 @@ export const fr = {
   roommateCard: {
     noPhoto: 'Pas de photo',
     perPerson: '/ personne',
+    perMonth: '/ mois',
     beds: '{{n}} lit(s)',
     bedrooms: '{{n}} ch.',
     priceNotSet: 'Prix non défini',

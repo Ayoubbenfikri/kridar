@@ -61,6 +61,26 @@ async function startRoommateConversation(roommateListingId: number, body: string
   return data.conversation
 }
 
+/**
+ * Owner-initiated: "Contacter" on OwnerReservationsPage. Same
+ * find-or-continue endpoint as startConversation(), with guest_id added
+ * so the backend knows this is the owner reaching out to a guest, not
+ * the other way round. The backend re-checks that this guest actually
+ * has a reservation on the property — sending an arbitrary id here
+ * would just get a 409 back.
+ */
+async function startConversationWithGuest(
+  propertyId: number,
+  guestId: number,
+  body: string,
+): Promise<Conversation> {
+  const { data } = await axiosClient.post<{ message: string; conversation: Conversation }>(
+    '/api/v1/conversations',
+    { property_id: propertyId, guest_id: guestId, body },
+  )
+  return data.conversation
+}
+
 async function sendMessage(conversationId: number, body: string): Promise<Message> {
   const { data } = await axiosClient.post<{ message: string; data: Message }>(
     `/api/v1/conversations/${conversationId}/messages`,
@@ -103,6 +123,7 @@ export const messagingApi = {
   fetchUnreadCount,
   fetchConversation,
   startConversation,
+  startConversationWithGuest,
   startRoommateConversation,
   sendMessage,
   markRead,

@@ -1,12 +1,23 @@
 import { useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { AlertCircle, CalendarX, Check, MapPin, TriangleAlert, User, X } from 'lucide-react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import {
+  AlertCircle,
+  CalendarX,
+  Check,
+  MapPin,
+  MessageSquare,
+  Send,
+  TriangleAlert,
+  User,
+  X,
+} from 'lucide-react'
 import {
   useCancelReservationAsOwner,
   useConfirmReservation,
   useOwnerReservations,
   useRejectReservation,
 } from '@/features/owner/useOwner'
+import { useStartConversationWithGuest } from '@/features/messaging/useMessaging'
 import { getErrorMessage } from '@/lib/apiErrors'
 import { formatMad } from '@/lib/formatPrice'
 import ReservationStatusBadge from '@/components/reservations/ReservationStatusBadge'
@@ -55,15 +66,41 @@ function Payout({ reservation }: { reservation: Reservation }) {
 export default function OwnerReservationsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Number(searchParams.get('page') ?? '1')
+  const navigate = useNavigate()
 
   const { showToast } = useToast()
   const { data, isError, error, isFetching } = useOwnerReservations(page)
   const confirmMutation = useConfirmReservation()
   const rejectMutation = useRejectReservation()
   const cancelMutation = useCancelReservationAsOwner()
+  const startConversation = useStartConversationWithGuest()
 
   const [cancellingId, setCancellingId] = useState<number | null>(null)
   const [cancelReason, setCancelReason] = useState('')
+
+  // Inline composer, same pattern as the cancel-reason box below: one
+  // reservation's "Contacter" button open at a time.
+  const [messagingId, setMessagingId] = useState<number | null>(null)
+  const [messageBody, setMessageBody] = useState('')
+
+  function startMessaging(reservationId: number) {
+    setMessagingId(reservationId)
+    setMessageBody('')
+  }
+
+  function sendMessage(reservation: Reservation) {
+    const trimmed = messageBody.trim()
+    if (trimmed === '' || !reservation.guest) return
+
+    startConversation.mutate(
+      { propertyId: reservation.property.id, guestId: reservation.guest.id, body: trimmed },
+      {
+        // Same find-or-continue as ContactOwnerCard: land on whichever
+        // thread came back, new or already existing.
+        onSuccess: (conversation) => navigate(`/messages/${conversation.id}`),
+      },
+    )
+  }
 
   function goToPage(nextPage: number) {
     setSearchParams(nextPage === 1 ? {} : { page: String(nextPage) })
@@ -240,6 +277,58 @@ export default function OwnerReservationsPage() {
                           Retour
                         </Button>
                       </div>
+                    </div>
+                  )}
+
+                  {/* Reach out to the guest about this booking — the
+                      owner-initiated counterpart to ContactOwnerCard.
+                      Shown whatever the reservation's status, since an
+                      owner may want to follow up on an old or cancelled
+                      booking too; the backend confirms this guest really
+                      has a reservation here either way. */}
+                  {reservation.guest && messagingId !== reservation.id && (
+                    <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-4">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        icon={<MessageSquare className="size-4" />}
+                        onClick={() => startMessaging(reservation.id)}
+                      >
+                        Contacter {reservation.guest.name}
+                      </Button>
+                    </div>
+                  )}
+
+                  {messagingId === reservation.id && (
+                    <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                      <Textarea
+                        label="Votre message"
+                        rows={3}
+                        maxLength={2000}
+                        placeholder="Bonjour, je vous contacte à propos de votre réservation..."
+                        value={messageBody}
+                        onChange={(event) => setMessageBody(event.target.value)}
+                      />
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          icon={<Send className="size-4" />}
+                          disabled={messageBody.trim() === ''}
+                          isLoading={startConversation.isPending}
+                          onClick={() => sendMessage(reservation)}
+                        >
+                          Envoyer
+                        </Button>
+                        <Button size="sm" variant="secondary" onClick={() => setMessagingId(null)}>
+                          Annuler
+                        </Button>
+                      </div>
+                      {startConversation.isError && (
+                        <p className="mt-3 flex items-start gap-2 text-sm text-red-600">
+                          <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+                          {getErrorMessage(startConversation.error)}
+                        </p>
+                      )}
                     </div>
                   )}
 

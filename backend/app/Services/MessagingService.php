@@ -8,6 +8,7 @@ use App\Exceptions\MessagingNotAllowedException;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\Property;
+use App\Models\Reservation;
 use App\Models\RoommateListing;
 use App\Models\User;
 use App\Notifications\NewMessageNotification;
@@ -116,6 +117,69 @@ class MessagingService
         });
 
         $this->notifyCounterpart($conversation, $sender);
+
+        return $conversation;
+    }
+
+    /**
+     * The reverse of startOrContinue() above: the OWNER reaching out to
+     * a guest, not a guest reaching out to the owner. Backs the
+     * "Contacter" button on OwnerReservationsPage — NOT a general
+     * "owner can message any user" door. It only works for a guest who
+     * actually has a reservation on this property, checked here and
+     * never trusted from the frontend (the frontend only ever has the
+     * reservation's own guest id to send anyway, but a crafted request
+     * could send any id, so the check stays server-side).
+     *
+     * Deliberately skips MessagingCreditsService entirely — no
+     * checkAccess(), no consumeFreeCredit(), whatever the conversation
+     * is new or not. The credit system exists to slow down COLD
+     * outreach (a stranger messaging an owner they found by browsing);
+     * this is the opposite — the owner already has a real, existing
+     * relationship with this guest via the reservation, so charging a
+     * credit here would punish an owner for doing customer service on
+     * their own booking. Same "always free" treatment as a reply in an
+     * existing thread.
+     */
+    public function startOrContinueAsOwner(Property $property, User $owner, User $guest, string $body): Conversation
+    {
+        if ($property->owner_id !== $owner->id) {
+            throw new MessagingNotAllowedException(
+                'You can only message guests about your own listings.'
+            );
+        }
+
+        $hasReservation = Reservation::query()
+            ->where('property_id', $property->id)
+            ->where('guest_id', $guest->id)
+            ->exists();
+
+        if (! $hasReservation) {
+            throw new MessagingNotAllowedException(
+                'This guest has no reservation on this property.'
+            );
+        }
+
+        $conversation = DB::transaction(function () use ($property, $owner, $guest, $body): Conversation {
+            $existing = $this->conversations->findForPropertyAndGuest($property->id, $guest->id);
+
+            if ($existing !== null) {
+                $this->conversations->addMessage($existing, $owner->id, $body);
+
+                return $this->conversations->touchLastMessageAt($existing);
+            }
+
+            $conversation = $this->conversations->create([
+                'property_id' => $property->id,
+                'guest_id' => $guest->id,
+            ]);
+
+            $this->conversations->addMessage($conversation, $owner->id, $body);
+
+            return $this->conversations->touchLastMessageAt($conversation);
+        });
+
+        $this->notifyCounterpart($conversation, $owner);
 
         return $conversation;
     }

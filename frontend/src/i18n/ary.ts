@@ -232,6 +232,7 @@ export const ary: TranslationSchema = {
   roommateCard: {
     noPhoto: 'ماكاينة تا تصويرة',
     perPerson: 'للفرد',
+    perMonth: 'للشهر',
     beds: '{{n}} سرير',
     bedrooms: '{{n}} بيوت',
     priceNotSet: 'الثمن ماشي محدّد',

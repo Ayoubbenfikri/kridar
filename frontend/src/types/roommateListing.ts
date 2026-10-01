@@ -38,6 +38,8 @@ export interface RoommateListing {
   longitude: string | null
 
   price_per_person: string | null
+  budget_min: string | null
+  budget_max: string | null
   currency: string
   beds: number | null
   bedrooms: number | null

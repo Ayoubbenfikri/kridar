@@ -53,6 +53,15 @@ class StoreConversationRequest extends FormRequest
             // cap exists so one request cannot dump unbounded text into
             // the database.
             'body' => ['required', 'string', 'min:1', 'max:2000'],
+
+            // Owner-initiated only: the "message this guest" button on
+            // OwnerReservationsPage. Only meaningful alongside
+            // property_id (a roommate post has no reservations to derive
+            // a guest from) — MessagingService::startOrContinueAsOwner()
+            // re-checks that the sender actually owns the property AND
+            // that this guest actually has a reservation on it, never
+            // trusting this id alone to mean "allowed to message".
+            'guest_id' => ['nullable', 'integer', 'exists:users,id'],
         ];
     }
 

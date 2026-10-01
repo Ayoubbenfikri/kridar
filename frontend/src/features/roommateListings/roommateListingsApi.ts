@@ -59,7 +59,7 @@ async function fetchOwnRoommateListings(page = 1): Promise<PaginatedResponse<Roo
 /**
  * Shared shape for POST /roommate-listings (StoreRoommateListingRequest -
  * price_per_person/beds/bedrooms/furnished required when type is "offer",
- * people_count required when type is "request") and PUT
+ * budget_min/budget_max/people_count required when type is "request") and PUT
  * /roommate-listings/{id} (UpdateRoommateListingRequest - every field
  * optional). Same "always send the whole form, the backend validates what
  * matters" convention as properties' PropertyFormPayload.
@@ -74,6 +74,8 @@ export interface RoommateListingFormPayload {
   latitude?: number
   longitude?: number
   price_per_person?: number
+  budget_min?: number
+  budget_max?: number
   beds?: number
   bedrooms?: number
   furnished?: boolean
