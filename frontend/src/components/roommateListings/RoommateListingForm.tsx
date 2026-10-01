@@ -383,15 +383,15 @@ export default function RoommateListingForm({
 
           <Select
             label={isOffer ? 'Meublé *' : 'Meublé'}
-            required={isOffer}
             value={form.furnished}
-            onChange={(event) => update('furnished', event.target.value as FormState['furnished'])}
+            onChange={(value) => update('furnished', value as FormState['furnished'])}
             error={fieldError('furnished')}
-          >
-            <option value="">Choisir...</option>
-            <option value="yes">Meublé</option>
-            <option value="no">Non meublé</option>
-          </Select>
+            options={[
+              { value: '', label: 'Choisir...' },
+              { value: 'yes', label: 'Meublé' },
+              { value: 'no', label: 'Non meublé' },
+            ]}
+          />
 
           <Input
             label={isRequest ? 'Nombre de personnes *' : 'Nombre de personnes (optionnel)'}

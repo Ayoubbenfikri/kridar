@@ -2,15 +2,18 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RotateCcw } from 'lucide-react'
 import { Button, Select } from '@/components/ui'
-import type { RoommateListingType } from '@/types/roommateListing'
 
 /**
  * Same shape and convention as PropertyFilters: every value is a string
  * because it comes from — and goes back to — the URL. This component
  * only edits a local draft and hands it back on "Apply".
+ *
+ * No `type` field here anymore — RoommateListingsPage now shows "Offer"
+ * vs "Request" as two separate tabs above this panel (switching page,
+ * not filtering a mixed list), so the page owns that part of the URL and
+ * always keeps it set when rebuilding the query string from this form.
  */
 export interface RoommateFilterValues {
-  type: string
   min_price: string
   max_price: string
   beds: string
@@ -20,7 +23,6 @@ export interface RoommateFilterValues {
 }
 
 export const EMPTY_ROOMMATE_FILTERS: RoommateFilterValues = {
-  type: '',
   min_price: '',
   max_price: '',
   beds: '',
@@ -28,8 +30,6 @@ export const EMPTY_ROOMMATE_FILTERS: RoommateFilterValues = {
   furnished: '',
   available_by: '',
 }
-
-const TYPE_VALUES: Array<RoommateListingType | ''> = ['', 'offer', 'request']
 
 const COUNT_OPTIONS = ['', '1', '2', '3', '4']
 
@@ -74,18 +74,6 @@ export default function RoommateListingFilters({
       className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Select
-          label={t('roommateFilters.type')}
-          value={draft.type}
-          onChange={(event) => set('type', event.target.value)}
-        >
-          {TYPE_VALUES.map((option) => (
-            <option key={option} value={option}>
-              {option === '' ? t('roommateType.all') : t(`roommateType.${option}`)}
-            </option>
-          ))}
-        </Select>
-
         <Field label={t('roommateFilters.minPrice', { unit: t('roommateFilters.perPerson') })}>
           <input
             type="number"
@@ -123,36 +111,33 @@ export default function RoommateListingFilters({
         <Select
           label={t('roommateFilters.beds')}
           value={draft.beds}
-          onChange={(event) => set('beds', event.target.value)}
-        >
-          {COUNT_OPTIONS.map((count) => (
-            <option key={count} value={count}>
-              {count === '' ? t('roommateFilters.any') : `${count}+`}
-            </option>
-          ))}
-        </Select>
+          onChange={(value) => set('beds', value)}
+          options={COUNT_OPTIONS.map((count) => ({
+            value: count,
+            label: count === '' ? t('roommateFilters.any') : `${count}+`,
+          }))}
+        />
 
         <Select
           label={t('roommateFilters.bedrooms')}
           value={draft.bedrooms}
-          onChange={(event) => set('bedrooms', event.target.value)}
-        >
-          {COUNT_OPTIONS.map((count) => (
-            <option key={count} value={count}>
-              {count === '' ? t('roommateFilters.any') : `${count}+`}
-            </option>
-          ))}
-        </Select>
+          onChange={(value) => set('bedrooms', value)}
+          options={COUNT_OPTIONS.map((count) => ({
+            value: count,
+            label: count === '' ? t('roommateFilters.any') : `${count}+`,
+          }))}
+        />
 
         <Select
           label={t('roommateFilters.furnished')}
           value={draft.furnished}
-          onChange={(event) => set('furnished', event.target.value)}
-        >
-          <option value="">{t('roommateFilters.furnishedAny')}</option>
-          <option value="1">{t('roommateFilters.furnishedYes')}</option>
-          <option value="0">{t('roommateFilters.furnishedNo')}</option>
-        </Select>
+          onChange={(value) => set('furnished', value)}
+          options={[
+            { value: '', label: t('roommateFilters.furnishedAny') },
+            { value: '1', label: t('roommateFilters.furnishedYes') },
+            { value: '0', label: t('roommateFilters.furnishedNo') },
+          ]}
+        />
       </div>
 
       <div className="mt-5 flex flex-wrap gap-3 border-t border-gray-100 pt-5">

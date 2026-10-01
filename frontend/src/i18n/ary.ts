@@ -245,6 +245,9 @@ export const ary: TranslationSchema = {
     searchPlaceholder: 'قلّب بالعنوان ولا بالمدينة...',
     searchLabel: 'قلّب',
     filters: 'الفلاتر',
+    viewList: 'اللائحة',
+    viewMap: 'الخريطة',
+    mapLoading: 'كنجيبو الخريطة...',
     removeFilter: 'نحّي هاد الفلتر',
     clearAll: 'مسح گاع',
     loadError:

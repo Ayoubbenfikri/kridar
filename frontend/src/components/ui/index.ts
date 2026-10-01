@@ -16,3 +16,4 @@ export { ToastProvider, useToast } from './Toast'
 
 export type { BadgeTone } from './Badge'
 export type { ButtonSize, ButtonVariant } from './Button'
+export type { SelectOption } from './Select'

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RotateCcw } from 'lucide-react'
-import { Button } from '@/components/ui'
+import { Button, Select } from '@/components/ui'
 import { useAmenities } from '@/features/amenities/useAmenities'
 import type { PropertyType, RentalType } from '@/types/property'
 
@@ -44,11 +44,12 @@ const RENTAL_VALUES: Array<RentalType | ''> = ['', 'short_term', 'long_term']
 
 const COUNT_OPTIONS = ['', '1', '2', '3', '4', '5']
 
-const SELECT_CLASS =
+// Plain <input> fields (min_price, max_price, guests) aren't part of this
+// request — only the <select> fields switch to the shared <Select> below,
+// so this class stays for those.
+const NUMBER_CLASS =
   'h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-[15px] text-gray-900 transition ' +
   'hover:border-gray-300 focus:border-brand-500 focus:ring-[3px] focus:ring-brand-500/20 focus:outline-none'
-
-const NUMBER_CLASS = SELECT_CLASS
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -101,33 +102,25 @@ export default function PropertyFilters({
       className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Field label={t('filters.propertyType')}>
-          <select
-            value={draft.property_type}
-            onChange={(event) => set('property_type', event.target.value)}
-            className={SELECT_CLASS}
-          >
-            {TYPE_VALUES.map((option) => (
-              <option key={option} value={option}>
-                {option === '' ? t('propertyType.all') : t(`propertyType.${option}`)}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <Select
+          label={t('filters.propertyType')}
+          value={draft.property_type}
+          onChange={(value) => set('property_type', value)}
+          options={TYPE_VALUES.map((option) => ({
+            value: option,
+            label: option === '' ? t('propertyType.all') : t(`propertyType.${option}`),
+          }))}
+        />
 
-        <Field label={t('filters.rentalType')}>
-          <select
-            value={draft.rental_type}
-            onChange={(event) => set('rental_type', event.target.value)}
-            className={SELECT_CLASS}
-          >
-            {RENTAL_VALUES.map((option) => (
-              <option key={option} value={option}>
-                {option === '' ? t('rentalType.both') : t(`rentalType.${option}`)}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <Select
+          label={t('filters.rentalType')}
+          value={draft.rental_type}
+          onChange={(value) => set('rental_type', value)}
+          options={RENTAL_VALUES.map((option) => ({
+            value: option,
+            label: option === '' ? t('rentalType.both') : t(`rentalType.${option}`),
+          }))}
+        />
 
         <Field label={t('filters.minPrice', { unit: priceUnit })}>
           <input
@@ -154,33 +147,25 @@ export default function PropertyFilters({
         </Field>
 
         {/* These three are minimums server-side (>=), so the labels say so. */}
-        <Field label={t('filters.bedrooms')}>
-          <select
-            value={draft.bedrooms}
-            onChange={(event) => set('bedrooms', event.target.value)}
-            className={SELECT_CLASS}
-          >
-            {COUNT_OPTIONS.map((count) => (
-              <option key={count} value={count}>
-                {count === '' ? t('filters.any') : `${count}+`}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <Select
+          label={t('filters.bedrooms')}
+          value={draft.bedrooms}
+          onChange={(value) => set('bedrooms', value)}
+          options={COUNT_OPTIONS.map((count) => ({
+            value: count,
+            label: count === '' ? t('filters.any') : `${count}+`,
+          }))}
+        />
 
-        <Field label={t('filters.bathrooms')}>
-          <select
-            value={draft.bathrooms}
-            onChange={(event) => set('bathrooms', event.target.value)}
-            className={SELECT_CLASS}
-          >
-            {COUNT_OPTIONS.map((count) => (
-              <option key={count} value={count}>
-                {count === '' ? t('filters.any') : `${count}+`}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <Select
+          label={t('filters.bathrooms')}
+          value={draft.bathrooms}
+          onChange={(value) => set('bathrooms', value)}
+          options={COUNT_OPTIONS.map((count) => ({
+            value: count,
+            label: count === '' ? t('filters.any') : `${count}+`,
+          }))}
+        />
 
         <Field label={t('filters.guests')}>
           <input

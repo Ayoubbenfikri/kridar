@@ -270,6 +270,9 @@ export const fr = {
     searchPlaceholder: 'Rechercher par titre ou ville...',
     searchLabel: 'Rechercher',
     filters: 'Filtres',
+    viewList: 'Liste',
+    viewMap: 'Carte',
+    mapLoading: 'Chargement de la carte...',
     removeFilter: 'Retirer ce filtre',
     clearAll: 'Tout effacer',
     loadError:

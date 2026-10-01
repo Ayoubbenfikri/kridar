@@ -7,11 +7,19 @@ import type { FetchRoommateListingsParams, RoommateListingFormPayload } from './
  * keepPreviousData convention as useProperties — the grid does not flash
  * empty while a new page loads.
  */
-export function useRoommateListings(params: FetchRoommateListingsParams = {}) {
+export function useRoommateListings(
+  params: FetchRoommateListingsParams = {},
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: ['roommateListings', params],
     queryFn: () => roommateListingsApi.fetchRoommateListings(params),
     placeholderData: keepPreviousData,
+    // Map view (RoommateListingsPage): lets the page skip the separate
+    // up-to-50-results map query while list view is showing — same
+    // `enabled` pass-through as useProperties. undefined (every existing
+    // caller) behaves as enabled, so this is backward compatible.
+    enabled: options?.enabled,
   })
 }
 

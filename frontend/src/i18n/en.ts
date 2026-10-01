@@ -229,6 +229,9 @@ export const en: TranslationSchema = {
     searchPlaceholder: 'Search by title or city...',
     searchLabel: 'Search',
     filters: 'Filters',
+    viewList: 'List',
+    viewMap: 'Map',
+    mapLoading: 'Loading map...',
     removeFilter: 'Remove this filter',
     clearAll: 'Clear all',
     loadError:

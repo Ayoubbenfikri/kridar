@@ -242,37 +242,25 @@ export default function PropertyForm({
 
           <Select
             label="Type de bien"
-            required
             value={form.property_type}
-            onChange={(event) => update('property_type', event.target.value as PropertyType)}
+            onChange={(value) => update('property_type', value as PropertyType)}
             error={fieldError('property_type')}
-          >
-            <option value="" disabled>
-              Choisir...
-            </option>
-            {Object.entries(PROPERTY_TYPE_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </Select>
+            options={[
+              { value: '', label: 'Choisir...' },
+              ...Object.entries(PROPERTY_TYPE_LABELS).map(([value, label]) => ({ value, label })),
+            ]}
+          />
 
           <Select
             label="Type de location"
-            required
             value={form.rental_type}
-            onChange={(event) => update('rental_type', event.target.value as RentalType)}
+            onChange={(value) => update('rental_type', value as RentalType)}
             error={fieldError('rental_type')}
-          >
-            <option value="" disabled>
-              Choisir...
-            </option>
-            {Object.entries(RENTAL_TYPE_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </Select>
+            options={[
+              { value: '', label: 'Choisir...' },
+              ...Object.entries(RENTAL_TYPE_LABELS).map(([value, label]) => ({ value, label })),
+            ]}
+          />
         </div>
       </Section>
 
