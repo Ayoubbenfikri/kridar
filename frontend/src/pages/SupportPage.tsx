@@ -143,6 +143,27 @@ export default function SupportPage() {
 
       <p className="mt-4 text-[17px] text-pretty text-gray-600">{t('support.intro')}</p>
 
+      {/* The one-click option, moved to the top of the page and given its
+          own warm amber treatment (matching the Support icon in the nav)
+          instead of the plain brand-teal button every other CTA on the
+          site uses - this is the one action the page actually wants
+          people to take, so it shouldn't look like just another button
+          buried under the explanation cards. */}
+      {support?.donate_url && (
+        <a
+          href={support.donate_url}
+          target="_blank"
+          // noreferrer as well as noopener: the destination is a
+          // third-party payment page and has no business knowing which
+          // page on Kridar sent the visitor.
+          rel="noopener noreferrer"
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 py-3.5 text-base font-semibold text-white shadow-sm transition hover:-translate-y-px hover:bg-amber-600 hover:shadow-md"
+        >
+          <Heart className="size-5" aria-hidden />
+          {t('support.donateButton')}
+        </a>
+      )}
+
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         <Card className="p-5">
           <h2 className="font-semibold text-gray-900">{t('support.whyTitle')}</h2>
@@ -209,21 +230,6 @@ export default function SupportPage() {
                   </a>
                 </div>
               </Card>
-            )}
-
-            {support?.donate_url && (
-              <a
-                href={support.donate_url}
-                target="_blank"
-                // noreferrer as well as noopener: the destination is a
-                // third-party payment page and has no business knowing
-                // which page on Kridar sent the visitor.
-                rel="noopener noreferrer"
-                className={buttonClasses({ fullWidth: true })}
-              >
-                <Heart className="size-4.5" aria-hidden />
-                {t('support.donateButton')}
-              </a>
             )}
 
             {support?.bank_details && (
