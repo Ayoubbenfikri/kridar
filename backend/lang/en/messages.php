@@ -31,6 +31,19 @@ return [
         'password_reset_link_sent' => 'If an account exists for that email, a password reset link has been sent.',
         'password_reset_success' => 'Your password has been reset. You can now log in.',
         'password_reset_invalid_token' => 'This password reset link is invalid or has expired.',
+
+        // The reset email itself (AppServiceProvider::boot(),
+        // ResetPassword::toMailUsing()) - kept here with the rest of the
+        // auth strings rather than hardcoded in the provider, same
+        // "every language file stays structurally identical" rule as
+        // everything else in this file.
+        'password_reset_mail_subject' => 'Reset your Krihouse password',
+        'password_reset_mail_greeting' => 'Hello :name,',
+        'password_reset_mail_line1' => 'We received a request to reset the password for your Krihouse account.',
+        'password_reset_mail_action' => 'Reset my password',
+        'password_reset_mail_expiry' => 'This link will expire in :count minutes.',
+        'password_reset_mail_line2' => "If you didn't request this, you can safely ignore this email — your password won't change.",
+        'password_reset_mail_salutation' => 'The Krihouse team',
         'terms_required' => 'You must accept the Terms of Use and Privacy Policy.',
         'account_deleted' => 'Your account has been deleted.',
         'account_deletion_forbidden_admin' => 'Admin accounts cannot be deleted from this page.',
