@@ -314,6 +314,15 @@ export const en: TranslationSchema = {
     termsOfUse: 'Terms of Use',
     termsAcceptMiddle: 'and the',
     privacyPolicy: 'Privacy Policy',
+
+    continueWithGoogle: 'Continue with Google',
+    orDivider: 'or',
+    googleTermsPrefix: 'By continuing with Google, you accept our',
+
+    googleErrorAuthFailed: 'Google sign-in failed. Please try again.',
+    googleErrorEmailUnverified:
+      "An account already exists with this email but isn't verified yet. Log in with your password, or verify your email, before using Google.",
+    googleErrorAccountSuspended: 'This account has been suspended.',
   },
 
   legal: {

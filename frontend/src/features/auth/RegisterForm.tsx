@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AlertCircle, Eye, EyeOff, Lock, Mail, Phone, User } from 'lucide-react'
 import { useAuth } from './useAuth'
+import GoogleAuthButton from './GoogleAuthButton'
 import { getErrorMessage, getValidationErrors } from '@/lib/apiErrors'
 import { Button, Input } from '@/components/ui'
 
@@ -39,6 +40,8 @@ export default function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <GoogleAuthButton />
+
       <Input
         label={t('auth.fullName')}
         required

@@ -363,6 +363,27 @@ export const fr = {
     termsOfUse: "Conditions d'Utilisation",
     termsAcceptMiddle: 'et la',
     privacyPolicy: 'Politique de Confidentialité',
+
+    // "Connect with Google" (GoogleAuthButton, shown on /login and
+    // /register). The button itself is a plain <a href> to the backend's
+    // /auth/google/redirect - no mutation, no loading state, the browser
+    // just navigates away.
+    continueWithGoogle: 'Continuer avec Google',
+    orDivider: 'ou',
+    // Same prefix/middle/link pattern as termsAcceptPrefix above, but
+    // informational rather than a checkbox: clicking the Google button IS
+    // the acceptance (terms_accepted_at is stamped automatically in
+    // GoogleAuthController), so this is a notice, not a required field.
+    googleTermsPrefix: 'En continuant avec Google, vous acceptez nos',
+
+    // GoogleAuthController redirects back to /login?error=<code> for every
+    // failure case (consent cancelled, Google error, an unverified classic
+    // account with the same email, a suspended account) - LoginForm reads
+    // that query param once on mount and shows one of these as a toast.
+    googleErrorAuthFailed: 'La connexion avec Google a échoué. Réessayez.',
+    googleErrorEmailUnverified:
+      'Un compte existe déjà avec cet email mais n\'est pas encore vérifié. Connectez-vous avec votre mot de passe, ou vérifiez votre email, avant d\'utiliser Google.',
+    googleErrorAccountSuspended: 'Ce compte a été suspendu.',
   },
 
   // AcceptTermsModal only (frontend/src/components/legal/). The two legal

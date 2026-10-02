@@ -49,6 +49,10 @@ class User extends Authenticatable implements MustVerifyEmailContract
      *   - terms_accepted_at  only AuthController::register()/acceptTerms()
      *   - terms_version      write these
      *
+     * "Connect with Google" added one more — a request body must never be
+     * able to attach itself to (or steal) someone else's Google account:
+     *   - google_id  only GoogleAuthController::callback() writes this
+     *
      * Factories are unaffected: Eloquent factories build models inside
      * Model::unguarded(), so UserFactory's role/status defaults and its
      * admin() state keep working.

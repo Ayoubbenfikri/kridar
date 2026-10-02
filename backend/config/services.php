@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    // "Connect with Google" (GoogleAuthController, via Laravel Socialite).
+    // 'redirect' must match EXACTLY one of the "URI de redirection
+    // autorisés" entered in Google Cloud Console — a trailing slash or a
+    // different scheme/port makes Google reject the callback.
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+    ],
+
 ];

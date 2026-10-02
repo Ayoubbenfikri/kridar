@@ -329,6 +329,15 @@ export const ary: TranslationSchema = {
     termsOfUse: 'شروط الاستعمال',
     termsAcceptMiddle: 'و',
     privacyPolicy: 'سياسة الخصوصية',
+
+    continueWithGoogle: 'كمّل ب Google',
+    orDivider: 'ولا',
+    googleTermsPrefix: 'إلا كملتي ب Google، كتقبل',
+
+    googleErrorAuthFailed: 'الدخول ب Google ماخدمش. عاود المحاولة.',
+    googleErrorEmailUnverified:
+      'كاين ديجا حساب بهاد الإيميل ولكن مازال ماتأكدش. دخل بكلمة السر ديالك، ولا أكّد الإيميل ديالك، قبل ما تستعمل Google.',
+    googleErrorAccountSuspended: 'هاد الحساب موقوف.',
   },
 
   legal: {
