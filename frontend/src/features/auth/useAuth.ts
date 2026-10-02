@@ -1,7 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import * as authApi from './authApi'
-import type { LoginPayload, RegisterPayload, UpdatePasswordPayload, UpdateProfilePayload } from './authApi'
+import type {
+  ForgotPasswordPayload,
+  LoginPayload,
+  RegisterPayload,
+  ResetPasswordPayload,
+  UpdatePasswordPayload,
+  UpdateProfilePayload,
+} from './authApi'
 import type { LocaleCode } from '@/i18n'
 import type { User } from '@/types/user'
 
@@ -47,6 +54,18 @@ export function useAuth() {
 
   const resendVerificationMutation = useMutation({
     mutationFn: authApi.resendVerificationEmail,
+  })
+
+  // No cache write on success for either of these - nobody is logged in
+  // yet at either step (forgot-password) or the user is about to be sent
+  // to /login to do that themselves (reset-password), so there's no "who
+  // is logged in" state to update.
+  const forgotPasswordMutation = useMutation({
+    mutationFn: (payload: ForgotPasswordPayload) => authApi.forgotPassword(payload),
+  })
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: (payload: ResetPasswordPayload) => authApi.resetPassword(payload),
   })
 
   const updateProfileMutation = useMutation({
@@ -116,6 +135,8 @@ export function useAuth() {
     login: loginMutation,
     logout: logoutMutation,
     resendVerification: resendVerificationMutation,
+    forgotPassword: forgotPasswordMutation,
+    resetPassword: resetPasswordMutation,
     updateProfile: updateProfileMutation,
     updatePassword: updatePasswordMutation,
     updateLocale: updateLocaleMutation,

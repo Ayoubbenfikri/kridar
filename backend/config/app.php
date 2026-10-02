@@ -56,6 +56,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Frontend URL
+    |--------------------------------------------------------------------------
+    |
+    | The React SPA's own origin — NOT the Laravel API. Needed wherever the
+    | backend has to build a link that a human clicks in their browser
+    | (password reset emails): this is a decoupled API with no Blade pages
+    | of its own to land them on, so those links must point here instead
+    | of at a Laravel route. Same value as .env's FRONTEND_URL, which CORS
+    | and Sanctum's stateful-domain check already use.
+    |
+    */
+
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

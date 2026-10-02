@@ -6,6 +6,8 @@ import AdminLayout from '@/components/layout/AdminLayout'
 import HomePage from '@/pages/HomePage'
 import LoginPage from '@/pages/LoginPage'
 import RegisterPage from '@/pages/RegisterPage'
+import ForgotPasswordPage from '@/pages/ForgotPasswordPage'
+import ResetPasswordPage from '@/pages/ResetPasswordPage'
 import PropertiesPage from '@/pages/PropertiesPage'
 import SupportPage from '@/pages/SupportPage'
 import PropertyDetailsPage from '@/pages/PropertyDetailsPage'
@@ -52,6 +54,10 @@ export const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: 'login', element: <LoginPage /> },
       { path: 'register', element: <RegisterPage /> },
+      // Public, same as login/register - a locked-out user has no session
+      // to gate either of these behind.
+      { path: 'forgot-password', element: <ForgotPasswordPage /> },
+      { path: 'reset-password', element: <ResetPasswordPage /> },
       { path: 'properties', element: <PropertiesPage /> },
       { path: 'ui', element: <UiKitPage /> },
       { path: 'properties/:id', element: <PropertyDetailsPage /> },

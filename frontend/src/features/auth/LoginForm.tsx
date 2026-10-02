@@ -61,6 +61,12 @@ export default function LoginForm() {
         }
       />
 
+      <div className="-mt-2 text-end">
+        <Link to="/forgot-password" className="text-sm font-medium text-brand-600 transition hover:text-brand-700">
+          {t('auth.forgotPasswordLink')}
+        </Link>
+      </div>
+
       {generalError && (
         <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />

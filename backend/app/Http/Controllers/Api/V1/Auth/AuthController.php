@@ -9,14 +9,17 @@ use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\DeleteAccountRequest;
+use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Http\Requests\Auth\UpdateLocaleRequest;
 use App\Http\Requests\Auth\UpdatePasswordRequest;
 use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Reservation;
 use App\Models\User;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
@@ -24,6 +27,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 
 /**
  * Phase 27: every message in this controller comes from the messages.php
@@ -134,6 +139,68 @@ class AuthController extends Controller
 
         return response()->json([
             'user' => new UserResource($user),
+        ]);
+    }
+
+    /**
+     * POST /auth/forgot-password — "I can't log in" entry point, reachable
+     * with no session. Password::sendResetLink() writes a fresh row to
+     * password_reset_tokens (hashed token, same table Laravel ships by
+     * default) and queues the email — AppServiceProvider::boot() is what
+     * points that email's link at the frontend instead of a Laravel route.
+     *
+     * The response is identical whether or not the email belongs to a
+     * real account. Returning "no account with that email" here would let
+     * anyone check which addresses are registered just by trying them —
+     * ForgotPasswordRequest deliberately skips an `exists` rule for the
+     * same reason. $status is still worth knowing for our own logs, just
+     * never worth exposing to the caller.
+     */
+    public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
+    {
+        Password::sendResetLink($request->only('email'));
+
+        return response()->json([
+            'message' => __('messages.auth.password_reset_link_sent'),
+        ]);
+    }
+
+    /**
+     * POST /auth/reset-password — the page at the end of the emailed link
+     * calls this with token+email+new password. Password::reset() checks
+     * the token against password_reset_tokens (it's hashed there, so this
+     * does the comparison itself rather than us querying the table by
+     * hand) and only runs the closure — which is where the password
+     * actually gets changed — once that check passes.
+     *
+     * setRememberToken: rotates the "remember me" token too, so a device
+     * that had remember-me cookies from BEFORE the reset doesn't keep
+     * working on the old password's trust. PasswordReset event fired for
+     * parity with Laravel's own default flow (nothing currently listens
+     * for it, but a future "we changed your password" notification would
+     * hook in here rather than needing a new call site).
+     */
+    public function resetPassword(ResetPasswordRequest $request): JsonResponse
+    {
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, string $password) {
+                $user->password = Hash::make($password);
+                $user->setRememberToken(Str::random(60));
+                $user->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        if ($status !== Password::PASSWORD_RESET) {
+            return response()->json([
+                'message' => __('messages.auth.password_reset_invalid_token'),
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => __('messages.auth.password_reset_success'),
         ]);
     }
 

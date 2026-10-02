@@ -338,6 +338,23 @@ export const fr = {
     noAccount: 'Pas encore de compte ?',
     haveAccount: 'Déjà un compte ?',
 
+    forgotPasswordLink: 'Mot de passe oublié ?',
+    forgotPasswordTitle: 'Réinitialiser votre mot de passe',
+    forgotPasswordSubtitle: "Entrez votre email, on vous envoie un lien de réinitialisation",
+    sendResetLink: 'Envoyer le lien',
+    sendingResetLink: 'Envoi...',
+    backToLogin: 'Retour à la connexion',
+    resetPasswordTitle: 'Choisissez un nouveau mot de passe',
+    resetPasswordSubtitle: 'Entrez un nouveau mot de passe pour votre compte',
+    newPassword: 'Nouveau mot de passe',
+    resetPasswordSubmit: 'Réinitialiser le mot de passe',
+    resettingPassword: 'Réinitialisation...',
+    // Shown instead of the form when the link is opened without its
+    // token/email query string (typed by hand, forwarded and stripped by
+    // an email client, etc.) - nothing to submit, so this is caught
+    // before the backend ever sees the request.
+    invalidResetLink: 'Ce lien de réinitialisation est invalide. Demandez-en un nouveau.',
+
     // The registration-form checkbox, built as prefix + two links + middle
     // word rather than one long string with placeholders - same pattern as
     // "haveAccount" above (text + a real <Link>, not an interpolated URL).

@@ -46,6 +46,42 @@ export async function logout(): Promise<void> {
   await axiosClient.post('/api/v1/auth/logout')
 }
 
+export interface ForgotPasswordPayload {
+  email: string
+}
+
+export interface ResetPasswordPayload {
+  token: string
+  email: string
+  password: string
+  password_confirmation: string
+}
+
+/**
+ * "I can't log in" entry point - no session yet, so it needs the CSRF
+ * cookie first same as register/login. The backend returns the same
+ * message whether or not the email belongs to a real account
+ * (AuthController::forgotPassword) - that's on purpose, not something
+ * this function hides.
+ */
+export async function forgotPassword(payload: ForgotPasswordPayload): Promise<{ message: string }> {
+  await ensureCsrfCookie()
+  const { data } = await axiosClient.post('/api/v1/auth/forgot-password', payload)
+  return data
+}
+
+/**
+ * What ResetPasswordForm calls once the user picks a new password -
+ * token/email come from the link they clicked (see
+ * AppServiceProvider::createUrlUsing on the backend for how that URL is
+ * built), not from anything this function looks up itself.
+ */
+export async function resetPassword(payload: ResetPasswordPayload): Promise<{ message: string }> {
+  await ensureCsrfCookie()
+  const { data } = await axiosClient.post('/api/v1/auth/reset-password', payload)
+  return data
+}
+
 export async function fetchMe(): Promise<User> {
   const { data } = await axiosClient.get<{ user: User }>('/api/v1/auth/me')
   return data.user

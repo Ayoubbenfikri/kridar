@@ -6,6 +6,13 @@ use Illuminate\Support\Facades\Route;
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
+// Public, like register/login above - a locked-out user has no session to
+// prove who they are, the emailed token is what does that instead. Same
+// throttle as login: both are exactly the kind of endpoint brute-forcing
+// targets (guessing emails here, guessing passwords there).
+Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:5,1');
+Route::post('/auth/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:5,1');
+
 // Deliberately NOT inside the auth:sanctum group. This link is clicked
 // from an email, possibly in a browser that has no active session at
 // all (different browser than the one used to register, phone's mail
