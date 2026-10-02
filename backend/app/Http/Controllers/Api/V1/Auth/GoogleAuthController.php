@@ -12,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Throwable;
@@ -65,6 +66,18 @@ class GoogleAuthController extends Controller
         try {
             $googleUser = Socialite::driver('google')->user();
         } catch (Throwable $e) {
+            // Logged rather than swallowed — "google_auth_failed" alone
+            // doesn't say WHICH of several very different problems this
+            // is (state/session mismatch, redirect_uri not matching what
+            // Google Cloud Console has on file, the person clicking
+            // "Cancel" on the consent screen, wrong/missing
+            // GOOGLE_CLIENT_ID...). Check storage/logs/laravel.log for the
+            // real exception message when this fires.
+            Log::warning('Google OAuth callback failed.', [
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+            ]);
+
             return redirect("{$frontendUrl}/login?error=google_auth_failed");
         }
 

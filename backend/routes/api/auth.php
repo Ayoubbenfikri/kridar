@@ -1,30 +1,16 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Auth\AuthController;
-use App\Http\Controllers\Api\V1\Auth\GoogleAuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
-// "Connect with Google". Both public and, like verifyEmail() below, meant
-// to be hit by a real browser navigation (the frontend button is a plain
-// <a href>, not an axios call) — Google redirects the browser itself
-// between these two, there is no JSON exchange to protect with Sanctum.
-//
-// ->middleware('web') is NOT decorative — without it this 500s with
-// "Session store not set on request". Every other route in this file sits
-// under bootstrap/app.php's statefulApi(), which only starts a session
-// when the request's Referer/Origin matches SANCTUM_STATEFUL_DOMAINS.
-// That works for /redirect (the browser is navigating away FROM the SPA,
-// so Referer = localhost:5173) but NOT for /callback — that request
-// arrives with Referer = accounts.google.com, which matches nothing, so
-// Sanctum would skip starting a session right when Socialite needs one
-// (to store/verify its CSRF 'state' value) and Auth::login() needs one
-// (to actually sign the person in). 'web' starts a session unconditionally
-// instead of guessing from the Referer, which is correct here on both legs.
-Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->middleware('web');
-Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->middleware('web');
+// "Connect with Google" used to live here too, but it moved to
+// routes/web.php — see that file for why (it needs a session on both the
+// /redirect leg AND the /callback leg, and stacking 'web' on top of this
+// file's statefulApi()-wrapped 'api' group started TWO competing sessions
+// instead of one, which is exactly what broke it).
 
 // Public, like register/login above - a locked-out user has no session to
 // prove who they are, the emailed token is what does that instead. Same
