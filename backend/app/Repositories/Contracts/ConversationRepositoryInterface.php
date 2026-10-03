@@ -62,4 +62,17 @@ interface ConversationRepositoryInterface
      * @return int how many were marked
      */
     public function markOtherSideAsRead(Conversation $conversation, int $userId): int;
+
+    /**
+     * Edit your own message's text. Ownership + "not already deleted"
+     * already checked by MessagePolicy::update() before this is called.
+     */
+    public function updateMessage(Message $message, string $body): Message;
+
+    /**
+     * Soft delete: stamps deleted_at, keeps the row (and its real body)
+     * in the database — see the migration that added this column for
+     * why this is a plain column rather than Eloquent's SoftDeletes.
+     */
+    public function deleteMessage(Message $message): Message;
 }

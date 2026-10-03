@@ -84,10 +84,15 @@ export interface MessageSharedRoommateListing {
 
 export interface Message {
   id: number
-  body: string
+  /** Null once is_deleted is true — the real text never leaves the server. */
+  body: string | null
   sender: { id: number; name: string | null }
   /** Which side of the thread to render this on. */
   is_mine: boolean
+  /** Soft-deleted: render the "Message supprimé" placeholder instead of body. */
+  is_deleted: boolean
+  /** Set once the message has been edited; always null when is_deleted. */
+  edited_at: string | null
   read_at: string | null
   created_at: string
   shared_property: MessageSharedProperty | null

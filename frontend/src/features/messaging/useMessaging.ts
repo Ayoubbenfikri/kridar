@@ -134,6 +134,35 @@ export function useSendMessage(conversationId: number) {
   })
 }
 
+/**
+ * Edit your own message. Invalidates the whole 'conversations' key —
+ * same convention as useSendMessage() — so the thread view's cache
+ * picks up the new body/edited_at on the next read.
+ */
+export function useEditMessage(conversationId: number) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ messageId, body }: { messageId: number; body: string }) =>
+      messagingApi.editMessage(conversationId, messageId, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] })
+    },
+  })
+}
+
+/** Soft delete your own message. Same invalidation as useEditMessage() above. */
+export function useDeleteMessage(conversationId: number) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (messageId: number) => messagingApi.deleteMessage(conversationId, messageId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] })
+    },
+  })
+}
+
 export function useMarkConversationRead() {
   const queryClient = useQueryClient()
 

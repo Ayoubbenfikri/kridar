@@ -143,4 +143,21 @@ class EloquentConversationRepository implements ConversationRepositoryInterface
             ->where('sender_id', '!=', $userId)
             ->update(['read_at' => now()]);
     }
+
+    public function updateMessage(Message $message, string $body): Message
+    {
+        $message->fill(['body' => $body]); // body is fillable
+        $message->edited_at = now(); // system-controlled, direct assignment — see Message::$fillable
+        $message->save();
+
+        return $message;
+    }
+
+    public function deleteMessage(Message $message): Message
+    {
+        $message->deleted_at = now(); // system-controlled, direct assignment — see Message::$fillable
+        $message->save();
+
+        return $message;
+    }
 }

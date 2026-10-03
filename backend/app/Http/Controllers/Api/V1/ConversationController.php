@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Messaging\StoreConversationRequest;
 use App\Http\Requests\Messaging\StoreMessageRequest;
+use App\Http\Requests\Messaging\UpdateMessageRequest;
 use App\Http\Resources\ConversationResource;
 use App\Http\Resources\MessageResource;
 use App\Models\Conversation;
+use App\Models\Message;
 use App\Models\Property;
 use App\Models\RoommateListing;
 use App\Models\User;
@@ -160,6 +162,50 @@ class ConversationController extends Controller
 
         return response()->json([
             'marked' => $this->messaging->markRead($conversation, $request->user()),
+        ]);
+    }
+
+    /**
+     * PATCH /conversations/{conversation}/messages/{message} — edit your
+     * own message.
+     *
+     * The abort_if below is NOT optional: Laravel's implicit route model
+     * binding resolves {message} by its own id alone — it does not check
+     * that the message actually belongs to {conversation}. Without this
+     * guard, a user could PATCH a message that lives in someone else's
+     * conversation (one they are not even a party to) as long as they
+     * happen to know its id.
+     */
+    public function updateMessage(UpdateMessageRequest $request, Conversation $conversation, Message $message): JsonResponse
+    {
+        abort_if($message->conversation_id !== $conversation->id, 404);
+
+        $this->authorize('update', $message);
+
+        $message = $this->messaging->editMessage($message, $request->validated('body'));
+
+        return response()->json([
+            'message' => 'Message updated.',
+            'data' => new MessageResource($message),
+        ]);
+    }
+
+    /**
+     * DELETE /conversations/{conversation}/messages/{message} — soft
+     * delete your own message (placeholder stays visible, see
+     * MessagePolicy / the migration that added deleted_at).
+     */
+    public function destroyMessage(Request $request, Conversation $conversation, Message $message): JsonResponse
+    {
+        abort_if($message->conversation_id !== $conversation->id, 404);
+
+        $this->authorize('delete', $message);
+
+        $message = $this->messaging->deleteMessage($message);
+
+        return response()->json([
+            'message' => 'Message deleted.',
+            'data' => new MessageResource($message),
         ]);
     }
 }

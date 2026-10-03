@@ -24,5 +24,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::middleware('throttle:30,1')->group(function () {
         Route::post('/conversations', [ConversationController::class, 'store']);
         Route::post('/conversations/{conversation}/messages', [ConversationController::class, 'storeMessage']);
+        Route::patch('/conversations/{conversation}/messages/{message}', [ConversationController::class, 'updateMessage']);
+        Route::delete('/conversations/{conversation}/messages/{message}', [ConversationController::class, 'destroyMessage']);
     });
 });

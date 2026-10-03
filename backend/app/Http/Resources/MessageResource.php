@@ -17,9 +17,18 @@ class MessageResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // Once deleted, the real body and any shared-listing attachment
+        // are hidden from the API response — they stay in the database
+        // (see the migration that added deleted_at) but no longer leave
+        // the server. The frontend renders the "Message supprimé"
+        // placeholder off of is_deleted, not off of an empty body.
+        $isDeleted = $this->deleted_at !== null;
+
         return [
             'id' => $this->id,
-            'body' => $this->body,
+            'body' => $isDeleted ? null : $this->body,
+            'is_deleted' => $isDeleted,
+            'edited_at' => $isDeleted ? null : $this->edited_at,
 
             'sender' => [
                 'id' => $this->sender_id,
@@ -37,7 +46,7 @@ class MessageResource extends JsonResource
             // never serialized through the full PropertyResource/RoommateListingResource:
             // this is a safe summary for the OTHER side of the chat, not
             // the full listing payload.
-            'shared_property' => $this->whenLoaded('sharedProperty', fn () => $this->sharedProperty ? [
+            'shared_property' => $isDeleted ? null : $this->whenLoaded('sharedProperty', fn () => $this->sharedProperty ? [
                 'id' => $this->sharedProperty->id,
                 'title' => $this->sharedProperty->title,
                 'slug' => $this->sharedProperty->slug,
@@ -47,7 +56,7 @@ class MessageResource extends JsonResource
                 'currency' => $this->sharedProperty->currency,
                 'cover_image_url' => $this->coverImageUrl($this->sharedProperty->images),
             ] : null),
-            'shared_roommate_listing' => $this->whenLoaded('sharedRoommateListing', fn () => $this->sharedRoommateListing ? [
+            'shared_roommate_listing' => $isDeleted ? null : $this->whenLoaded('sharedRoommateListing', fn () => $this->sharedRoommateListing ? [
                 'id' => $this->sharedRoommateListing->id,
                 'title' => $this->sharedRoommateListing->title,
                 'type' => $this->sharedRoommateListing->type,

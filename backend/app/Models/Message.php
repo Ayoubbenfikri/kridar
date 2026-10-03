@@ -10,6 +10,16 @@ class Message extends Model
 {
     use HasFactory;
 
+    /**
+     * edited_at and deleted_at are deliberately NOT here — same reasoning
+     * as role/status/terms_accepted_at on User: a request body must never
+     * be able to fake "this was edited" or undelete/delete a message by
+     * itself. EloquentConversationRepository::updateMessage()/
+     * deleteMessage() are the only two places that ever set either one,
+     * and both do it by direct property assignment, not mass assignment.
+     *
+     * @var list<string>
+     */
     protected $fillable = [
         'conversation_id',
         'sender_id',
@@ -41,6 +51,8 @@ class Message extends Model
     {
         return [
             'read_at' => 'datetime',
+            'edited_at' => 'datetime',
+            'deleted_at' => 'datetime',
         ];
     }
 

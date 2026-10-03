@@ -121,6 +121,32 @@ async function sendMessage(
   return data.data
 }
 
+/** Edit your own message. The backend re-checks ownership (MessagePolicy). */
+async function editMessage(
+  conversationId: number,
+  messageId: number,
+  body: string,
+): Promise<Message> {
+  const { data } = await axiosClient.patch<{ message: string; data: Message }>(
+    `/api/v1/conversations/${conversationId}/messages/${messageId}`,
+    { body },
+  )
+  return data.data
+}
+
+/**
+ * Soft delete your own message — the backend keeps the row and returns
+ * it with is_deleted: true, body: null, which is what the thread view
+ * needs to swap the bubble's text for the "Message supprimé" placeholder
+ * without a page refresh.
+ */
+async function deleteMessage(conversationId: number, messageId: number): Promise<Message> {
+  const { data } = await axiosClient.delete<{ message: string; data: Message }>(
+    `/api/v1/conversations/${conversationId}/messages/${messageId}`,
+  )
+  return data.data
+}
+
 /** Marks what the OTHER side sent as read. Never your own messages. */
 async function markRead(conversationId: number): Promise<number> {
   const { data } = await axiosClient.patch<{ marked: number }>(
@@ -158,6 +184,8 @@ export const messagingApi = {
   startConversationWithGuest,
   startRoommateConversation,
   sendMessage,
+  editMessage,
+  deleteMessage,
   markRead,
   buyMessagingPack,
 }

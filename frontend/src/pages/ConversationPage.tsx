@@ -1,8 +1,20 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { AlertCircle, ArrowLeft, Home, Send, TriangleAlert, Users } from 'lucide-react'
+import {
+  AlertCircle,
+  ArrowLeft,
+  Home,
+  MoreVertical,
+  Pencil,
+  Send,
+  Trash2,
+  TriangleAlert,
+  Users,
+} from 'lucide-react'
 import {
   useConversation,
+  useDeleteMessage,
+  useEditMessage,
   useMarkConversationRead,
   useSendMessage,
 } from '@/features/messaging/useMessaging'
@@ -10,7 +22,7 @@ import { getErrorMessage, getValidationErrors } from '@/lib/apiErrors'
 import { formatMad } from '@/lib/formatPrice'
 import ShareListingPicker from '@/components/messaging/ShareListingPicker'
 import type { ShareableListing } from '@/components/messaging/ShareListingPicker'
-import { Button, Card, Skeleton, Textarea } from '@/components/ui'
+import { Button, Card, Skeleton, Textarea, useToast } from '@/components/ui'
 import { cn } from '@/lib/cn'
 import type { Message } from '@/types/conversation'
 
@@ -130,22 +142,195 @@ function SharedListingCard({ message }: { message: Message }) {
   return null
 }
 
-function Bubble({ message }: { message: Message }) {
+/**
+ * One bubble. Edit mode is driven from ConversationPage (editingMessageId)
+ * rather than kept local to this component, so starting a new edit always
+ * closes whichever other bubble was open — a chat only ever has one
+ * message being edited at a time.
+ */
+function Bubble({
+  message,
+  isEditing,
+  isSaving,
+  isDeleting,
+  onStartEdit,
+  onCancelEdit,
+  onSaveEdit,
+  onDelete,
+}: {
+  message: Message
+  isEditing: boolean
+  isSaving: boolean
+  isDeleting: boolean
+  onStartEdit: (messageId: number) => void
+  onCancelEdit: () => void
+  onSaveEdit: (messageId: number, body: string) => void
+  onDelete: (messageId: number) => void
+}) {
+  const [draft, setDraft] = useState(message.body ?? '')
+
+  // Refill the draft from the current body every time edit mode opens
+  // for THIS message — not on every render, otherwise it would wipe out
+  // what the user is typing.
+  useEffect(() => {
+    if (isEditing) setDraft(message.body ?? '')
+  }, [isEditing, message.body])
+
+  // The "..." menu (Modifier / Supprimer). Hover-only icons were hard to
+  // notice, so this button is always visible instead; the two actions
+  // live behind it rather than as two separate always-visible icons, to
+  // keep the bubble from feeling cluttered.
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!isMenuOpen) return
+
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isMenuOpen])
+
+  const canModify = message.is_mine && !message.is_deleted
+
+  function handleSave() {
+    const trimmed = draft.trim()
+    if (trimmed === '') return
+    onSaveEdit(message.id, trimmed)
+  }
+
+  function handleDeleteClick() {
+    // No reusable confirm modal exists yet in this app, and deleting a
+    // message is not frequent enough to justify building one just for
+    // this — a native confirm is fine here.
+    if (window.confirm('Supprimer ce message ? Cette action est définitive.')) {
+      onDelete(message.id)
+    }
+  }
+
   return (
     <div className={cn('flex', message.is_mine ? 'justify-end' : 'justify-start')}>
       <div
         className={cn(
-          'max-w-[80%] rounded-2xl px-4 py-2.5',
+          'relative max-w-[80%] rounded-2xl px-4 py-2.5',
           message.is_mine
             ? 'rounded-br-md bg-brand-600 text-white'
             : 'rounded-bl-md bg-gray-100 text-gray-900',
         )}
       >
-        <SharedListingCard message={message} />
-        <p className="text-[15px] break-words whitespace-pre-line">{linkifyMessage(message.body)}</p>
-        <p className={cn('mt-1 text-[11px]', message.is_mine ? 'text-brand-100' : 'text-gray-400')}>
-          {formatSentAt(message.created_at)}
-        </p>
+        {message.is_deleted ? (
+          <p
+            className={cn(
+              'text-[15px] italic',
+              message.is_mine ? 'text-brand-100' : 'text-gray-400',
+            )}
+          >
+            Message supprimé
+          </p>
+        ) : (
+          <>
+            <SharedListingCard message={message} />
+
+            {isEditing ? (
+              <div className="space-y-2">
+                <textarea
+                  autoFocus
+                  rows={2}
+                  maxLength={2000}
+                  value={draft}
+                  onChange={(event) => setDraft(event.target.value)}
+                  className={cn(
+                    'w-full resize-none rounded-lg border px-2 py-1.5 text-[15px] outline-none',
+                    message.is_mine
+                      ? 'border-white/30 bg-white/10 text-white placeholder:text-brand-100'
+                      : 'border-gray-300 bg-white text-gray-900',
+                  )}
+                />
+                <div className="flex gap-3 text-xs font-medium">
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={isSaving || draft.trim() === ''}
+                    className="underline disabled:opacity-50"
+                  >
+                    {isSaving ? 'Enregistrement...' : 'Enregistrer'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onCancelEdit}
+                    disabled={isSaving}
+                    className="underline disabled:opacity-50"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-[15px] break-words whitespace-pre-line">
+                {linkifyMessage(message.body ?? '')}
+              </p>
+            )}
+          </>
+        )}
+
+        <div className="mt-1 flex items-center gap-2">
+          <p className={cn('text-[11px]', message.is_mine ? 'text-brand-100' : 'text-gray-400')}>
+            {formatSentAt(message.created_at)}
+            {message.edited_at ? ' · modifié' : ''}
+          </p>
+
+          {canModify && !isEditing && (
+            <div ref={menuRef} className="relative ml-auto">
+              <button
+                type="button"
+                onClick={() => setIsMenuOpen((open) => !open)}
+                aria-label="Options du message"
+                className={cn(
+                  'rounded p-0.5 hover:opacity-70',
+                  message.is_mine ? 'text-brand-100' : 'text-gray-400',
+                )}
+              >
+                <MoreVertical className="size-3.5" aria-hidden />
+              </button>
+
+              {isMenuOpen && (
+                // Always dark-on-white regardless of bubble color, same
+                // reasoning as SharedListingCard above — easier to read
+                // than trying to theme a dropdown for both bubble colors.
+                <div className="absolute right-0 top-full z-10 mt-1 w-36 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 text-left shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMenuOpen(false)
+                      onStartEdit(message.id)
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <Pencil className="size-3.5" aria-hidden />
+                    Modifier
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMenuOpen(false)
+                      handleDeleteClick()
+                    }}
+                    disabled={isDeleting}
+                    className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    <Trash2 className="size-3.5" aria-hidden />
+                    Supprimer
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -165,10 +350,15 @@ export default function ConversationPage() {
 
   const conversationId = data?.conversation.id
   const sendMessage = useSendMessage(conversationId ?? 0)
+  const editMessage = useEditMessage(conversationId ?? 0)
+  const deleteMessage = useDeleteMessage(conversationId ?? 0)
   const markRead = useMarkConversationRead()
+  const { showToast } = useToast()
 
   const [body, setBody] = useState('')
   const [sharedListing, setSharedListing] = useState<ShareableListing | null>(null)
+  // Only one message can be in edit mode at a time — see Bubble's comment.
+  const [editingMessageId, setEditingMessageId] = useState<number | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   // Mark read once per thread. A ref rather than state: this must not
@@ -212,6 +402,22 @@ export default function ConversationPage() {
         },
       },
     )
+  }
+
+  function handleSaveEdit(messageId: number, newBody: string) {
+    editMessage.mutate(
+      { messageId, body: newBody },
+      {
+        onSuccess: () => setEditingMessageId(null),
+        onError: (mutationError) => showToast('error', getErrorMessage(mutationError)),
+      },
+    )
+  }
+
+  function handleDeleteMessage(messageId: number) {
+    deleteMessage.mutate(messageId, {
+      onError: (mutationError) => showToast('error', getErrorMessage(mutationError)),
+    })
   }
 
   /**
@@ -310,7 +516,17 @@ export default function ConversationPage() {
             ) : (
               <div className="max-h-[55vh] space-y-3 overflow-y-auto pr-1">
                 {messages.map((message) => (
-                  <Bubble key={message.id} message={message} />
+                  <Bubble
+                    key={message.id}
+                    message={message}
+                    isEditing={editingMessageId === message.id}
+                    isSaving={editMessage.isPending && editingMessageId === message.id}
+                    isDeleting={deleteMessage.isPending && deleteMessage.variables === message.id}
+                    onStartEdit={setEditingMessageId}
+                    onCancelEdit={() => setEditingMessageId(null)}
+                    onSaveEdit={handleSaveEdit}
+                    onDelete={handleDeleteMessage}
+                  />
                 ))}
                 <div ref={bottomRef} />
               </div>

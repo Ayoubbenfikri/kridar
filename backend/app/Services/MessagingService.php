@@ -390,6 +390,28 @@ class MessagingService
     }
 
     /**
+     * Edit your own message. Authorization (sender, not already deleted)
+     * already happened via MessagePolicy::update() at the controller.
+     */
+    public function editMessage(Message $message, string $body): Message
+    {
+        $message = $this->conversations->updateMessage($message, $body);
+
+        return $message->load(array_merge(['sender:id,name'], Message::SHARED_LISTING_WITH));
+    }
+
+    /**
+     * Soft delete your own message. Authorization (sender, not already
+     * deleted) already happened via MessagePolicy::delete() at the
+     * controller. No notification, no touchLastMessageAt() — deleting a
+     * message is not an event the other side needs to be pinged about.
+     */
+    public function deleteMessage(Message $message): Message
+    {
+        return $this->conversations->deleteMessage($message);
+    }
+
+    /**
      * Ring the other person's bell — but only for the FIRST unread
      * message in a thread.
      *
