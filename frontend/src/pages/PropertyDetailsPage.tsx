@@ -15,7 +15,6 @@ import {
   Phone,
   Ruler,
   Star,
-  User,
   Users,
 } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
@@ -28,7 +27,7 @@ import FavoriteButton from '@/components/properties/FavoriteButton'
 import ContactOwnerCard from '@/components/properties/ContactOwnerCard'
 import BookingPanel from '@/components/reservations/BookingPanel'
 import PropertyLocationMap from '@/components/map/PropertyLocationMap'
-import { Button, Card, EmptyState, Skeleton, buttonClasses } from '@/components/ui'
+import { Button, Card, EmptyState, Skeleton, UserAvatar, buttonClasses } from '@/components/ui'
 import type { Property, PropertyType, RentalType } from '@/types/property'
 
 const TYPE_LABELS: Record<PropertyType, string> = {
@@ -374,9 +373,12 @@ export default function PropertyDetailsPage() {
           <section className="mt-8">
             <h2 className="text-xl font-semibold tracking-tight text-gray-900">Propriétaire</h2>
             <div className="mt-3 flex items-center gap-3">
-              <span className="flex size-11 items-center justify-center rounded-full bg-brand-100 text-brand-700">
-                <User className="size-5" aria-hidden />
-              </span>
+              <UserAvatar
+                name={property.owner?.name}
+                avatarUrl={property.owner?.avatar_url}
+                seed={property.owner?.id ?? 0}
+                size="md"
+              />
               <div>
                 <p className="font-medium text-gray-900">{property.owner?.name ?? 'Compte supprimé'}</p>
                 <p className="text-sm text-gray-500">Propose ce logement</p>

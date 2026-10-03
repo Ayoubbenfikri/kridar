@@ -10,14 +10,13 @@ import {
   MapPin,
   Sofa,
   Tag,
-  User,
   Users,
 } from 'lucide-react'
 import { useRoommateListing } from '@/features/roommateListings/useRoommateListings'
 import { formatMad } from '@/lib/formatPrice'
 import ContactPosterCard from '@/components/roommateListings/ContactPosterCard'
 import PropertyLocationMap from '@/components/map/PropertyLocationMap'
-import { Card, EmptyState, Skeleton, buttonClasses } from '@/components/ui'
+import { Card, EmptyState, Skeleton, UserAvatar, buttonClasses } from '@/components/ui'
 import type { RoommateListingType } from '@/types/roommateListing'
 
 /**
@@ -239,9 +238,12 @@ export default function RoommateListingDetailsPage() {
           <section className="mt-8">
             <h2 className="text-xl font-semibold tracking-tight text-gray-900">Publié par</h2>
             <div className="mt-3 flex items-center gap-3">
-              <span className="flex size-11 items-center justify-center rounded-full bg-brand-100 text-brand-700">
-                <User className="size-5" aria-hidden />
-              </span>
+              <UserAvatar
+                name={listing.user?.name}
+                avatarUrl={listing.user?.avatar_url}
+                seed={listing.user?.id ?? 0}
+                size="md"
+              />
               <div>
                 <p className="font-medium text-gray-900">{listing.user?.name ?? 'Compte supprimé'}</p>
                 <p className="text-sm text-gray-500">

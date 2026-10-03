@@ -17,7 +17,7 @@ import LeaveReviewPage from '@/pages/LeaveReviewPage'
 import OwnerReplyPage from '@/pages/OwnerReplyPage'
 import FavoritesPage from '@/pages/FavoritesPage'
 import NotificationsPage from '@/pages/NotificationsPage'
-import MessagesPage from '@/pages/MessagesPage'
+import MessagesPage, { MessagesEmptyState } from '@/pages/MessagesPage'
 import ConversationPage from '@/pages/ConversationPage'
 import MyReservationsPage from '@/pages/MyReservationsPage'
 import AccountPage from '@/pages/AccountPage'
@@ -83,10 +83,21 @@ export const router = createBrowserRouter([
           { path: 'favorites', element: <FavoritesPage /> },
           { path: 'reservations', element: <MyReservationsPage /> },
           { path: 'notifications', element: <NotificationsPage /> },
-          // Inbox, then one thread. Both need a session: a conversation
-          // is private to its two participants (ConversationPolicy).
-          { path: 'messages', element: <MessagesPage /> },
-          { path: 'messages/:id', element: <ConversationPage /> },
+          // Inbox + one thread as a single WhatsApp-style split view:
+          // MessagesPage is the shared layout (the conversation list,
+          // always visible), and its <Outlet /> renders whichever child
+          // matched on the right - the empty state with no id, the
+          // thread itself with one. Both still need a session: a
+          // conversation is private to its two participants
+          // (ConversationPolicy).
+          {
+            path: 'messages',
+            element: <MessagesPage />,
+            children: [
+              { index: true, element: <MessagesEmptyState /> },
+              { path: ':id', element: <ConversationPage /> },
+            ],
+          },
           { path: 'account', element: <AccountPage /> },
           { path: 'account/settings', element: <AccountSettingsPage /> },
           {

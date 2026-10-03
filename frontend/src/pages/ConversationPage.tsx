@@ -4,6 +4,7 @@ import {
   AlertCircle,
   ArrowLeft,
   Home,
+  Loader2,
   MoreVertical,
   Pencil,
   Send,
@@ -22,7 +23,7 @@ import { getErrorMessage, getValidationErrors } from '@/lib/apiErrors'
 import { formatMad } from '@/lib/formatPrice'
 import ShareListingPicker from '@/components/messaging/ShareListingPicker'
 import type { ShareableListing } from '@/components/messaging/ShareListingPicker'
-import { Button, Card, Skeleton, Textarea, UserAvatar, useToast } from '@/components/ui'
+import { Card, Skeleton, UserAvatar, useToast } from '@/components/ui'
 import { cn } from '@/lib/cn'
 import type { Message } from '@/types/conversation'
 
@@ -150,6 +151,7 @@ function SharedListingCard({ message }: { message: Message }) {
  */
 function Bubble({
   message,
+  isFirstInGroup,
   isEditing,
   isSaving,
   isDeleting,
@@ -159,6 +161,10 @@ function Bubble({
   onDelete,
 }: {
   message: Message
+  /** True for the first message of a run from the same sender — that's
+      the only one that gets an avatar and a name label above it, same
+      "group consecutive messages" convention as WhatsApp/Messenger. */
+  isFirstInGroup: boolean
   isEditing: boolean
   isSaving: boolean
   isDeleting: boolean
@@ -214,132 +220,150 @@ function Bubble({
   }
 
   return (
-    <div className={cn('flex items-end gap-2', message.is_mine ? 'justify-end' : 'justify-start')}>
-      {/* Only on the OTHER side's messages — you already know what you
-          look like, same convention as WhatsApp/Messenger. */}
-      {!message.is_mine && (
-        <UserAvatar
-          name={message.sender.name}
-          avatarUrl={message.sender.avatar_url}
-          seed={message.sender.id}
-          size="xs"
-        />
+    <div className={cn(isFirstInGroup ? 'mt-3' : 'mt-1', 'first:mt-0')}>
+      {/* Sender name, once per group - shown above the first bubble of a
+          run of consecutive messages from the same person. ml-9 lines it
+          up with the bubble below (xs avatar is 28px + 8px gap = 36px). */}
+      {isFirstInGroup && !message.is_mine && (
+        <p className="mb-1 ml-9 text-xs font-medium text-gray-400">
+          {message.sender.name ?? 'Utilisateur'}
+        </p>
       )}
-      <div
-        className={cn(
-          'relative max-w-[80%] rounded-2xl px-4 py-2.5',
-          message.is_mine
-            ? 'rounded-br-md bg-brand-600 text-white'
-            : 'rounded-bl-md bg-gray-100 text-gray-900',
-        )}
-      >
-        {message.is_deleted ? (
-          <p
-            className={cn(
-              'text-[15px] italic',
-              message.is_mine ? 'text-brand-100' : 'text-gray-400',
-            )}
-          >
-            Message supprimé
-          </p>
-        ) : (
-          <>
-            <SharedListingCard message={message} />
 
-            {isEditing ? (
-              <div className="space-y-2">
-                <textarea
-                  autoFocus
-                  rows={2}
-                  maxLength={2000}
-                  value={draft}
-                  onChange={(event) => setDraft(event.target.value)}
-                  className={cn(
-                    'w-full resize-none rounded-lg border px-2 py-1.5 text-[15px] outline-none',
-                    message.is_mine
-                      ? 'border-white/30 bg-white/10 text-white placeholder:text-brand-100'
-                      : 'border-gray-300 bg-white text-gray-900',
-                  )}
-                />
-                <div className="flex gap-3 text-xs font-medium">
-                  <button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={isSaving || draft.trim() === ''}
-                    className="underline disabled:opacity-50"
-                  >
-                    {isSaving ? 'Enregistrement...' : 'Enregistrer'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onCancelEdit}
-                    disabled={isSaving}
-                    className="underline disabled:opacity-50"
-                  >
-                    Annuler
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <p className="text-[15px] break-words whitespace-pre-line">
-                {linkifyMessage(message.body ?? '')}
-              </p>
-            )}
-          </>
-        )}
-
-        <div className="mt-1 flex items-center gap-2">
-          <p className={cn('text-[11px]', message.is_mine ? 'text-brand-100' : 'text-gray-400')}>
-            {formatSentAt(message.created_at)}
-            {message.edited_at ? ' · modifié' : ''}
-          </p>
-
-          {canModify && !isEditing && (
-            <div ref={menuRef} className="relative ml-auto">
-              <button
-                type="button"
-                onClick={() => setIsMenuOpen((open) => !open)}
-                aria-label="Options du message"
-                className={cn(
-                  'rounded p-0.5 hover:opacity-70',
-                  message.is_mine ? 'text-brand-100' : 'text-gray-400',
-                )}
-              >
-                <MoreVertical className="size-3.5" aria-hidden />
-              </button>
-
-              {isMenuOpen && (
-                // Always dark-on-white regardless of bubble color, same
-                // reasoning as SharedListingCard above — easier to read
-                // than trying to theme a dropdown for both bubble colors.
-                <div className="absolute right-0 top-full z-10 mt-1 w-36 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 text-left shadow-lg">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMenuOpen(false)
-                      onStartEdit(message.id)
-                    }}
-                    className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    <Pencil className="size-3.5" aria-hidden />
-                    Modifier
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMenuOpen(false)
-                      handleDeleteClick()
-                    }}
-                    disabled={isDeleting}
-                    className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
-                  >
-                    <Trash2 className="size-3.5" aria-hidden />
-                    Supprimer
-                  </button>
-                </div>
-              )}
-            </div>
+      <div className={cn('flex items-end gap-2', message.is_mine ? 'justify-end' : 'justify-start')}>
+        {/* Only on the OTHER side's messages — you already know what you
+            look like, same convention as WhatsApp/Messenger. Only on the
+            first bubble of a group; the rest get an invisible spacer of
+            the same width so they still line up under it. */}
+        {!message.is_mine &&
+          (isFirstInGroup ? (
+            <UserAvatar
+              name={message.sender.name}
+              avatarUrl={message.sender.avatar_url}
+              seed={message.sender.id}
+              size="xs"
+            />
+          ) : (
+            <div className="size-7 shrink-0" aria-hidden />
+          ))}
+        <div
+          className={cn(
+            // A literal pill (rounded-full) only looks right for a short
+            // one-line message - its radius is min(width,height)/2, so a
+            // tall bubble (a shared-listing card + caption) got hugely
+            // over-curved corners. A fixed radius stays soft either way.
+            'relative max-w-[80%] rounded-[20px] px-4 py-2.5',
+            message.is_mine ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-900',
           )}
+        >
+          {message.is_deleted ? (
+            <p
+              className={cn(
+                'text-[15px] italic',
+                message.is_mine ? 'text-brand-100' : 'text-gray-400',
+              )}
+            >
+              Message supprimé
+            </p>
+          ) : (
+            <>
+              <SharedListingCard message={message} />
+
+              {isEditing ? (
+                <div className="space-y-2">
+                  <textarea
+                    autoFocus
+                    rows={2}
+                    maxLength={2000}
+                    value={draft}
+                    onChange={(event) => setDraft(event.target.value)}
+                    className={cn(
+                      'w-full resize-none rounded-lg border px-2 py-1.5 text-[15px] outline-none',
+                      message.is_mine
+                        ? 'border-white/30 bg-white/10 text-white placeholder:text-brand-100'
+                        : 'border-gray-300 bg-white text-gray-900',
+                    )}
+                  />
+                  <div className="flex gap-3 text-xs font-medium">
+                    <button
+                      type="button"
+                      onClick={handleSave}
+                      disabled={isSaving || draft.trim() === ''}
+                      className="underline disabled:opacity-50"
+                    >
+                      {isSaving ? 'Enregistrement...' : 'Enregistrer'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onCancelEdit}
+                      disabled={isSaving}
+                      className="underline disabled:opacity-50"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[15px] break-words whitespace-pre-line">
+                  {linkifyMessage(message.body ?? '')}
+                </p>
+              )}
+            </>
+          )}
+
+          <div className="mt-1 flex items-center gap-2">
+            <p className={cn('text-[11px]', message.is_mine ? 'text-brand-100' : 'text-gray-400')}>
+              {formatSentAt(message.created_at)}
+              {message.edited_at ? ' · modifié' : ''}
+            </p>
+
+            {canModify && !isEditing && (
+              <div ref={menuRef} className="relative ml-auto">
+                <button
+                  type="button"
+                  onClick={() => setIsMenuOpen((open) => !open)}
+                  aria-label="Options du message"
+                  className={cn(
+                    'rounded p-0.5 hover:opacity-70',
+                    message.is_mine ? 'text-brand-100' : 'text-gray-400',
+                  )}
+                >
+                  <MoreVertical className="size-3.5" aria-hidden />
+                </button>
+
+                {isMenuOpen && (
+                  // Always dark-on-white regardless of bubble color, same
+                  // reasoning as SharedListingCard above — easier to read
+                  // than trying to theme a dropdown for both bubble colors.
+                  <div className="absolute right-0 top-full z-10 mt-1 w-36 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 text-left shadow-lg">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMenuOpen(false)
+                        onStartEdit(message.id)
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <Pencil className="size-3.5" aria-hidden />
+                      Modifier
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMenuOpen(false)
+                        handleDeleteClick()
+                      }}
+                      disabled={isDeleting}
+                      className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+                    >
+                      <Trash2 className="size-3.5" aria-hidden />
+                      Supprimer
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -347,7 +371,11 @@ function Bubble({
 }
 
 /**
- * /messages/:id — one thread.
+ * /messages/:id — one thread, rendered as the right-hand panel of
+ * MessagesPage's split view (that file mounts this through <Outlet />;
+ * it is never routed to on its own anymore). No outer page chrome here —
+ * the shared bordered panel and the conversation list beside it both
+ * live in MessagesPage, this component just fills its half.
  *
  * Polls every 10s (see useConversation), so the other side's replies
  * appear on their own. The API returns messages NEWEST FIRST so that
@@ -395,9 +423,9 @@ export default function ConversationPage() {
     bottomRef.current?.scrollIntoView({ block: 'end' })
   }, [messageCount])
 
-  function handleSubmit(event: FormEvent) {
-    event.preventDefault()
-
+  // Separate from handleSubmit so the composer's textarea can trigger the
+  // same send on Enter (see its onKeyDown) without faking a FormEvent.
+  function trySend() {
     const trimmed = body.trim()
     if (trimmed === '' || conversationId === undefined) return
 
@@ -412,6 +440,11 @@ export default function ConversationPage() {
         },
       },
     )
+  }
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault()
+    trySend()
   }
 
   function handleSaveEdit(messageId: number, newBody: string) {
@@ -433,7 +466,7 @@ export default function ConversationPage() {
   /**
    * "Envoyer l'annonce" — the picker's own dedicated button. Separate
    * from handleSubmit() above: this sends the listing right away with no
-   * text required, rather than needing something typed in the Textarea
+   * text required, rather than needing something typed in the composer
    * first. The backend still needs a non-empty body (messages.body is
    * NOT NULL), so a short default caption is sent along with it.
    */
@@ -448,153 +481,187 @@ export default function ConversationPage() {
 
   if (isError) {
     return (
-      <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
+      <div className="flex h-full flex-col items-center justify-center gap-4 p-6">
         <Card className="flex items-start gap-3 border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
           <TriangleAlert className="mt-0.5 size-4.5 shrink-0" aria-hidden />
           {getErrorMessage(error)}
         </Card>
         <Link
           to="/messages"
-          className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-brand-600"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-brand-600 md:hidden"
         >
           <ArrowLeft className="size-4" aria-hidden />
           Retour aux messages
         </Link>
-      </main>
+      </div>
+    )
+  }
+
+  if (!data) {
+    return (
+      <div className="flex h-full flex-col gap-3 p-4">
+        <Skeleton className="h-16 w-full rounded-xl" />
+        <Skeleton className="h-64 flex-1 rounded-xl" />
+      </div>
     )
   }
 
   const validationErrors = getValidationErrors(sendMessage.error)
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
-      <Link
-        to="/messages"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-brand-600"
-      >
-        <ArrowLeft className="size-4" aria-hidden />
-        Retour aux messages
-      </Link>
+    <div className="flex h-full min-h-0 flex-col">
+      {/* Header — the back arrow only shows on mobile: on md+ the thread
+          sits next to the conversation list (MessagesPage), so there is
+          nothing to "go back" to, the list is already right there. */}
+      <div className="flex shrink-0 items-center gap-3 border-b border-gray-200 p-4">
+        <Link
+          to="/messages"
+          aria-label="Retour aux messages"
+          className="shrink-0 text-gray-400 transition hover:text-gray-600 md:hidden"
+        >
+          <ArrowLeft className="size-5" aria-hidden />
+        </Link>
 
-      {!data ? (
-        <div className="mt-4 space-y-3">
-          <Skeleton className="h-16 w-full rounded-xl" />
-          <Skeleton className="h-64 w-full rounded-xl" />
-        </div>
-      ) : (
-        <>
-          <Card className="mt-4 flex items-center gap-3 p-4">
-            <UserAvatar
-              name={data.conversation.counterpart?.name}
-              avatarUrl={data.conversation.counterpart?.avatar_url}
-              seed={data.conversation.counterpart?.id ?? data.conversation.id}
-              size="sm"
-            />
-            <div className="min-w-0">
-              <p className="font-semibold text-gray-900">
-                {data.conversation.counterpart?.name ?? 'Utilisateur'}
-              </p>
-              <p className="mt-0.5 text-sm text-gray-500">
-                {/* Phase R2 (roommate listings) — same listing_type branch
-                    as MessagesPage's ConversationRow, plus the right link
-                    target for each kind. */}
-                {data.conversation.listing_type === 'roommate_listing' ? (
-                  data.conversation.roommate_listing.id !== null ? (
-                    <Link
-                      to={`/roommates/${data.conversation.roommate_listing.id}`}
-                      className="transition hover:text-brand-600"
-                    >
-                      {data.conversation.roommate_listing.title}
-                    </Link>
-                  ) : (
-                    'Annonce supprimée'
-                  )
-                ) : data.conversation.property.id !== null ? (
-                  <Link
-                    to={`/properties/${data.conversation.property.id}`}
-                    className="transition hover:text-brand-600"
-                  >
-                    {data.conversation.property.title}
-                  </Link>
-                ) : (
-                  'Annonce supprimée'
-                )}
-              </p>
-              <p className="mt-1 text-xs text-gray-400">
-                {data.conversation.viewer_is_owner
-                  ? 'Cette personne vous a contacté à propos de votre annonce'
-                  : 'Vous avez contacté le propriétaire'}
-              </p>
-            </div>
-          </Card>
-
-          <Card className="mt-4 p-4">
-            {messages.length === 0 ? (
-              <p className="py-8 text-center text-sm text-gray-500">Aucun message.</p>
+        <UserAvatar
+          name={data.conversation.counterpart?.name}
+          avatarUrl={data.conversation.counterpart?.avatar_url}
+          seed={data.conversation.counterpart?.id ?? data.conversation.id}
+          size="sm"
+        />
+        <div className="min-w-0">
+          <p className="font-semibold text-gray-900">
+            {data.conversation.counterpart?.name ?? 'Utilisateur'}
+          </p>
+          <p className="mt-0.5 truncate text-sm text-gray-500">
+            {/* Phase R2 (roommate listings) — same listing_type branch
+                as ConversationListPanel's ConversationRow, plus the
+                right link target for each kind. */}
+            {data.conversation.listing_type === 'roommate_listing' ? (
+              data.conversation.roommate_listing.id !== null ? (
+                <Link
+                  to={`/roommates/${data.conversation.roommate_listing.id}`}
+                  className="transition hover:text-brand-600"
+                >
+                  {data.conversation.roommate_listing.title}
+                </Link>
+              ) : (
+                'Annonce supprimée'
+              )
+            ) : data.conversation.property.id !== null ? (
+              <Link
+                to={`/properties/${data.conversation.property.id}`}
+                className="transition hover:text-brand-600"
+              >
+                {data.conversation.property.title}
+              </Link>
             ) : (
-              <div className="max-h-[55vh] space-y-3 overflow-y-auto pr-1">
-                {messages.map((message) => (
-                  <Bubble
-                    key={message.id}
-                    message={message}
-                    isEditing={editingMessageId === message.id}
-                    isSaving={editMessage.isPending && editingMessageId === message.id}
-                    isDeleting={deleteMessage.isPending && deleteMessage.variables === message.id}
-                    onStartEdit={setEditingMessageId}
-                    onCancelEdit={() => setEditingMessageId(null)}
-                    onSaveEdit={handleSaveEdit}
-                    onDelete={handleDeleteMessage}
-                  />
-                ))}
-                <div ref={bottomRef} />
-              </div>
+              'Annonce supprimée'
             )}
+          </p>
+        </div>
+      </div>
 
-            {data.meta.last_page > 1 && (
-              <p className="mt-3 border-t border-gray-100 pt-3 text-center text-xs text-gray-400">
-                Seuls les {data.meta.per_page} derniers messages sont affichés.
-              </p>
+      {/* Messages — the only scrollable region, fills whatever height is
+          left between the header and the composer (min-h-0 is what lets
+          a flex child actually shrink and scroll instead of overflowing
+          the whole panel). */}
+      <div className="min-h-0 flex-1 overflow-y-auto p-4">
+        {messages.length === 0 ? (
+          <p className="py-8 text-center text-sm text-gray-500">Aucun message.</p>
+        ) : (
+          <>
+            {messages.map((message, index) => {
+              const previousMessage = index > 0 ? messages[index - 1] : null
+              // A new group starts whenever the sender changes (or the
+              // side changes - is_mine covers the case where the
+              // other person's own id briefly matches a stale cache).
+              const isFirstInGroup =
+                !previousMessage ||
+                previousMessage.sender.id !== message.sender.id ||
+                previousMessage.is_mine !== message.is_mine
+
+              return (
+                <Bubble
+                  key={message.id}
+                  message={message}
+                  isFirstInGroup={isFirstInGroup}
+                  isEditing={editingMessageId === message.id}
+                  isSaving={editMessage.isPending && editingMessageId === message.id}
+                  isDeleting={deleteMessage.isPending && deleteMessage.variables === message.id}
+                  onStartEdit={setEditingMessageId}
+                  onCancelEdit={() => setEditingMessageId(null)}
+                  onSaveEdit={handleSaveEdit}
+                  onDelete={handleDeleteMessage}
+                />
+              )
+            })}
+            <div ref={bottomRef} />
+          </>
+        )}
+
+        {data.meta.last_page > 1 && (
+          <p className="mt-3 border-t border-gray-100 pt-3 text-center text-xs text-gray-400">
+            Seuls les {data.meta.per_page} derniers messages sont affichés.
+          </p>
+        )}
+      </div>
+
+      {/* Composer */}
+      <form onSubmit={handleSubmit} className="shrink-0 space-y-3 border-t border-gray-200 p-4">
+        <ShareListingPicker
+          selected={sharedListing}
+          onSelect={setSharedListing}
+          onClear={() => setSharedListing(null)}
+          onSend={sendSharedListing}
+          isSending={sendMessage.isPending}
+        />
+
+        <div className="flex items-end gap-2">
+          <textarea
+            rows={1}
+            maxLength={2000}
+            placeholder="Écrivez votre message..."
+            value={body}
+            onChange={(event) => setBody(event.target.value)}
+            onKeyDown={(event) => {
+              // Enter sends, Shift+Enter inserts a line break - same
+              // convention as every chat app this page is modeled on.
+              if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault()
+                trySend()
+              }
+            }}
+            className="max-h-32 min-h-11 flex-1 resize-none rounded-full border border-transparent bg-gray-100 px-4 py-2.5 text-[15px] text-gray-900 outline-none placeholder:text-gray-400 focus:border-brand-400 focus:bg-white"
+          />
+
+          <button
+            type="submit"
+            disabled={body.trim() === '' || sendMessage.isPending}
+            className="flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-brand-600 px-5 text-[15px] font-semibold text-white transition hover:-translate-y-px hover:bg-brand-700 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
+          >
+            {sendMessage.isPending ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <Send className="size-4" aria-hidden />
             )}
-          </Card>
+            Envoyer
+          </button>
+        </div>
 
-          <form onSubmit={handleSubmit} className="mt-4 space-y-3">
-            <ShareListingPicker
-              selected={sharedListing}
-              onSelect={setSharedListing}
-              onClear={() => setSharedListing(null)}
-              onSend={sendSharedListing}
-              isSending={sendMessage.isPending}
-            />
+        {validationErrors?.body?.[0] && (
+          <p className="flex items-start gap-2 text-sm text-red-600">
+            <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+            {validationErrors.body[0]}
+          </p>
+        )}
 
-            <Textarea
-              label="Votre message"
-              rows={3}
-              maxLength={2000}
-              placeholder="Écrivez votre message..."
-              value={body}
-              onChange={(event) => setBody(event.target.value)}
-              error={validationErrors?.body?.[0]}
-              hint={`${body.length} / 2000`}
-            />
-
-            {sendMessage.isError && !validationErrors && (
-              <p className="flex items-start gap-2 text-sm text-red-600">
-                <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
-                {getErrorMessage(sendMessage.error)}
-              </p>
-            )}
-
-            <Button
-              type="submit"
-              icon={<Send className="size-4" />}
-              disabled={body.trim() === ''}
-              isLoading={sendMessage.isPending}
-            >
-              {sendMessage.isPending ? 'Envoi...' : 'Envoyer'}
-            </Button>
-          </form>
-        </>
-      )}
-    </main>
+        {sendMessage.isError && !validationErrors && (
+          <p className="flex items-start gap-2 text-sm text-red-600">
+            <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+            {getErrorMessage(sendMessage.error)}
+          </p>
+        )}
+      </form>
+    </div>
   )
 }

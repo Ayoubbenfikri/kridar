@@ -1,194 +1,63 @@
-import { Link, useSearchParams } from 'react-router-dom'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Home, MessageSquare, TriangleAlert, Users } from 'lucide-react'
-import { useConversations } from '@/features/messaging/useMessaging'
-import { getErrorMessage } from '@/lib/apiErrors'
-import { Badge, Card, EmptyState, Pagination, Skeleton, UserAvatar, buttonClasses } from '@/components/ui'
+import { Outlet, useParams } from 'react-router-dom'
+import { MessageSquare } from 'lucide-react'
+import ConversationListPanel from '@/components/messaging/ConversationListPanel'
 import { cn } from '@/lib/cn'
-import type { Conversation } from '@/types/conversation'
 
 /**
- * Formats "when did this thread last move" the way a messaging app does:
- * a time today, a weekday this week, a date beyond that. Absolute dates
- * for everything would make a live conversation look stale.
+ * Shown on the right when no thread is open — only reachable on desktop
+ * (md+), since on mobile the list itself fills that space instead (see
+ * the responsive classes below). This is the index child of the
+ * 'messages' route (router.tsx), rendered through MessagesPage's
+ * <Outlet /> exactly like ConversationPage is for 'messages/:id'.
  */
-function formatActivity(value: string | null): string {
-  if (value === null) return ''
-
-  const date = new Date(value)
-  const now = new Date()
-  const sameDay = date.toDateString() === now.toDateString()
-
-  if (sameDay) {
-    return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-  }
-
-  const daysAgo = (now.getTime() - date.getTime()) / 86_400_000
-  if (daysAgo < 7) {
-    return date.toLocaleDateString('fr-FR', { weekday: 'long' })
-  }
-
-  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
-}
-
-function Avatar({ conversation }: { conversation: Conversation }) {
+export function MessagesEmptyState() {
   return (
-    <div className="relative shrink-0">
-      <UserAvatar
-        name={conversation.counterpart?.name}
-        avatarUrl={conversation.counterpart?.avatar_url}
-        // Falls back to the conversation's own id when there is no
-        // counterpart (listing relation failed to load) — still
-        // deterministic, just not tied to a specific person in that
-        // edge case.
-        seed={conversation.counterpart?.id ?? conversation.id}
-        size="md"
-      />
-
-      {/* Property vs roommate post — a tiny badge so it reads at a
-          glance while scanning the inbox, instead of only showing up in
-          the text line below. */}
-      <div className="absolute -right-1 -bottom-1 flex size-5 items-center justify-center rounded-full border-2 border-white bg-gray-100">
-        {conversation.listing_type === 'roommate_listing' ? (
-          <Users className="size-2.5 text-gray-500" aria-hidden />
-        ) : (
-          <Home className="size-2.5 text-gray-500" aria-hidden />
-        )}
-      </div>
+    <div className="flex h-full flex-col items-center justify-center gap-2 p-8 text-center text-gray-400">
+      <MessageSquare className="size-10" aria-hidden />
+      <p className="text-sm">Sélectionnez une conversation pour l'ouvrir.</p>
     </div>
   )
 }
 
-function ConversationRow({ conversation, index }: { conversation: Conversation; index: number }) {
-  const hasUnread = conversation.unread_count > 0
-
-  // Phase R2 (roommate listings) — a thread is about a property OR a
-  // roommate post, never both. listing_type says which one to read.
-  const listingTitle =
-    conversation.listing_type === 'roommate_listing'
-      ? conversation.roommate_listing.title
-      : conversation.property.title
-
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10, transition: { duration: 0.15 } }}
-      // Capped so a long inbox doesn't make the last row wait a full
-      // second to appear — rows beyond the 9th all animate together.
-      transition={{ duration: 0.25, delay: Math.min(index, 8) * 0.04 }}
-    >
-      <Link
-        to={`/messages/${conversation.id}`}
-        className={cn(
-          'flex items-start gap-3 rounded-xl border p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg',
-          hasUnread
-            ? 'border-brand-200 bg-brand-50/60 hover:border-brand-300'
-            : 'border-gray-200 bg-white hover:border-gray-300',
-        )}
-      >
-        <Avatar conversation={conversation} />
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <p
-              className={
-                hasUnread ? 'truncate font-semibold text-gray-900' : 'truncate font-medium text-gray-900'
-              }
-            >
-              {conversation.counterpart?.name ?? 'Utilisateur'}
-            </p>
-            <span className="shrink-0 text-xs text-gray-400">
-              {formatActivity(conversation.last_message_at)}
-            </span>
-          </div>
-
-          <p className="mt-0.5 truncate text-sm text-gray-500">{listingTitle ?? 'Annonce supprimée'}</p>
-
-          <div className="mt-1.5 flex items-center justify-between gap-3">
-            {/* Which hat the viewer is wearing in this thread. Without
-                it, an inbox mixing "listings I asked about" and "people
-                asking about my listings" is confusing. */}
-            <p className="truncate text-xs text-gray-400">
-              {conversation.viewer_is_owner ? 'À propos de votre annonce' : 'Votre demande'}
-            </p>
-            {hasUnread && (
-              <motion.div
-                animate={{ scale: [1, 1.12, 1] }}
-                transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-                className="shrink-0"
-              >
-                <Badge tone="teal">{conversation.unread_count}</Badge>
-              </motion.div>
-            )}
-          </div>
-        </div>
-      </Link>
-    </motion.div>
-  )
-}
-
 /**
- * /messages — every thread the user is in, on either side. Polls every
- * 30s (see useConversations), so a new message appears without a reload.
+ * /messages and /messages/:id — one WhatsApp-style split view instead of
+ * two separate pages. The list (ConversationListPanel) is always
+ * mounted; the right side is whichever child route matched
+ * (MessagesEmptyState with no id, ConversationPage with one) — React
+ * Router hands us that through <Outlet />, so this component doesn't
+ * need to know which one it is.
+ *
+ * Responsive rule, same as the WhatsApp mobile app: md+ screens show
+ * both columns side by side. Below md there is only room for one, so
+ * the list is full-width at /messages and the thread is full-width at
+ * /messages/:id (with its own back arrow — see ConversationPage) — which
+ * one shows is decided purely by whether `id` is present, no extra
+ * state to keep in sync.
  */
 export default function MessagesPage() {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const page = Number(searchParams.get('page') ?? '1')
-
-  const { data, isError, error, isFetching } = useConversations(page)
-
-  function goToPage(nextPage: number) {
-    setSearchParams(nextPage === 1 ? {} : { page: String(nextPage) })
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
+  const { id } = useParams<{ id?: string }>()
+  const hasActiveThread = id !== undefined
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
-      <h1 className="text-2xl font-bold tracking-tight text-gray-900">Messages</h1>
-      {data && (
-        <p className="mt-1 text-sm text-gray-500">
-          {data.meta.total} conversation{data.meta.total > 1 ? 's' : ''}
-        </p>
-      )}
+    <main className="mx-auto w-full max-w-6xl px-0 py-0 sm:px-4 sm:py-6 lg:py-8">
+      <div className="flex h-[calc(100dvh-8rem)] overflow-hidden border border-gray-200 bg-white shadow-sm sm:rounded-2xl lg:h-[calc(100dvh-6rem)]">
+        <aside
+          className={cn(
+            'w-full shrink-0 flex-col border-gray-200 sm:border-r md:flex md:w-80 lg:w-96',
+            hasActiveThread ? 'hidden md:flex' : 'flex',
+          )}
+        >
+          <ConversationListPanel activeConversationId={id ? Number(id) : undefined} />
+        </aside>
 
-      <div className="mt-6">
-        {isError ? (
-          <Card className="flex items-start gap-3 border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-            <TriangleAlert className="mt-0.5 size-4.5 shrink-0" aria-hidden />
-            {getErrorMessage(error)}
-          </Card>
-        ) : !data ? (
-          <div className="space-y-3">
-            {[0, 1, 2].map((index) => (
-              <Skeleton key={index} className="h-24 w-full rounded-xl" />
-            ))}
-          </div>
-        ) : data.data.length === 0 ? (
-          <EmptyState
-            icon={<MessageSquare className="size-6" />}
-            title="Aucune conversation"
-            description="Contactez un propriétaire depuis la page d'une annonce pour démarrer une conversation."
-            action={
-              <Link to="/properties" className={buttonClasses()}>
-                Parcourir les propriétés
-              </Link>
-            }
-          />
-        ) : (
-          <>
-            <div className={`space-y-3 transition-opacity ${isFetching ? 'opacity-60' : ''}`}>
-              <AnimatePresence initial={false}>
-                {data.data.map((conversation, index) => (
-                  <ConversationRow key={conversation.id} conversation={conversation} index={index} />
-                ))}
-              </AnimatePresence>
-            </div>
-
-            <Pagination currentPage={page} lastPage={data.meta.last_page} onChange={goToPage} />
-          </>
-        )}
+        <section
+          className={cn(
+            'min-h-0 min-w-0 flex-1 flex-col md:flex',
+            hasActiveThread ? 'flex' : 'hidden md:flex',
+          )}
+        >
+          <Outlet />
+        </section>
       </div>
     </main>
   )

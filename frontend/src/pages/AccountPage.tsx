@@ -5,7 +5,7 @@ import { useMyReservations } from '@/features/reservations/useReservations'
 import { useFavorites } from '@/features/favorites/useFavorites'
 import { useUnreadCount } from '@/features/notifications/useNotifications'
 import { formatMad } from '@/lib/formatPrice'
-import { Card, buttonClasses } from '@/components/ui'
+import { Card, UserAvatar, buttonClasses } from '@/components/ui'
 import ReservationStatusBadge from '@/components/reservations/ReservationStatusBadge'
 import type { ReservationStatusValue } from '@/types/reservation'
 
@@ -51,19 +51,11 @@ export default function AccountPage() {
     .filter((reservation) => UPCOMING_STATUSES.has(reservation.status))
     .slice(0, 3)
 
-  const initials = (user?.name ?? '')
-    .split(' ')
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join('')
-
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <span className="flex size-14 items-center justify-center rounded-full bg-brand-100 text-lg font-semibold text-brand-700">
-            {initials}
-          </span>
+          <UserAvatar name={user?.name} avatarUrl={user?.avatar_url} seed={user?.id ?? 0} size="lg" />
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">Bonjour {user?.name}</h1>
             <p className="text-sm text-gray-500">{user?.email}</p>
