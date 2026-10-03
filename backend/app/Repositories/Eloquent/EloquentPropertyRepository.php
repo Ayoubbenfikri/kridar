@@ -65,7 +65,7 @@ class EloquentPropertyRepository implements PropertyRepositoryInterface
                 }
             })
             ->with([
-                'owner:id,name',
+                'owner:id,name,avatar_path',
                 // Only the cover image, not the full gallery — list cards
                 // just need one thumbnail. The full gallery is loaded
                 // separately in show() for the property details page.

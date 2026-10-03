@@ -22,7 +22,7 @@ import { getErrorMessage, getValidationErrors } from '@/lib/apiErrors'
 import { formatMad } from '@/lib/formatPrice'
 import ShareListingPicker from '@/components/messaging/ShareListingPicker'
 import type { ShareableListing } from '@/components/messaging/ShareListingPicker'
-import { Button, Card, Skeleton, Textarea, useToast } from '@/components/ui'
+import { Button, Card, Skeleton, Textarea, UserAvatar, useToast } from '@/components/ui'
 import { cn } from '@/lib/cn'
 import type { Message } from '@/types/conversation'
 
@@ -214,7 +214,17 @@ function Bubble({
   }
 
   return (
-    <div className={cn('flex', message.is_mine ? 'justify-end' : 'justify-start')}>
+    <div className={cn('flex items-end gap-2', message.is_mine ? 'justify-end' : 'justify-start')}>
+      {/* Only on the OTHER side's messages — you already know what you
+          look like, same convention as WhatsApp/Messenger. */}
+      {!message.is_mine && (
+        <UserAvatar
+          name={message.sender.name}
+          avatarUrl={message.sender.avatar_url}
+          seed={message.sender.id}
+          size="xs"
+        />
+      )}
       <div
         className={cn(
           'relative max-w-[80%] rounded-2xl px-4 py-2.5',
@@ -473,41 +483,49 @@ export default function ConversationPage() {
         </div>
       ) : (
         <>
-          <Card className="mt-4 p-4">
-            <p className="font-semibold text-gray-900">
-              {data.conversation.counterpart?.name ?? 'Utilisateur'}
-            </p>
-            <p className="mt-0.5 text-sm text-gray-500">
-              {/* Phase R2 (roommate listings) — same listing_type branch
-                  as MessagesPage's ConversationRow, plus the right link
-                  target for each kind. */}
-              {data.conversation.listing_type === 'roommate_listing' ? (
-                data.conversation.roommate_listing.id !== null ? (
+          <Card className="mt-4 flex items-center gap-3 p-4">
+            <UserAvatar
+              name={data.conversation.counterpart?.name}
+              avatarUrl={data.conversation.counterpart?.avatar_url}
+              seed={data.conversation.counterpart?.id ?? data.conversation.id}
+              size="sm"
+            />
+            <div className="min-w-0">
+              <p className="font-semibold text-gray-900">
+                {data.conversation.counterpart?.name ?? 'Utilisateur'}
+              </p>
+              <p className="mt-0.5 text-sm text-gray-500">
+                {/* Phase R2 (roommate listings) — same listing_type branch
+                    as MessagesPage's ConversationRow, plus the right link
+                    target for each kind. */}
+                {data.conversation.listing_type === 'roommate_listing' ? (
+                  data.conversation.roommate_listing.id !== null ? (
+                    <Link
+                      to={`/roommates/${data.conversation.roommate_listing.id}`}
+                      className="transition hover:text-brand-600"
+                    >
+                      {data.conversation.roommate_listing.title}
+                    </Link>
+                  ) : (
+                    'Annonce supprimée'
+                  )
+                ) : data.conversation.property.id !== null ? (
                   <Link
-                    to={`/roommates/${data.conversation.roommate_listing.id}`}
+                    to={`/properties/${data.conversation.property.id}`}
                     className="transition hover:text-brand-600"
                   >
-                    {data.conversation.roommate_listing.title}
+                    {data.conversation.property.title}
                   </Link>
                 ) : (
                   'Annonce supprimée'
-                )
-              ) : data.conversation.property.id !== null ? (
-                <Link
-                  to={`/properties/${data.conversation.property.id}`}
-                  className="transition hover:text-brand-600"
-                >
-                  {data.conversation.property.title}
-                </Link>
-              ) : (
-                'Annonce supprimée'
-              )}
-            </p>
-            <p className="mt-1 text-xs text-gray-400">
-              {data.conversation.viewer_is_owner
-                ? 'Cette personne vous a contacté à propos de votre annonce'
-                : 'Vous avez contacté le propriétaire'}
-            </p>
+                )}
+              </p>
+              <p className="mt-1 text-xs text-gray-400">
+                {data.conversation.viewer_is_owner
+                  ? 'Cette personne vous a contacté à propos de votre annonce'
+                  : 'Vous avez contacté le propriétaire'}
+              </p>
+            </div>
           </Card>
 
           <Card className="mt-4 p-4">

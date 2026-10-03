@@ -10,6 +10,7 @@
 export interface ConversationCounterpart {
   id: number
   name: string
+  avatar_url: string | null
 }
 
 /** Only these columns are loaded (EloquentConversationRepository). */
@@ -86,7 +87,7 @@ export interface Message {
   id: number
   /** Null once is_deleted is true — the real text never leaves the server. */
   body: string | null
-  sender: { id: number; name: string | null }
+  sender: { id: number; name: string | null; avatar_url: string | null }
   /** Which side of the thread to render this on. */
   is_mine: boolean
   /** Soft-deleted: render the "Message supprimé" placeholder instead of body. */

@@ -79,6 +79,20 @@ export function useAuth() {
     mutationFn: (payload: UpdatePasswordPayload) => authApi.updatePassword(payload),
   })
 
+  const uploadAvatarMutation = useMutation({
+    mutationFn: (file: File) => authApi.uploadAvatar(file),
+    onSuccess: (data) => {
+      queryClient.setQueryData(ME_QUERY_KEY, data.user)
+    },
+  })
+
+  const deleteAvatarMutation = useMutation({
+    mutationFn: authApi.deleteAvatar,
+    onSuccess: (data) => {
+      queryClient.setQueryData(ME_QUERY_KEY, data.user)
+    },
+  })
+
   /**
    * Phase 27. Lives here rather than in useLocale so that ME_QUERY_KEY
    * stays private to this file — a second module writing to the profile
@@ -139,6 +153,8 @@ export function useAuth() {
     resetPassword: resetPasswordMutation,
     updateProfile: updateProfileMutation,
     updatePassword: updatePasswordMutation,
+    uploadAvatar: uploadAvatarMutation,
+    deleteAvatar: deleteAvatarMutation,
     updateLocale: updateLocaleMutation,
     acceptTerms: acceptTermsMutation,
     deleteAccount: deleteAccountMutation,

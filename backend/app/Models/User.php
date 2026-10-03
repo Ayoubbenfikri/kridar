@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmailContract
@@ -52,6 +53,10 @@ class User extends Authenticatable implements MustVerifyEmailContract
      * "Connect with Google" added one more — a request body must never be
      * able to attach itself to (or steal) someone else's Google account:
      *   - google_id  only GoogleAuthController::callback() writes this
+     *
+     * Profile photo added one more, same reasoning — a request body must
+     * never be able to point this at an arbitrary path on the server:
+     *   - avatar_path  only AvatarService writes this
      *
      * Factories are unaffected: Eloquent factories build models inside
      * Model::unguarded(), so UserFactory's role/status defaults and its
@@ -111,6 +116,22 @@ class User extends Authenticatable implements MustVerifyEmailContract
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;
+    }
+
+    /**
+     * The profile photo's public URL, or null when none was uploaded.
+     * A plain method rather than an accessor/cast — every resource that
+     * shows a MINIMAL user block (RoommateListingResource::user,
+     * PropertyResource::owner, MessageResource::sender,
+     * ConversationResource::counterpart) calls this directly instead of
+     * going through UserResource, which also exposes email/phone and is
+     * reserved for a user's OWN data. Keeping the URL-building logic
+     * here means every one of those call sites stays correct even if the
+     * storage disk or path convention ever changes.
+     */
+    public function avatarUrl(): ?string
+    {
+        return $this->avatar_path ? Storage::disk('public')->url($this->avatar_path) : null;
     }
 
     /**

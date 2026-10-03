@@ -1,8 +1,10 @@
 import { Link, useSearchParams } from 'react-router-dom'
-import { MessageSquare, TriangleAlert } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Home, MessageSquare, TriangleAlert, Users } from 'lucide-react'
 import { useConversations } from '@/features/messaging/useMessaging'
 import { getErrorMessage } from '@/lib/apiErrors'
-import { Badge, Card, EmptyState, Pagination, Skeleton, buttonClasses } from '@/components/ui'
+import { Badge, Card, EmptyState, Pagination, Skeleton, UserAvatar, buttonClasses } from '@/components/ui'
+import { cn } from '@/lib/cn'
 import type { Conversation } from '@/types/conversation'
 
 /**
@@ -29,7 +31,35 @@ function formatActivity(value: string | null): string {
   return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
 }
 
-function ConversationRow({ conversation }: { conversation: Conversation }) {
+function Avatar({ conversation }: { conversation: Conversation }) {
+  return (
+    <div className="relative shrink-0">
+      <UserAvatar
+        name={conversation.counterpart?.name}
+        avatarUrl={conversation.counterpart?.avatar_url}
+        // Falls back to the conversation's own id when there is no
+        // counterpart (listing relation failed to load) — still
+        // deterministic, just not tied to a specific person in that
+        // edge case.
+        seed={conversation.counterpart?.id ?? conversation.id}
+        size="md"
+      />
+
+      {/* Property vs roommate post — a tiny badge so it reads at a
+          glance while scanning the inbox, instead of only showing up in
+          the text line below. */}
+      <div className="absolute -right-1 -bottom-1 flex size-5 items-center justify-center rounded-full border-2 border-white bg-gray-100">
+        {conversation.listing_type === 'roommate_listing' ? (
+          <Users className="size-2.5 text-gray-500" aria-hidden />
+        ) : (
+          <Home className="size-2.5 text-gray-500" aria-hidden />
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ConversationRow({ conversation, index }: { conversation: Conversation; index: number }) {
   const hasUnread = conversation.unread_count > 0
 
   // Phase R2 (roommate listings) — a thread is about a property OR a
@@ -40,30 +70,62 @@ function ConversationRow({ conversation }: { conversation: Conversation }) {
       : conversation.property.title
 
   return (
-    <Link
-      to={`/messages/${conversation.id}`}
-      className="block rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-lg"
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10, transition: { duration: 0.15 } }}
+      // Capped so a long inbox doesn't make the last row wait a full
+      // second to appear — rows beyond the 9th all animate together.
+      transition={{ duration: 0.25, delay: Math.min(index, 8) * 0.04 }}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className={hasUnread ? 'truncate font-semibold text-gray-900' : 'truncate font-medium text-gray-900'}>
-            {conversation.counterpart?.name ?? 'Utilisateur'}
-          </p>
-          <p className="mt-0.5 truncate text-sm text-gray-500">{listingTitle ?? 'Annonce supprimée'}</p>
-          {/* Which hat the viewer is wearing in this thread. Without it,
-              an inbox mixing "listings I asked about" and "people asking
-              about my listings" is confusing. */}
-          <p className="mt-1 text-xs text-gray-400">
-            {conversation.viewer_is_owner ? 'À propos de votre annonce' : 'Votre demande'}
-          </p>
-        </div>
+      <Link
+        to={`/messages/${conversation.id}`}
+        className={cn(
+          'flex items-start gap-3 rounded-xl border p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg',
+          hasUnread
+            ? 'border-brand-200 bg-brand-50/60 hover:border-brand-300'
+            : 'border-gray-200 bg-white hover:border-gray-300',
+        )}
+      >
+        <Avatar conversation={conversation} />
 
-        <div className="flex shrink-0 flex-col items-end gap-1.5">
-          <span className="text-xs text-gray-400">{formatActivity(conversation.last_message_at)}</span>
-          {hasUnread && <Badge tone="teal">{conversation.unread_count}</Badge>}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <p
+              className={
+                hasUnread ? 'truncate font-semibold text-gray-900' : 'truncate font-medium text-gray-900'
+              }
+            >
+              {conversation.counterpart?.name ?? 'Utilisateur'}
+            </p>
+            <span className="shrink-0 text-xs text-gray-400">
+              {formatActivity(conversation.last_message_at)}
+            </span>
+          </div>
+
+          <p className="mt-0.5 truncate text-sm text-gray-500">{listingTitle ?? 'Annonce supprimée'}</p>
+
+          <div className="mt-1.5 flex items-center justify-between gap-3">
+            {/* Which hat the viewer is wearing in this thread. Without
+                it, an inbox mixing "listings I asked about" and "people
+                asking about my listings" is confusing. */}
+            <p className="truncate text-xs text-gray-400">
+              {conversation.viewer_is_owner ? 'À propos de votre annonce' : 'Votre demande'}
+            </p>
+            {hasUnread && (
+              <motion.div
+                animate={{ scale: [1, 1.12, 1] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                className="shrink-0"
+              >
+                <Badge tone="teal">{conversation.unread_count}</Badge>
+              </motion.div>
+            )}
+          </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+    </motion.div>
   )
 }
 
@@ -117,9 +179,11 @@ export default function MessagesPage() {
         ) : (
           <>
             <div className={`space-y-3 transition-opacity ${isFetching ? 'opacity-60' : ''}`}>
-              {data.data.map((conversation) => (
-                <ConversationRow key={conversation.id} conversation={conversation} />
-              ))}
+              <AnimatePresence initial={false}>
+                {data.data.map((conversation, index) => (
+                  <ConversationRow key={conversation.id} conversation={conversation} index={index} />
+                ))}
+              </AnimatePresence>
             </div>
 
             <Pagination currentPage={page} lastPage={data.meta.last_page} onChange={goToPage} />

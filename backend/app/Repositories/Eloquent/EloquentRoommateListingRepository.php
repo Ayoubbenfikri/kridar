@@ -67,7 +67,7 @@ class EloquentRoommateListingRepository implements RoommateListingRepositoryInte
                 });
             })
             ->with([
-                'user:id,name',
+                'user:id,name,avatar_path',
                 'images' => fn ($query) => $query->where('is_cover', true),
             ])
             ->latest('published_at')

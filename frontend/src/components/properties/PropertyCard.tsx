@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Bath, BedDouble, ImageOff, MapPin, Ruler, Star, Users } from 'lucide-react'
 import FavoriteButton from './FavoriteButton'
+import { UserAvatar } from '@/components/ui'
 import { formatMad, primaryPrice } from '@/lib/formatPrice'
 import type { Property } from '@/types/property'
 
@@ -109,6 +110,20 @@ export default function PropertyCard({ property }: { property: Property }) {
             </p>
           ) : (
             <p className="mt-3 text-sm text-gray-400">{t('price.notSet')}</p>
+          )}
+
+          {/* Null when the owner's account was soft-deleted
+              (PropertyResource) — same guard as RoommateListingCard. */}
+          {property.owner && (
+            <div className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3">
+              <UserAvatar
+                name={property.owner.name}
+                avatarUrl={property.owner.avatar_url}
+                seed={property.owner.id}
+                size="xs"
+              />
+              <span className="truncate text-xs text-gray-500">Par {property.owner.name}</span>
+            </div>
           )}
         </div>
       </Link>

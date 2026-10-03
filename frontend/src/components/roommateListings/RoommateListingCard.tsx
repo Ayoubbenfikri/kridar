@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { BedDouble, DoorOpen, ImageOff, MapPin } from 'lucide-react'
+import { UserAvatar } from '@/components/ui'
 import { formatMad } from '@/lib/formatPrice'
 import type { RoommateListing } from '@/types/roommateListing'
 
@@ -91,6 +92,22 @@ export default function RoommateListingCard({ listing }: { listing: RoommateList
             </p>
           ) : (
             <p className="mt-3 text-sm text-gray-400">{t('roommateCard.priceNotSet')}</p>
+          )}
+
+          {/* Who's asking (request) or offering (offer) — the whole point
+              of showing a photo here, so an owner browsing "looking for a
+              place" posts sees who they'd be renting to. Null when the
+              poster's account was soft-deleted. */}
+          {listing.user && (
+            <div className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3">
+              <UserAvatar
+                name={listing.user.name}
+                avatarUrl={listing.user.avatar_url}
+                seed={listing.user.id}
+                size="xs"
+              />
+              <span className="truncate text-xs text-gray-500">Par {listing.user.name}</span>
+            </div>
           )}
         </div>
       </Link>

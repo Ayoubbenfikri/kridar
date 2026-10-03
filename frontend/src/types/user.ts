@@ -12,6 +12,8 @@ export interface User {
   name: string
   email: string
   phone: string | null
+  /** Profile photo, or null until one is uploaded (/account/settings). */
+  avatar_url: string | null
   /**
    * Consent to show `phone` on this user's long-term listings. Off by
    * default — the number was given to create an account, not to be

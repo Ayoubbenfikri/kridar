@@ -1,14 +1,21 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { AlertCircle, AlertTriangle, ArrowLeft, CheckCircle2, Lock, Phone, Trash2, User } from 'lucide-react'
+import { AlertCircle, AlertTriangle, ArrowLeft, Camera, CheckCircle2, Lock, Phone, Trash2, User } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
 import { getErrorMessage, getValidationErrors } from '@/lib/apiErrors'
-import { Button, Card, Input } from '@/components/ui'
+import { Button, Card, Input, UserAvatar } from '@/components/ui'
 
 // What the user must type, exactly, before the delete button is enabled.
 // Uppercase in the UI (a visual "this is serious" cue); compared
 // case-insensitively so a lowercase "supprimer" still counts.
 const DELETE_CONFIRMATION_WORD = 'SUPPRIMER'
+
+// Mirrors the backend's UpdateAvatarRequest rules (image, jpeg/png/webp,
+// max 2048 KB) so an obviously-bad file is rejected instantly instead of
+// after a round trip. The backend still re-validates everything itself -
+// this check is UX only, never a substitute for it.
+const ACCEPTED_AVATAR_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const MAX_AVATAR_SIZE_BYTES = 2048 * 1024
 
 /**
  * /account/settings - profile (name, phone) and password, as two
@@ -17,7 +24,15 @@ const DELETE_CONFIRMATION_WORD = 'SUPPRIMER'
  */
 export default function AccountSettingsPage() {
   const navigate = useNavigate()
-  const { user, updateProfile, updatePassword, deleteAccount } = useAuth()
+  const { user, updateProfile, updatePassword, deleteAccount, uploadAvatar, deleteAvatar } = useAuth()
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  // Local, not derived from the mutations' own isError/isSuccess - two
+  // mutations (upload, delete) share this one card, and tracking the
+  // notice ourselves avoids a stale "photo updated" message lingering
+  // after a later delete (or vice versa).
+  const [avatarError, setAvatarError] = useState<string | null>(null)
+  const [avatarNotice, setAvatarNotice] = useState<string | null>(null)
 
   const [name, setName] = useState(user?.name ?? '')
   const [phone, setPhone] = useState(user?.phone ?? '')
@@ -89,6 +104,39 @@ export default function AccountSettingsPage() {
     })
   }
 
+  function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    // Lets the same file be picked again later (e.g. re-selecting after
+    // an error) - without this, a second pick of the identical file
+    // would not fire onChange at all.
+    event.target.value = ''
+    if (!file) return
+
+    setAvatarNotice(null)
+
+    if (!ACCEPTED_AVATAR_TYPES.includes(file.type)) {
+      setAvatarError('Format non supporté. Utilisez une image JPEG, PNG ou WebP.')
+      return
+    }
+    if (file.size > MAX_AVATAR_SIZE_BYTES) {
+      setAvatarError('Image trop volumineuse (2 Mo maximum).')
+      return
+    }
+
+    setAvatarError(null)
+    uploadAvatar.mutate(file, {
+      onSuccess: () => setAvatarNotice('Photo mise à jour.'),
+    })
+  }
+
+  function handleRemoveAvatar() {
+    setAvatarError(null)
+    setAvatarNotice(null)
+    deleteAvatar.mutate(undefined, {
+      onSuccess: () => setAvatarNotice('Photo supprimée.'),
+    })
+  }
+
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6">
       <Link
@@ -101,6 +149,72 @@ export default function AccountSettingsPage() {
 
       <h1 className="mt-3 text-2xl font-bold tracking-tight text-gray-900">Paramètres</h1>
       <p className="mt-1 text-sm text-gray-500">Vos informations et votre mot de passe</p>
+
+      {/* ---------------- Photo de profil ---------------- */}
+      <Card className="mt-6 p-5 sm:p-6">
+        <h2 className="font-semibold text-gray-900">Photo de profil</h2>
+        <p className="mt-0.5 mb-5 text-sm text-gray-500">
+          Visible par les autres dans vos messages et sur vos annonces.
+        </p>
+
+        <div className="flex items-center gap-4">
+          <UserAvatar name={user?.name} avatarUrl={user?.avatar_url} seed={user?.id ?? 0} size="xl" />
+
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                icon={<Camera className="size-4" aria-hidden />}
+                isLoading={uploadAvatar.isPending}
+                disabled={deleteAvatar.isPending}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {user?.avatar_url ? 'Changer la photo' : 'Ajouter une photo'}
+              </Button>
+
+              {user?.avatar_url && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  icon={<Trash2 className="size-4" aria-hidden />}
+                  isLoading={deleteAvatar.isPending}
+                  disabled={uploadAvatar.isPending}
+                  onClick={handleRemoveAvatar}
+                >
+                  Retirer
+                </Button>
+              )}
+            </div>
+
+            {/* Hidden input, triggered by the buttons above - a native
+                file picker can't be styled, so this is how every custom
+                "upload a photo" button is built. */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+
+            <p className="text-xs text-gray-500">JPEG, PNG ou WebP. 2 Mo maximum.</p>
+          </div>
+        </div>
+
+        {(avatarError || uploadAvatar.isError || deleteAvatar.isError) && (
+          <p className="mt-3 flex items-start gap-2 text-sm text-red-600">
+            <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+            {avatarError ?? getErrorMessage(uploadAvatar.error ?? deleteAvatar.error)}
+          </p>
+        )}
+        {avatarNotice && !avatarError && (
+          <p className="mt-3 flex items-center gap-2 text-sm text-green-700">
+            <CheckCircle2 className="size-4 shrink-0" aria-hidden />
+            {avatarNotice}
+          </p>
+        )}
+      </Card>
 
       {/* ---------------- Profile ---------------- */}
       <Card className="mt-6 p-5 sm:p-6">

@@ -6,7 +6,7 @@ import { useBuyMessagingPack, useStartRoommateConversation } from '@/features/me
 import { usePaymentsEnabled, useSettings } from '@/features/settings/useSettings'
 import { getErrorMessage, getValidationErrors, isPaymentRequiredError } from '@/lib/apiErrors'
 import { formatMad } from '@/lib/formatPrice'
-import { Badge, Button, Card, Textarea, buttonClasses } from '@/components/ui'
+import { Badge, Button, Card, Textarea, UserAvatar, buttonClasses } from '@/components/ui'
 import type { MessagingPackDuration } from '@/features/messaging/messagingApi'
 import type { RoommateListing } from '@/types/roommateListing'
 
@@ -188,15 +188,20 @@ export default function ContactPosterCard({ listing }: { listing: RoommateListin
 
   return (
     <Card className="mt-4 p-5">
-      <h2 className="flex items-center gap-2 font-semibold text-gray-900">
-        <MessageSquare className="size-4.5 text-brand-600" aria-hidden />
-        Contacter {listing.user.name}
-      </h2>
-      <p className="mt-1 text-sm text-gray-500">
-        {listing.type === 'offer'
-          ? 'Posez vos questions sur la colocation.'
-          : 'Proposez-lui votre logement ou posez une question.'}
-      </p>
+      <div className="flex items-center gap-3">
+        <UserAvatar name={listing.user.name} avatarUrl={listing.user.avatar_url} seed={listing.user.id} size="sm" />
+        <div>
+          <h2 className="flex items-center gap-2 font-semibold text-gray-900">
+            <MessageSquare className="size-4.5 text-brand-600" aria-hidden />
+            Contacter {listing.user.name}
+          </h2>
+          <p className="mt-0.5 text-sm text-gray-500">
+            {listing.type === 'offer'
+              ? 'Posez vos questions sur la colocation.'
+              : 'Proposez-lui votre logement ou posez une question.'}
+          </p>
+        </div>
+      </div>
       <CreditsStatus />
 
       <form onSubmit={handleSubmit} className="mt-4 space-y-3">

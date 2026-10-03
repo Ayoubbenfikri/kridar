@@ -54,7 +54,7 @@ class PropertyController extends Controller
         // owner through UserResource any more — the number can only come
         // out through `owner_phone`, which applies the visibility rules.
         $property->load([
-            'owner:id,name,phone,show_phone_on_listings',
+            'owner:id,name,phone,show_phone_on_listings,avatar_path',
             'amenities',
             'images',
         ]);
@@ -76,7 +76,7 @@ class PropertyController extends Controller
 
         return response()->json([
             'message' => 'Property created as a draft. Call publish when it is ready to go live.',
-            'property' => new PropertyResource($property->load('owner:id,name')),
+            'property' => new PropertyResource($property->load('owner:id,name,avatar_path')),
         ], 201);
     }
 
@@ -87,7 +87,7 @@ class PropertyController extends Controller
         $property = $this->properties->update($property, $request->validated());
 
         return response()->json([
-            'property' => new PropertyResource($property->load(['owner:id,name', 'amenities', 'images'])),
+            'property' => new PropertyResource($property->load(['owner:id,name,avatar_path', 'amenities', 'images'])),
         ]);
     }
 
@@ -108,7 +108,7 @@ class PropertyController extends Controller
 
         return response()->json([
             'message' => 'Property published.',
-            'property' => new PropertyResource($property->load('owner:id,name')),
+            'property' => new PropertyResource($property->load('owner:id,name,avatar_path')),
         ]);
     }
 
@@ -120,7 +120,7 @@ class PropertyController extends Controller
 
         return response()->json([
             'message' => 'Property moved back to draft.',
-            'property' => new PropertyResource($property->load('owner:id,name')),
+            'property' => new PropertyResource($property->load('owner:id,name,avatar_path')),
         ]);
     }
 

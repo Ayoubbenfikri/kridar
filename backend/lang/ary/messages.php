@@ -32,6 +32,8 @@ return [
         'verification_sent' => 'صيفطنا ليك رابط التأكيد.',
         'invalid_verification_link' => 'رابط التأكيد ماشي صالح.',
         'profile_updated' => 'البروفيل تبدّل.',
+        'avatar_updated' => 'تصويرة البروفيل تبدّلت.',
+        'avatar_removed' => 'تصويرة البروفيل تحيدات.',
         'password_updated' => 'كلمة السر تبدّلت.',
         'password_reset_link_sent' => 'إلا كاين حساب بهاد الإيميل، صيفطنا ليه رابط باش يبدّل كلمة السر.',
         'password_reset_success' => 'كلمة السر ديالك تبدّلت. دابا تقدر تدخل لحسابك.',

@@ -23,6 +23,7 @@ export interface RoommateListingImage {
 export interface RoommateListingUser {
   id: number
   name: string
+  avatar_url: string | null
 }
 
 export interface RoommateListing {

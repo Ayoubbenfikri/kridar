@@ -27,6 +27,8 @@ return [
         'verification_sent' => 'Verification link sent.',
         'invalid_verification_link' => 'Invalid verification link.',
         'profile_updated' => 'Profile updated.',
+        'avatar_updated' => 'Profile photo updated.',
+        'avatar_removed' => 'Profile photo removed.',
         'password_updated' => 'Password updated.',
         'password_reset_link_sent' => 'If an account exists for that email, a password reset link has been sent.',
         'password_reset_success' => 'Your password has been reset. You can now log in.',

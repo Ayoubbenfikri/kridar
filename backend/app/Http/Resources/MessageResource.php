@@ -33,6 +33,7 @@ class MessageResource extends JsonResource
             'sender' => [
                 'id' => $this->sender_id,
                 'name' => $this->sender?->name,
+                'avatar_url' => $this->sender?->avatarUrl(),
             ],
 
             // Which side of the thread to render this on. Computed here

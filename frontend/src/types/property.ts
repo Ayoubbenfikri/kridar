@@ -40,6 +40,7 @@ export interface Amenity {
 export interface PropertyOwner {
   id: number
   name: string
+  avatar_url: string | null
 }
 
 export interface Property {

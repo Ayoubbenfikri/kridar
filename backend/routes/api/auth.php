@@ -50,6 +50,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
     Route::put('/auth/password', [AuthController::class, 'updatePassword']);
 
+    // Profile photo. POST (not PUT) because it's a multipart file upload —
+    // same convention as PropertyImageController::store.
+    Route::post('/auth/avatar', [AuthController::class, 'updateAvatar']);
+    Route::delete('/auth/avatar', [AuthController::class, 'destroyAvatar']);
+
     // Account deletion. DELETE (not POST) because it's the semantically
     // correct verb for "remove this resource" and matches how the SPA's
     // axios client calls it (see authApi.deleteAccount).

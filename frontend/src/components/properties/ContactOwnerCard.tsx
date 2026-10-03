@@ -6,7 +6,7 @@ import { useBuyMessagingPack, useStartConversation } from '@/features/messaging/
 import { usePaymentsEnabled, useSettings } from '@/features/settings/useSettings'
 import { getErrorMessage, getValidationErrors, isPaymentRequiredError } from '@/lib/apiErrors'
 import { formatMad } from '@/lib/formatPrice'
-import { Badge, Button, Card, Textarea, buttonClasses } from '@/components/ui'
+import { Badge, Button, Card, Textarea, UserAvatar, buttonClasses } from '@/components/ui'
 import type { MessagingPackDuration } from '@/features/messaging/messagingApi'
 import type { Property } from '@/types/property'
 
@@ -207,13 +207,23 @@ export default function ContactOwnerCard({ property }: { property: Property }) {
 
   return (
     <Card className="mt-4 p-5">
-      <h2 className="flex items-center gap-2 font-semibold text-gray-900">
-        <MessageSquare className="size-4.5 text-brand-600" aria-hidden />
-        Contacter le propriétaire
-      </h2>
-      <p className="mt-1 text-sm text-gray-500">
-        Posez vos questions directement à {property.owner.name}.
-      </p>
+      <div className="flex items-center gap-3">
+        <UserAvatar
+          name={property.owner.name}
+          avatarUrl={property.owner.avatar_url}
+          seed={property.owner.id}
+          size="sm"
+        />
+        <div>
+          <h2 className="flex items-center gap-2 font-semibold text-gray-900">
+            <MessageSquare className="size-4.5 text-brand-600" aria-hidden />
+            Contacter le propriétaire
+          </h2>
+          <p className="mt-0.5 text-sm text-gray-500">
+            Posez vos questions directement à {property.owner.name}.
+          </p>
+        </div>
+      </div>
       <CreditsStatus />
 
       <form onSubmit={handleSubmit} className="mt-4 space-y-3">

@@ -32,6 +32,8 @@ return [
         'verification_sent' => 'Lien de vérification envoyé.',
         'invalid_verification_link' => 'Lien de vérification invalide.',
         'profile_updated' => 'Profil mis à jour.',
+        'avatar_updated' => 'Photo de profil mise à jour.',
+        'avatar_removed' => 'Photo de profil supprimée.',
         'password_updated' => 'Mot de passe mis à jour.',
         'password_reset_link_sent' => 'Si un compte existe pour cet email, un lien de réinitialisation a été envoyé.',
         'password_reset_success' => 'Votre mot de passe a été réinitialisé. Vous pouvez maintenant vous connecter.',

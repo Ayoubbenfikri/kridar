@@ -328,7 +328,7 @@ class MessagingService
 
         $this->notifyCounterpart($conversation, $sender);
 
-        return $message->load(array_merge(['sender:id,name'], Message::SHARED_LISTING_WITH));
+        return $message->load(array_merge(['sender:id,name,avatar_path'], Message::SHARED_LISTING_WITH));
     }
 
     /**
@@ -397,7 +397,7 @@ class MessagingService
     {
         $message = $this->conversations->updateMessage($message, $body);
 
-        return $message->load(array_merge(['sender:id,name'], Message::SHARED_LISTING_WITH));
+        return $message->load(array_merge(['sender:id,name,avatar_path'], Message::SHARED_LISTING_WITH));
     }
 
     /**

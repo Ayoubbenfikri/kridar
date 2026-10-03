@@ -115,6 +115,25 @@ export async function updateProfile(payload: UpdateProfilePayload): Promise<{ me
   return data
 }
 
+/**
+ * Upload or replace the profile photo. FormData, not JSON — axios sets
+ * the multipart Content-Type (with the right boundary) on its own when
+ * the body is a FormData instance, so there is nothing to set by hand
+ * here.
+ */
+export async function uploadAvatar(file: File): Promise<{ message: string; user: User }> {
+  const formData = new FormData()
+  formData.append('avatar', file)
+
+  const { data } = await axiosClient.post('/api/v1/auth/avatar', formData)
+  return data
+}
+
+export async function deleteAvatar(): Promise<{ message: string; user: User }> {
+  const { data } = await axiosClient.delete('/api/v1/auth/avatar')
+  return data
+}
+
 export async function updatePassword(payload: UpdatePasswordPayload): Promise<{ message: string }> {
   const { data } = await axiosClient.put('/api/v1/auth/password', payload)
   return data

@@ -118,6 +118,7 @@ class PropertyResource extends JsonResource
             'owner' => $this->whenLoaded('owner', fn () => $this->owner ? [
                 'id' => $this->owner->id,
                 'name' => $this->owner->name,
+                'avatar_url' => $this->owner->avatarUrl(),
             ] : null),
 
             // Safe to send to anyone: it says THAT a number exists, not

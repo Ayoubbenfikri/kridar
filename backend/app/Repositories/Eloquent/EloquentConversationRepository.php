@@ -30,10 +30,10 @@ class EloquentConversationRepository implements ConversationRepositoryInterface
      */
     private const WITH = [
         self::PROPERTY_COLUMNS,
-        'property.owner:id,name',
+        'property.owner:id,name,avatar_path',
         self::ROOMMATE_LISTING_COLUMNS,
-        'roommateListing.user:id,name',
-        'guest:id,name',
+        'roommateListing.user:id,name,avatar_path',
+        'guest:id,name,avatar_path',
     ];
 
     public function paginateForUser(int $userId, int $perPage = 15): LengthAwarePaginator
@@ -95,7 +95,7 @@ class EloquentConversationRepository implements ConversationRepositoryInterface
         // Newest first so page 1 is the bottom of the thread — the part
         // anyone actually wants. The frontend reverses for display.
         return $conversation->messages()
-            ->with(array_merge(['sender:id,name'], Message::SHARED_LISTING_WITH))
+            ->with(array_merge(['sender:id,name,avatar_path'], Message::SHARED_LISTING_WITH))
             ->latest()
             ->paginate($perPage);
     }

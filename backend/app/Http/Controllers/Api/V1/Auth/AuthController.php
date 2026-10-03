@@ -13,12 +13,14 @@ use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
+use App\Http\Requests\Auth\UpdateAvatarRequest;
 use App\Http\Requests\Auth\UpdateLocaleRequest;
 use App\Http\Requests\Auth\UpdatePasswordRequest;
 use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Reservation;
 use App\Models\User;
+use App\Services\AvatarService;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Events\Verified;
@@ -300,6 +302,38 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => __('messages.auth.profile_updated'),
+            'user' => new UserResource($user->fresh()),
+        ]);
+    }
+
+    /**
+     * POST /auth/avatar — upload or replace your own profile photo.
+     *
+     * $avatars is resolved by Laravel's container at call time (method
+     * injection) — AuthController has no constructor to add it to, same
+     * as every other method here, so this is simpler than introducing one
+     * just for this.
+     */
+    public function updateAvatar(UpdateAvatarRequest $request, AvatarService $avatars): JsonResponse
+    {
+        $user = $avatars->upload($request->user(), $request->file('avatar'));
+
+        return response()->json([
+            'message' => __('messages.auth.avatar_updated'),
+            'user' => new UserResource($user->fresh()),
+        ]);
+    }
+
+    /**
+     * DELETE /auth/avatar — remove your own profile photo. Harmless to
+     * call when there isn't one — AvatarService::delete() is a no-op then.
+     */
+    public function destroyAvatar(Request $request, AvatarService $avatars): JsonResponse
+    {
+        $user = $avatars->delete($request->user());
+
+        return response()->json([
+            'message' => __('messages.auth.avatar_removed'),
             'user' => new UserResource($user->fresh()),
         ]);
     }

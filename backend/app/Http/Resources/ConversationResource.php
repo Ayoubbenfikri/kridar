@@ -56,6 +56,7 @@ class ConversationResource extends JsonResource
             'counterpart' => $counterpart === null ? null : [
                 'id' => $counterpart->id,
                 'name' => $counterpart->name,
+                'avatar_url' => $counterpart->avatarUrl(),
             ],
 
             // True when the viewer is the one who owns the listing, so

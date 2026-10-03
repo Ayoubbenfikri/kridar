@@ -22,7 +22,7 @@ import { useAuth } from '@/features/auth/useAuth'
 import NotificationBell from '@/components/notifications/NotificationBell'
 import MessagesLink from '@/components/messaging/MessagesLink'
 import LanguageSwitcher from './LanguageSwitcher'
-import { buttonClasses } from '@/components/ui'
+import { buttonClasses, UserAvatar } from '@/components/ui'
 import { cn } from '@/lib/cn'
 
 /**
@@ -123,12 +123,6 @@ export default function Navbar({
   // The link is only rendered for an admin; the real gate is the backend
   // 'admin' middleware, not this check.
   const isAdmin = user?.role === 'admin'
-
-  const initials = (user?.name ?? '')
-    .split(' ')
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join('')
 
   // Back to the plain original shape - just the active background one
   // notch darker (brand-50 -> brand-100) and the hover a touch more
@@ -252,9 +246,7 @@ export default function Navbar({
                   aria-haspopup="menu"
                   className="flex w-full items-center gap-2 rounded-lg border border-gray-200 bg-white p-1.5 transition hover:border-gray-300 hover:shadow-sm"
                 >
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">
-                    {initials || <User className="size-4" aria-hidden />}
-                  </span>
+                  <UserAvatar name={user?.name} avatarUrl={user?.avatar_url} seed={user?.id ?? 0} size="xs" />
                   <span className="min-w-0 flex-1 truncate text-start text-sm font-medium text-gray-700">
                     {user?.name}
                   </span>

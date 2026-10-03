@@ -61,7 +61,7 @@ class RoommateListingController extends Controller
     {
         $this->authorize('view', $roommateListing);
 
-        $roommateListing->load(['user:id,name', 'images']);
+        $roommateListing->load(['user:id,name,avatar_path', 'images']);
 
         return response()->json([
             'roommate_listing' => new RoommateListingResource($roommateListing),
@@ -78,7 +78,7 @@ class RoommateListingController extends Controller
 
         return response()->json([
             'message' => 'Post created as a draft. Call publish when it is ready to go live.',
-            'roommate_listing' => new RoommateListingResource($listing->load('user:id,name')),
+            'roommate_listing' => new RoommateListingResource($listing->load('user:id,name,avatar_path')),
         ], 201);
     }
 
@@ -89,7 +89,7 @@ class RoommateListingController extends Controller
         $roommateListing = $this->listings->update($roommateListing, $request->validated());
 
         return response()->json([
-            'roommate_listing' => new RoommateListingResource($roommateListing->load(['user:id,name', 'images'])),
+            'roommate_listing' => new RoommateListingResource($roommateListing->load(['user:id,name,avatar_path', 'images'])),
         ]);
     }
 
@@ -110,7 +110,7 @@ class RoommateListingController extends Controller
 
         return response()->json([
             'message' => 'Post published.',
-            'roommate_listing' => new RoommateListingResource($roommateListing->load('user:id,name')),
+            'roommate_listing' => new RoommateListingResource($roommateListing->load('user:id,name,avatar_path')),
         ]);
     }
 
@@ -122,7 +122,7 @@ class RoommateListingController extends Controller
 
         return response()->json([
             'message' => 'Post moved back to draft.',
-            'roommate_listing' => new RoommateListingResource($roommateListing->load('user:id,name')),
+            'roommate_listing' => new RoommateListingResource($roommateListing->load('user:id,name,avatar_path')),
         ]);
     }
 }
