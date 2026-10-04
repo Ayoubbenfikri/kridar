@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\LegalStatus;
+use App\Enums\ListingType;
+use App\Enums\PropertyCondition;
 use App\Enums\PropertyStatus;
 use App\Enums\PropertyType;
 use App\Enums\PublicationStatus;
@@ -23,6 +26,7 @@ class Property extends Model
         'slug',
         'description',
         'property_type',
+        'listing_type',
         'rental_type',
         'address',
         'city',
@@ -36,6 +40,12 @@ class Property extends Model
         'area_sqm',
         'price_per_night',
         'price_per_month',
+        // Sale listings only (listing_type = sale) — see App\Enums\ListingType.
+        'sale_price',
+        'price_negotiable',
+        'year_built',
+        'property_condition',
+        'legal_status',
         'currency',
         'status',
         'is_featured',
@@ -52,7 +62,11 @@ class Property extends Model
     {
         return [
             'property_type' => PropertyType::class,
+            'listing_type' => ListingType::class,
+            // Null for a property that is for sale.
             'rental_type' => RentalType::class,
+            'property_condition' => PropertyCondition::class,
+            'legal_status' => LegalStatus::class,
             'status' => PropertyStatus::class,
             'publication_status' => PublicationStatus::class,
             'is_featured' => 'boolean',
@@ -62,7 +76,22 @@ class Property extends Model
             'longitude' => 'decimal:7',
             'price_per_night' => 'decimal:2',
             'price_per_month' => 'decimal:2',
+            'sale_price' => 'decimal:2',
+            'price_negotiable' => 'boolean',
+            'year_built' => 'integer',
         ];
+    }
+
+    /**
+     * Is this a property for sale (as opposed to a rental)?
+     *
+     * THE test for it — services, requests and resources ask this instead
+     * of comparing listing_type themselves, same convention as
+     * requiresPublicationFee() below.
+     */
+    public function isForSale(): bool
+    {
+        return $this->listing_type === ListingType::Sale;
     }
 
     /**

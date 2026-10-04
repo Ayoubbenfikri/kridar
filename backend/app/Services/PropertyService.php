@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ListingType;
 use App\Enums\PropertyStatus;
 use App\Enums\PublicationStatus;
 use App\Exceptions\PropertySuspendedException;
@@ -44,6 +45,20 @@ class PropertyService
         $data['slug'] = $this->generateUniqueSlug($data['title']);
         $data['status'] = PropertyStatus::Draft; // every listing starts as a draft, see Phase 5 plan
         $data['currency'] = 'MAD';
+
+        // Property sales: a request that never mentioned listing_type is a
+        // rental. Set explicitly (rather than leaving it to the column
+        // default) so the model returned below already carries the value.
+        $data['listing_type'] = $data['listing_type'] ?? ListingType::Rent->value;
+
+        // A sale may legitimately omit bedrooms/bathrooms (a plot of land
+        // has none), but the columns are NOT NULL with a default of 0.
+        // A rental never gets here without them — StorePropertyRequest
+        // requires both.
+        if ($data['listing_type'] === ListingType::Sale->value) {
+            $data['bedrooms'] = $data['bedrooms'] ?? 0;
+            $data['bathrooms'] = $data['bathrooms'] ?? 0;
+        }
 
         // Phase 29 (monetization) — decide, ONCE, whether THIS listing is
         // the owner's free one, and insert the property, IN THE SAME

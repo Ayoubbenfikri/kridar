@@ -190,7 +190,8 @@ class OwnerPhoneVisibilityTest extends TestCase
 
         $owner = $this->show($property)['owner'];
 
-        $this->assertSame(['id', 'name'], array_keys($owner));
+        // avatar_url is public by design; email and phone must never appear.
+        $this->assertSame(['id', 'name', 'avatar_url'], array_keys($owner));
     }
 
     public function test_the_public_listing_index_never_carries_a_number(): void

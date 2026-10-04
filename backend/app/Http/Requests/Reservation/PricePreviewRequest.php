@@ -53,6 +53,15 @@ class PricePreviewRequest extends FormRequest
                     return; // the 'exists' rule above already reports this
                 }
 
+                // A property for sale has nothing to price per night or
+                // month (and a null rental_type, which the check below
+                // would crash on).
+                if ($property->isForSale()) {
+                    $validator->errors()->add('property_id', 'This property is for sale and cannot be booked.');
+
+                    return;
+                }
+
                 // Same shape as StoreReservationRequest::after(): the
                 // property's own rental_type must be exactly what was
                 // asked for, or 'both'.

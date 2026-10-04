@@ -52,8 +52,12 @@ class MessageResource extends JsonResource
                 'title' => $this->sharedProperty->title,
                 'slug' => $this->sharedProperty->slug,
                 'city' => $this->sharedProperty->city,
+                // A property for sale has sale_price instead of the two
+                // rental prices (both null on a sale).
+                'listing_type' => $this->sharedProperty->listing_type,
                 'price_per_night' => $this->sharedProperty->price_per_night,
                 'price_per_month' => $this->sharedProperty->price_per_month,
+                'sale_price' => $this->sharedProperty->sale_price,
                 'currency' => $this->sharedProperty->currency,
                 'cover_image_url' => $this->coverImageUrl($this->sharedProperty->images),
             ] : null),

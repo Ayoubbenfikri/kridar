@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\ListingType;
 use App\Enums\PropertyStatus;
 use App\Enums\PropertyType;
 use App\Enums\PublicationStatus;
@@ -49,7 +50,12 @@ class PropertyFactory extends Factory
             'title' => $title,
             'slug' => Str::slug($title).'-'.fake()->unique()->numberBetween(1000, 9999),
             'description' => fake()->paragraphs(3, true),
-            'property_type' => fake()->randomElement(PropertyType::cases()),
+            // Land can only be sold (see PropertyType), so the default
+            // rental factory never picks it.
+            'property_type' => fake()->randomElement(
+                array_values(array_filter(PropertyType::cases(), fn (PropertyType $type) => $type !== PropertyType::Land))
+            ),
+            'listing_type' => ListingType::Rent,
             'rental_type' => $rentalType,
             'address' => fake()->streetAddress(),
             'city' => fake()->randomElement(self::CITIES),
@@ -93,6 +99,27 @@ class PropertyFactory extends Factory
             'max_guests' => null,
             'price_per_night' => null,
             'price_per_month' => fake()->numberBetween(2500, 25000),
+            'publication_status' => PublicationStatus::Paid,
+            'publication_paid_at' => now(),
+        ]);
+    }
+
+    /**
+     * A property for sale: no rental type, no nightly/monthly price, no
+     * guests — a sale price instead. Fee already settled, like the other
+     * states; combine with ->unpaidPublication() for the "must pay first"
+     * case.
+     */
+    public function forSale(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'listing_type' => ListingType::Sale,
+            'rental_type' => null,
+            'max_guests' => null,
+            'price_per_night' => null,
+            'price_per_month' => null,
+            'sale_price' => fake()->numberBetween(300000, 5000000),
+            'price_negotiable' => false,
             'publication_status' => PublicationStatus::Paid,
             'publication_paid_at' => now(),
         ]);

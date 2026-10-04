@@ -64,6 +64,16 @@ class StoreReservationRequest extends FormRequest
                     return;
                 }
 
+                // A property for sale has no rental_type, prices or
+                // calendar — it can never be booked. Must come before
+                // anything below reads $property->rental_type, which is
+                // null for a sale.
+                if ($property->isForSale()) {
+                    $validator->errors()->add('property_id', 'This property is for sale and cannot be booked.');
+
+                    return;
+                }
+
                 if ($this->user() && $property->owner_id === $this->user()->id) {
                     $validator->errors()->add('property_id', 'You cannot book your own property.');
 

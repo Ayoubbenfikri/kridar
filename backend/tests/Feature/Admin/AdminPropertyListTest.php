@@ -73,9 +73,9 @@ class AdminPropertyListTest extends TestCase
     {
         // Same rule as the public listing (OwnerPhoneVisibilityTest): the
         // owner block is built by hand in PropertyResource and can only
-        // ever contain id and name. Pinned here too, because this endpoint
-        // loads a different column set and is the one an admin screen puts
-        // on display.
+        // ever contain id, name and the public avatar_url. Pinned here too,
+        // because this endpoint loads a different column set and is the one
+        // an admin screen puts on display.
         $owner = User::factory()->create(['phone' => '0612345678']);
         Property::factory()->for($owner, 'owner')->create();
 
@@ -83,7 +83,7 @@ class AdminPropertyListTest extends TestCase
 
         $row = $this->firstRow();
 
-        $this->assertSame(['id', 'name'], array_keys($row['owner']));
+        $this->assertSame(['id', 'name', 'avatar_url'], array_keys($row['owner']));
         $this->assertSame($owner->name, $row['owner']['name']);
     }
 }

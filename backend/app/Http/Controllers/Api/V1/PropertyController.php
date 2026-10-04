@@ -133,6 +133,9 @@ class PropertyController extends Controller
      */
     public function availability(AvailabilityRequest $request, Property $property): JsonResponse
     {
+        // A property for sale has no calendar to show.
+        abort_if($property->isForSale(), 404, 'Availability does not apply to a property for sale.');
+
         $start = Carbon::parse($request->validated('start'))->startOfDay();
         $end = Carbon::parse($request->validated('end'))->startOfDay();
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Property;
 
+use App\Enums\ListingType;
 use App\Enums\PropertyType;
 use App\Enums\RentalType;
 use Illuminate\Contracts\Validation\Validator as ValidatorContract;
@@ -24,6 +25,13 @@ class PropertySearchRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // Optional. Missing means 'rent' — EloquentPropertyRepository
+            // applies that default, so the existing rental pages keep
+            // showing rentals only and sales never leak into them.
+            'listing_type' => ['sometimes', Rule::enum(ListingType::class)],
+            // Optional. Missing means newest first, exactly as before.
+            // Price sorts use the same column the price filter uses.
+            'sort' => ['sometimes', Rule::in(['newest', 'price_asc', 'price_desc'])],
             'q' => ['sometimes', 'string', 'max:100'],
             'city' => ['sometimes', 'string', 'max:100'],
             'property_type' => ['sometimes', Rule::enum(PropertyType::class)],

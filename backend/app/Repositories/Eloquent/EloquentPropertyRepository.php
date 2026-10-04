@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquent;
 
+use App\Enums\ListingType;
 use App\Enums\PropertyStatus;
 use App\Enums\RentalType;
 use App\Models\Property;
@@ -15,8 +16,34 @@ class EloquentPropertyRepository implements PropertyRepositoryInterface
 {
     public function paginatePublished(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
+        // Rentals unless a sale search was explicitly asked for. This
+        // default is what keeps properties for sale out of the rental
+        // list, the map and the home page, which never send the filter.
+        $listingType = $filters['listing_type'] ?? ListingType::Rent->value;
+        $isSale = $listingType === ListingType::Sale->value;
+
+        // A property for sale has no rental_type and no guest capacity, so
+        // those two filters could only ever empty the result. Ignored
+        // (not refused) in a sale search: a client that keeps a leftover
+        // rental filter in its URL still gets a sensible list.
+        $rentalType = $isSale ? null : ($filters['rental_type'] ?? null);
+        $maxGuests = $isSale ? null : ($filters['max_guests'] ?? null);
+
+        // The ONE column "price" means in this search. Used by the price
+        // range filter and by the price sort, so they can never disagree.
+        // Always one of three fixed names — never user input — which is
+        // what makes it safe to put in orderByRaw() below.
+        $priceColumn = match (true) {
+            $isSale => 'sale_price',
+            $rentalType === RentalType::LongTerm->value => 'price_per_month',
+            default => 'price_per_night', // short_term, both, or no rental_type given
+        };
+
+        $sort = $filters['sort'] ?? 'newest';
+
         return Property::query()
             ->where('status', PropertyStatus::Published)
+            ->where('listing_type', $listingType)
             ->when($filters['q'] ?? null, function (Builder $query, string $q) {
                 // Free-text search: title OR city contains the term.
                 $query->where(function (Builder $sub) use ($q) {
@@ -31,7 +58,7 @@ class EloquentPropertyRepository implements PropertyRepositoryInterface
                 $query->whereRaw('LOWER(city) = ?', [mb_strtolower($city)]);
             })
             ->when($filters['property_type'] ?? null, fn (Builder $query, string $type) => $query->where('property_type', $type))
-            ->when($filters['rental_type'] ?? null, function (Builder $query, string $rentalType) {
+            ->when($rentalType, function (Builder $query, string $rentalType) {
                 // A property listed as "both" satisfies a search for
                 // either short_term or long_term specifically, since it
                 // does offer that rental mode.
@@ -43,20 +70,12 @@ class EloquentPropertyRepository implements PropertyRepositoryInterface
             })
             ->when(isset($filters['bedrooms']), fn (Builder $query) => $query->where('bedrooms', '>=', $filters['bedrooms']))
             ->when(isset($filters['bathrooms']), fn (Builder $query) => $query->where('bathrooms', '>=', $filters['bathrooms']))
-            ->when(isset($filters['max_guests']), fn (Builder $query) => $query->where('max_guests', '>=', $filters['max_guests']))
-            ->when(isset($filters['min_price']) || isset($filters['max_price']), function (Builder $query) use ($filters) {
-                // Which column depends on what's being searched: a
-                // long_term search compares price_per_month, everything
-                // else (short_term, both, or no rental_type given at all)
-                // compares price_per_night.
-                $column = ($filters['rental_type'] ?? null) === RentalType::LongTerm->value
-                    ? 'price_per_month'
-                    : 'price_per_night';
-
-                $query
-                    ->when(isset($filters['min_price']), fn (Builder $q) => $q->where($column, '>=', $filters['min_price']))
-                    ->when(isset($filters['max_price']), fn (Builder $q) => $q->where($column, '<=', $filters['max_price']));
-            })
+            ->when($maxGuests !== null, fn (Builder $query) => $query->where('max_guests', '>=', $maxGuests))
+            // Which column "price" means is decided once, above, in
+            // $priceColumn: sale_price for a sale search, price_per_month
+            // for a long_term search, price_per_night for everything else.
+            ->when(isset($filters['min_price']), fn (Builder $query) => $query->where($priceColumn, '>=', $filters['min_price']))
+            ->when(isset($filters['max_price']), fn (Builder $query) => $query->where($priceColumn, '<=', $filters['max_price']))
             ->when($filters['amenities'] ?? null, function (Builder $query, array $amenityIds) {
                 // Must have ALL requested amenities, not just one - one
                 // whereHas() per id, each narrowing the result further.
@@ -77,6 +96,17 @@ class EloquentPropertyRepository implements PropertyRepositoryInterface
             ])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
+            // Price sort. "IS NULL" first pushes listings that have no price
+            // in this column (for example a long-term-only rental when
+            // sorting nightly prices) to the END, whatever the direction —
+            // otherwise MySQL would put them first on an ascending sort.
+            // Newest first is always the tie-break, and the default.
+            ->when(
+                in_array($sort, ['price_asc', 'price_desc'], true),
+                fn (Builder $query) => $query
+                    ->orderByRaw("{$priceColumn} IS NULL")
+                    ->orderBy($priceColumn, $sort === 'price_asc' ? 'asc' : 'desc')
+            )
             ->latest('published_at')
             ->paginate($perPage);
     }

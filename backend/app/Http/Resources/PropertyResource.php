@@ -53,6 +53,11 @@ class PropertyResource extends JsonResource
             'slug' => $this->slug,
             'description' => $this->description,
             'property_type' => $this->property_type,
+
+            // 'rent' | 'sale'. For a sale, rental_type is null and the
+            // nightly/monthly prices are null too — the sale fields below
+            // are the ones that carry data.
+            'listing_type' => $this->listing_type,
             'rental_type' => $this->rental_type,
 
             'address' => $this->address,
@@ -69,6 +74,18 @@ class PropertyResource extends JsonResource
 
             'price_per_night' => $this->price_per_night,
             'price_per_month' => $this->price_per_month,
+
+            // Sale listings only — null on a rental. Whatever the seller
+            // declared; Kridar does not verify any of it.
+            'sale_price' => $this->sale_price,
+            // Cast to bool: a property just created in this request has not
+            // been re-read from the database, so the column default (false)
+            // is not on the model yet and would come out as null.
+            'price_negotiable' => (bool) $this->price_negotiable,
+            'year_built' => $this->year_built,
+            'property_condition' => $this->property_condition,
+            'legal_status' => $this->legal_status,
+
             'currency' => $this->currency,
 
             'status' => $this->status,

@@ -41,7 +41,7 @@ class Message extends Model
      * first row (same reasoning as PropertyResource/RoommateListingResource).
      */
     public const SHARED_LISTING_WITH = [
-        'sharedProperty:id,title,slug,city,price_per_night,price_per_month,currency',
+        'sharedProperty:id,title,slug,city,listing_type,price_per_night,price_per_month,sale_price,currency',
         'sharedProperty.images',
         'sharedRoommateListing:id,title,type,city,price_per_person,budget_min,budget_max,currency',
         'sharedRoommateListing.images',
