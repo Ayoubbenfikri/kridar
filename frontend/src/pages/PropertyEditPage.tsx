@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, CheckCircle2, TriangleAlert, Trash2 } from 'lucide-react'
 import PropertyForm from '@/components/properties/PropertyForm'
 import PropertyImagesManager from '@/components/properties/PropertyImagesManager'
@@ -17,6 +17,12 @@ import type { PropertyFormPayload } from '@/features/properties/propertiesApi'
 export default function PropertyEditPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  // Set by PropertyCreatePage when the property was created successfully
+  // but the photos picked there failed to upload — the property itself is
+  // fine, only the photo step needs a retry, which happens right below
+  // via the normal PropertyImagesManager.
+  const photoUploadError = (useLocation().state as { photoUploadError?: string } | null)
+    ?.photoUploadError
 
   const { data: property, isError, error } = useProperty(id)
   const updateMutation = useUpdateProperty()
@@ -87,6 +93,15 @@ export default function PropertyEditPage() {
       />
 
       <div className="mt-5">
+        {photoUploadError && (
+          <Card className="mb-3 flex items-start gap-3 border-amber-200 bg-amber-50 p-3.5 text-sm text-amber-800">
+            <TriangleAlert className="mt-0.5 size-4.5 shrink-0" aria-hidden />
+            <span>
+              La propriété a bien été créée, mais l'envoi des photos a échoué ({photoUploadError}).
+              Réessayez ci-dessous.
+            </span>
+          </Card>
+        )}
         <PropertyImagesManager propertyId={property.id} images={property.images} />
       </div>
 
