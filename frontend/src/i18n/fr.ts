@@ -243,6 +243,39 @@ export const fr = {
     reset: 'Tout effacer',
   },
 
+  // Amenity names and categories. The database stores one English name
+  // per amenity (AmenitiesSeeder), so these are looked up BY that English
+  // name through useAmenityLabels(). The keys below must match the seeder
+  // names exactly; an amenity with no entry here simply shows its English
+  // name (see useAmenityLabels for the fallback).
+  amenityNames: {
+    WiFi: 'Wi-Fi',
+    'Air conditioning': 'Climatisation',
+    Heating: 'Chauffage',
+    Kitchen: 'Cuisine',
+    'Washing machine': 'Lave-linge',
+    'Free parking': 'Parking gratuit',
+    Elevator: 'Ascenseur',
+    'Swimming pool': 'Piscine',
+    Terrace: 'Terrasse',
+    Garden: 'Jardin',
+    TV: 'Télévision',
+    'Security / guard': 'Sécurité / gardien',
+    'Smoke detector': 'Détecteur de fumée',
+    'Pets allowed': 'Animaux acceptés',
+  },
+
+  amenityCategories: {
+    connectivity: 'Connectivité',
+    comfort: 'Confort',
+    practical: 'Pratique',
+    outdoor: 'Extérieur',
+    entertainment: 'Divertissement',
+    safety: 'Sécurité',
+    policy: 'Règles de la maison',
+    other: 'Autres',
+  },
+
   // Shared Accommodation / Roommates (Phase R5). Same i18n treatment as
   // `properties`/`filters`/`card`/`propertyType` above — this is a public
   // browse path, same as the property list. The roommate details page

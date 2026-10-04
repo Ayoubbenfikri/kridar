@@ -18,6 +18,7 @@ import {
   Users,
 } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
+import { useAmenityLabels } from '@/features/amenities/useAmenityLabels'
 import { useProperty, useRevealPhone } from '@/features/properties/useProperties'
 import { useSettings } from '@/features/settings/useSettings'
 import { getErrorMessage } from '@/lib/apiErrors'
@@ -169,6 +170,7 @@ export default function PropertyDetailsPage() {
   const { id } = useParams<{ id: string }>()
   const { data: property, isError } = useProperty(id)
   const [activeImage, setActiveImage] = useState(0)
+  const { amenityName } = useAmenityLabels()
 
   if (isError) {
     return (
@@ -347,7 +349,7 @@ export default function PropertyDetailsPage() {
                 {property.amenities.map((amenity) => (
                   <li key={amenity.id} className="flex items-center gap-2.5 text-gray-700">
                     <Check className="size-4 shrink-0 text-brand-600" aria-hidden />
-                    {amenity.name}
+                    {amenityName(amenity.name)}
                   </li>
                 ))}
               </ul>

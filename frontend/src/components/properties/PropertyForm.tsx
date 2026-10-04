@@ -1,11 +1,12 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
-import { AlertCircle, Banknote, Building2, MapPin, Sparkles, Users } from 'lucide-react'
+import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import { AlertCircle, Banknote, Building2, Check, MapPin, Sparkles, Users } from 'lucide-react'
 import { useAmenities } from '@/features/amenities/useAmenities'
+import { useAmenityLabels } from '@/features/amenities/useAmenityLabels'
 import LocationPicker from '@/components/map/LocationPicker'
 import { Button, Card, Input, Select, Skeleton, Textarea } from '@/components/ui'
 import type { PropertyFormPayload } from '@/features/properties/propertiesApi'
 import type { ValidationErrors } from '@/lib/apiErrors'
-import type { Property, PropertyType, RentalType } from '@/types/property'
+import type { Amenity, Property, PropertyType, RentalType } from '@/types/property'
 
 const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
   apartment: 'Appartement',
@@ -16,8 +17,8 @@ const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
 }
 
 const RENTAL_TYPE_LABELS: Record<RentalType, string> = {
-  short_term: 'Courte duree (par nuit)',
-  long_term: 'Longue duree (par mois)',
+  short_term: 'Courte durée (par nuit)',
+  long_term: 'Longue durée (par mois)',
   both: 'Les deux',
 }
 
@@ -128,6 +129,27 @@ function buildPayload(form: FormState): PropertyFormPayload {
   }
 }
 
+/**
+ * Groups the amenity list by its `category` column, keeping the order the
+ * API returned them in (first category seen comes first) and putting
+ * amenities with no category (null) in a last group.
+ */
+function groupByCategory(amenities: Amenity[]): Array<{ category: string | null; items: Amenity[] }> {
+  const groups = new Map<string | null, Amenity[]>()
+
+  for (const amenity of amenities) {
+    const items = groups.get(amenity.category) ?? []
+    items.push(amenity)
+    groups.set(amenity.category, items)
+  }
+
+  const result = Array.from(groups, ([category, items]) => ({ category, items }))
+  return [
+    ...result.filter((group) => group.category !== null),
+    ...result.filter((group) => group.category === null),
+  ]
+}
+
 /** One titled block of the form. */
 function Section({
   icon,
@@ -176,7 +198,13 @@ export default function PropertyForm({
   const [form, setForm] = useState<FormState>(
     initialProperty ? formStateFromProperty(initialProperty) : EMPTY_FORM,
   )
-  const { data: amenities } = useAmenities()
+  const {
+    data: amenities,
+    isError: amenitiesFailed,
+    refetch: refetchAmenities,
+  } = useAmenities()
+  const { amenityName, categoryName } = useAmenityLabels()
+  const amenityGroups = useMemo(() => groupByCategory(amenities ?? []), [amenities])
 
   // Mirrors StorePropertyRequest: a nightly price (and max_guests) is
   // required as soon as the property is rented by the night, a monthly
@@ -219,7 +247,7 @@ export default function PropertyForm({
             <Input
               label="Titre"
               required
-              placeholder="Villa avec piscine privee"
+              placeholder="Villa avec piscine privée"
               value={form.title}
               onChange={(event) => update('title', event.target.value)}
               error={fieldError('title')}
@@ -232,11 +260,11 @@ export default function PropertyForm({
               required
               minLength={20}
               rows={5}
-              placeholder="Decrivez le logement, le quartier, ce qui le rend agreable..."
+              placeholder="Décrivez le logement, le quartier, ce qui le rend agréable..."
               value={form.description}
               onChange={(event) => update('description', event.target.value)}
               error={fieldError('description')}
-              hint="20 caracteres minimum"
+              hint="20 caractères minimum"
             />
           </div>
 
@@ -285,7 +313,7 @@ export default function PropertyForm({
           />
 
           <Input
-            label="Region (optionnel)"
+            label="Région (optionnel)"
             value={form.region}
             onChange={(event) => update('region', event.target.value)}
             error={fieldError('region')}
@@ -310,7 +338,7 @@ export default function PropertyForm({
               }}
             />
             <p className="text-xs text-gray-500">
-              Cliquez sur la carte ou deplacez le repere pour definir la position exacte du bien.
+              Cliquez sur la carte ou déplacez le repère pour définir la position exacte du bien.
               {form.latitude && form.longitude && (
                 <>
                   {' '}
@@ -328,7 +356,7 @@ export default function PropertyForm({
         </div>
       </Section>
 
-      <Section icon={<Users className="size-4.5" />} title="Capacite">
+      <Section icon={<Users className="size-4.5" />} title="Capacité">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Input
             label="Chambres"
@@ -361,7 +389,7 @@ export default function PropertyForm({
           />
 
           <Input
-            label="Surface m2 (optionnel)"
+            label="Surface m² (optionnel)"
             type="number"
             min={0}
             step="any"
@@ -377,8 +405,8 @@ export default function PropertyForm({
         title="Tarifs"
         description={
           form.rental_type === ''
-            ? 'Choisissez d abord un type de location ci-dessus'
-            : 'Les champs marques * sont obligatoires pour ce type de location'
+            ? "Choisissez d'abord un type de location ci-dessus"
+            : 'Les champs marqués * sont obligatoires pour ce type de location'
         }
       >
         <div className="grid gap-4 sm:grid-cols-2">
@@ -408,39 +436,60 @@ export default function PropertyForm({
 
       <Section
         icon={<Sparkles className="size-4.5" />}
-        title="Equipements"
+        title="Équipements"
         description="Ce qui est inclus dans le logement"
       >
-        {!amenities ? (
+        {amenitiesFailed ? (
+          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <AlertCircle className="size-4 shrink-0" aria-hidden />
+            <span>Impossible de charger les équipements.</span>
+            <Button type="button" variant="secondary" size="sm" onClick={() => refetchAmenities()}>
+              Réessayer
+            </Button>
+          </div>
+        ) : !amenities ? (
           <div className="flex flex-wrap gap-2">
             {[0, 1, 2, 3, 4, 5].map((index) => (
               <Skeleton key={index} className="h-9 w-28 rounded-full" />
             ))}
           </div>
+        ) : amenities.length === 0 ? (
+          <p className="text-sm text-gray-500">Aucun équipement n'est disponible pour le moment.</p>
         ) : (
-          <div className="flex flex-wrap gap-2">
-            {amenities.map((amenity) => {
-              const checked = form.amenity_ids.includes(amenity.id)
-              return (
-                <label
-                  key={amenity.id}
-                  className={
-                    'cursor-pointer rounded-full border px-3.5 py-2 text-sm transition ' +
-                    (checked
-                      ? 'border-brand-500 bg-brand-50 font-medium text-brand-700'
-                      : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50')
-                  }
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => toggleAmenity(amenity.id)}
-                    className="sr-only"
-                  />
-                  {amenity.name}
-                </label>
-              )
-            })}
+          <div className="space-y-5">
+            {amenityGroups.map((group) => (
+              <fieldset key={group.category ?? 'other'}>
+                <legend className="mb-2 text-sm font-medium text-gray-500">
+                  {categoryName(group.category)}
+                </legend>
+                <div className="flex flex-wrap gap-2">
+                  {group.items.map((amenity) => {
+                    const checked = form.amenity_ids.includes(amenity.id)
+                    return (
+                      <label
+                        key={amenity.id}
+                        className={
+                          'flex cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm transition ' +
+                          'has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-brand-500/30 ' +
+                          (checked
+                            ? 'border-brand-500 bg-brand-50 font-medium text-brand-700'
+                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50')
+                        }
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleAmenity(amenity.id)}
+                          className="sr-only"
+                        />
+                        {checked && <Check className="size-3.5 shrink-0" aria-hidden />}
+                        {amenityName(amenity.name)}
+                      </label>
+                    )
+                  })}
+                </div>
+              </fieldset>
+            ))}
           </div>
         )}
       </Section>

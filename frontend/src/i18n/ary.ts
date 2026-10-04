@@ -221,6 +221,37 @@ export const ary: TranslationSchema = {
     reset: 'مسح گاع',
   },
 
+  // Keys are the exact names in AmenitiesSeeder — see fr.ts.
+  // ⚠️ Ayoub: هاد الترجمات كتبتها بالدارجة اللي كتهضرو الناس فالمغرب
+  // (الشوفاج، الكوزينة، البيسين، الأصانصور...) — بدّل أي كلمة ما عجباتكش.
+  amenityNames: {
+    WiFi: 'واي فاي',
+    'Air conditioning': 'المكيّف',
+    Heating: 'الشوفاج',
+    Kitchen: 'الكوزينة',
+    'Washing machine': 'ماشينة الغسيل',
+    'Free parking': 'پاركينغ مجاني',
+    Elevator: 'الأصانصور',
+    'Swimming pool': 'البيسين',
+    Terrace: 'التيراس',
+    Garden: 'الجنان',
+    TV: 'التلفازة',
+    'Security / guard': 'الأمن / الحارس',
+    'Smoke detector': 'كاشف الدخان',
+    'Pets allowed': 'الحيوانات مقبولة',
+  },
+
+  amenityCategories: {
+    connectivity: 'الاتصال',
+    comfort: 'الراحة',
+    practical: 'عملي',
+    outdoor: 'برّا',
+    entertainment: 'الترفيه',
+    safety: 'السلامة',
+    policy: 'قوانين الدار',
+    other: 'أخرى',
+  },
+
   // ⚠️ Ayoub: "roommates" (تقاسم السكن، حرفياً "تقسيم السكن") ماكاينش
   // ليه كلمة دارجة راسخة — كتبت حاجة مفهومة، بدّلها بلي كيعجبك.
   roommateType: {

@@ -207,6 +207,35 @@ export const en: TranslationSchema = {
     reset: 'Clear all',
   },
 
+  // Keys are the exact names in AmenitiesSeeder — see fr.ts.
+  amenityNames: {
+    WiFi: 'WiFi',
+    'Air conditioning': 'Air conditioning',
+    Heating: 'Heating',
+    Kitchen: 'Kitchen',
+    'Washing machine': 'Washing machine',
+    'Free parking': 'Free parking',
+    Elevator: 'Elevator',
+    'Swimming pool': 'Swimming pool',
+    Terrace: 'Terrace',
+    Garden: 'Garden',
+    TV: 'TV',
+    'Security / guard': 'Security / guard',
+    'Smoke detector': 'Smoke detector',
+    'Pets allowed': 'Pets allowed',
+  },
+
+  amenityCategories: {
+    connectivity: 'Connectivity',
+    comfort: 'Comfort',
+    practical: 'Practical',
+    outdoor: 'Outdoor',
+    entertainment: 'Entertainment',
+    safety: 'Safety',
+    policy: 'House rules',
+    other: 'Other',
+  },
+
   roommateType: {
     all: 'All types',
     offer: 'Has a place, looking for a roommate',

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { RotateCcw } from 'lucide-react'
 import { Button, Select } from '@/components/ui'
 import { useAmenities } from '@/features/amenities/useAmenities'
+import { useAmenityLabels } from '@/features/amenities/useAmenityLabels'
 import type { PropertyType, RentalType } from '@/types/property'
 
 /**
@@ -72,6 +73,7 @@ export default function PropertyFilters({
   const { t } = useTranslation()
   const [draft, setDraft] = useState<FilterValues>(value)
   const { data: amenities } = useAmenities()
+  const { amenityName } = useAmenityLabels()
 
   function set<K extends keyof FilterValues>(key: K, next: FilterValues[K]) {
     setDraft((current) => ({ ...current, [key]: next }))
@@ -204,11 +206,10 @@ export default function PropertyFilters({
                     onChange={() => toggleAmenity(amenity.id)}
                     className="sr-only"
                   />
-                  {/* Amenity names come from the database (the amenities
-                      table), so they are NOT translated here — they are
-                      data, not interface. Translating them would mean a
-                      column per language on that table. */}
-                  {amenity.name}
+                  {/* The amenities table holds one English name per row,
+                      so the translation is looked up by that name in the
+                      i18n files (see useAmenityLabels). */}
+                  {amenityName(amenity.name)}
                 </label>
               )
             })}
