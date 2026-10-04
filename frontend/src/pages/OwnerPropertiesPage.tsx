@@ -1,5 +1,5 @@
 import { Link, useSearchParams } from 'react-router-dom'
-import { Building2, ChevronLeft, ChevronRight, ImageOff, Info, Pencil, Plus, TriangleAlert } from 'lucide-react'
+import { Building2, ChevronLeft, ChevronRight, ImageOff, Pencil, Plus, TriangleAlert } from 'lucide-react'
 import {
   useOwnerProperties,
   usePayPublicationFee,
@@ -193,21 +193,6 @@ export default function OwnerPropertiesPage() {
           Ajouter
         </Link>
       </div>
-
-      {/* The business model, stated once where the owner acts on it. The
-          fee comes from the admin settings, never hardcoded. */}
-      {settings && (
-        <Card className="mt-4 flex items-start gap-3 bg-gray-50 p-4 text-sm text-gray-600">
-          <Info className="mt-0.5 size-4.5 shrink-0 text-brand-600" aria-hidden />
-          <p>
-            <strong className="text-gray-900">Premiere annonce :</strong> gratuite, quel que soit son
-            type de location.{' '}
-            <strong className="text-gray-900">Annonces suivantes :</strong>{' '}
-            {formatMad(settings.listing_publication_fee)} une seule fois pour publier chacune. Aucune
-            commission sur le loyer ni sur les réservations.
-          </p>
-        </Card>
-      )}
 
       {mutationError && (
         <Card className="mt-4 flex items-start gap-3 border-red-200 bg-red-50 p-3 text-sm text-red-700">
