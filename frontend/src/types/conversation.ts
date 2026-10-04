@@ -65,8 +65,11 @@ export interface MessageSharedProperty {
   title: string
   slug: string
   city: string
+  listing_type: 'rent' | 'sale'
   price_per_night: string | null
   price_per_month: string | null
+  /** Set instead of the two rental prices when listing_type is 'sale'. */
+  sale_price: string | null
   currency: string
   cover_image_url: string | null
 }

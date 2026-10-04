@@ -29,6 +29,7 @@ export default function PropertyCard({ property }: { property: Property }) {
   const cover = images.find((image) => image.is_cover) ?? images[0] ?? null
   const price = primaryPrice(property)
   const rating = property.average_rating
+  const isSale = property.listing_type === 'sale'
 
   return (
     <article className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-gray-300 hover:shadow-lg">
@@ -84,12 +85,18 @@ export default function PropertyCard({ property }: { property: Property }) {
           </p>
 
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-gray-100 pt-3 text-[13px] text-gray-500">
-            <span className="flex items-center gap-1.5">
-              <BedDouble className="size-3.5" aria-hidden /> {t('card.bedrooms', { n: property.bedrooms })}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Bath className="size-3.5" aria-hidden /> {t('card.bathrooms', { n: property.bathrooms })}
-            </span>
+            {/* A sale can have 0 rooms (land, commercial premises): "0 ch."
+                would only be noise there. A rental always shows them. */}
+            {(!isSale || property.bedrooms > 0) && (
+              <span className="flex items-center gap-1.5">
+                <BedDouble className="size-3.5" aria-hidden /> {t('card.bedrooms', { n: property.bedrooms })}
+              </span>
+            )}
+            {(!isSale || property.bathrooms > 0) && (
+              <span className="flex items-center gap-1.5">
+                <Bath className="size-3.5" aria-hidden /> {t('card.bathrooms', { n: property.bathrooms })}
+              </span>
+            )}
             {property.max_guests !== null ? (
               <span className="flex items-center gap-1.5">
                 <Users className="size-3.5" aria-hidden /> {t('card.guests', { n: property.max_guests })}
@@ -106,7 +113,13 @@ export default function PropertyCard({ property }: { property: Property }) {
               <span className="text-lg font-bold tracking-tight text-gray-900">
                 {formatMad(price.amount)}
               </span>
-              <span className="text-sm text-gray-500">{t(price.unitKey)}</span>
+              {/* No unit on a sale price. */}
+              {price.unitKey && <span className="text-sm text-gray-500">{t(price.unitKey)}</span>}
+              {isSale && property.price_negotiable && (
+                <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                  {t('card.negotiable')}
+                </span>
+              )}
             </p>
           ) : (
             <p className="mt-3 text-sm text-gray-400">{t('price.notSet')}</p>

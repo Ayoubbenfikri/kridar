@@ -1,11 +1,26 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Helmet } from 'react-helmet-async'
-import { ArrowRight, Building2, Heart, ShieldCheck, Sparkles } from 'lucide-react'
+import {
+  ArrowRight,
+  BedDouble,
+  Briefcase,
+  Building,
+  Building2,
+  Heart,
+  Home,
+  Landmark,
+  ShieldCheck,
+  Store,
+  Trees,
+} from 'lucide-react'
 import SearchBar from '@/components/search/SearchBar'
 import PropertyCard from '@/components/properties/PropertyCard'
 import { useProperties } from '@/features/properties/useProperties'
 import { Card, EmptyState, Skeleton, buttonClasses } from '@/components/ui'
+import { searchUrl, type SearchMode } from '@/lib/homeSearch'
+import type { PropertyType } from '@/types/property'
 
 /**
  * City names are proper nouns and stay as they are in all three
@@ -14,6 +29,22 @@ import { Card, EmptyState, Skeleton, buttonClasses } from '@/components/ui'
  * which matches the exact value stored in the database.
  */
 const CITIES = ['Marrakech', 'Casablanca', 'Rabat', 'Tanger', 'Agadir', 'Essaouira']
+
+/**
+ * "Browse by type" tiles. They follow the search bar's mode: in "buy" the
+ * last tile is land (only sold, never rented), otherwise it is offices.
+ */
+const TYPE_ICONS: Record<string, typeof Home> = {
+  apartment: Building,
+  villa: Home,
+  riad: Landmark,
+  studio: BedDouble,
+  commercial: Store,
+  land: Trees,
+  office: Briefcase,
+}
+const TILE_TYPES_RENT: PropertyType[] = ['apartment', 'villa', 'riad', 'studio', 'commercial', 'office']
+const TILE_TYPES_BUY: PropertyType[] = ['apartment', 'villa', 'riad', 'land', 'commercial', 'studio']
 
 /** Same shape as a PropertyCard, so the grid does not jump on load. */
 function PropertyCardSkeleton() {
@@ -32,6 +63,9 @@ function PropertyCardSkeleton() {
 
 export default function HomePage() {
   const { t } = useTranslation()
+  // One mode for the whole hero: the search bar's tabs, the city chips and
+  // the type tiles all build their links from it (see lib/homeSearch).
+  const [mode, setMode] = useState<SearchMode>('short')
 
   // Newest published properties. The listing endpoint returns them
   // newest-first, so this is "the latest homes", not a curated
@@ -39,13 +73,21 @@ export default function HomePage() {
   const { data, isError } = useProperties({ per_page: 6 })
   const properties = data?.data ?? []
 
+  // Rentals only: the default search is rent (see the repository), so the
+  // list above never mixes in sales. Sales get their own section below,
+  // and only when there is at least one - an empty "for sale" shelf on
+  // launch day would look broken, not honest.
+  const { data: saleData } = useProperties({ listing_type: 'sale', per_page: 3 })
+  const saleProperties = saleData?.data ?? []
+  const tileTypes = mode === 'buy' ? TILE_TYPES_BUY : TILE_TYPES_RENT
+
   return (
     <main>
       <Helmet>
-        <title>Krihouse — Location courte et longue durée au Maroc</title>
+        <title>Krihouse — Louer et acheter un bien au Maroc</title>
         <meta
           name="description"
-          content="Trouvez ou publiez un appartement, une villa, un studio ou un riad à louer au Maroc. Réservation directe entre voyageurs et propriétaires, sans commission."
+          content="Trouvez ou publiez un appartement, une villa, un studio, un riad ou un terrain à louer ou à vendre au Maroc. Contact direct entre voyageurs, acheteurs et propriétaires, sans commission."
         />
       </Helmet>
 
@@ -60,34 +102,51 @@ export default function HomePage() {
           className="pointer-events-none absolute inset-x-0 -top-40 h-96 bg-[radial-gradient(60%_60%_at_50%_50%,var(--color-brand-100),transparent_70%)]"
         />
 
-        <div className="relative mx-auto w-full max-w-6xl px-4 py-16 text-center sm:px-6 sm:py-20">
-          <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50 py-1.5 pe-3.5 ps-2.5 text-[13px] font-medium text-brand-700">
-            <Sparkles className="size-3.5" aria-hidden />
-            {t('home.badge')}
-          </span>
+        <div className="relative mx-auto w-full max-w-6xl px-4 py-12 text-center sm:px-6 sm:py-16">
+          {/* The heading stays for screen readers and search engines, it is
+              just not shown: the search bar is the first thing people see. */}
+          <h1 className="sr-only">{t('home.title')}</h1>
 
-          <h1 className="mt-5 text-4xl font-bold tracking-tight text-balance text-gray-900 sm:text-5xl">
-            {t('home.title')}
-          </h1>
-          <p className="mx-auto mt-4 max-w-xl text-[17px] text-pretty text-gray-500">
-            {t('home.subtitle')}
-          </p>
-
-          <div className="mt-9">
-            <SearchBar />
+          <div>
+            <SearchBar mode={mode} onModeChange={setMode} />
           </div>
 
           <div className="mt-6 flex flex-wrap justify-center gap-2">
             {CITIES.map((city) => (
               <Link
                 key={city}
-                to={`/properties?city=${encodeURIComponent(city)}`}
+                to={searchUrl(mode, { city })}
                 className="rounded-full border border-gray-200 bg-white px-4 py-1.5 text-sm text-gray-600 transition hover:border-brand-500 hover:bg-brand-50 hover:text-brand-700"
               >
                 {city}
               </Link>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------------
+          BROWSE BY TYPE
+          --------------------------------------------------------------- */}
+      <section className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6">
+        <h2 className="text-2xl font-bold tracking-tight text-gray-900">{t('search.typesTitle')}</h2>
+        <p className="mt-1 text-sm text-gray-500">{t('search.typesSubtitle')}</p>
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {tileTypes.map((type) => {
+            const Icon = TYPE_ICONS[type]
+            return (
+              <Link
+                key={type}
+                to={searchUrl(mode, { property_type: type })}
+                className="group flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white p-5 text-center transition hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-md"
+              >
+                <span className="flex size-12 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition group-hover:bg-brand-600 group-hover:text-white">
+                  <Icon className="size-6" aria-hidden />
+                </span>
+                <span className="text-sm font-semibold text-gray-900">{t(`propertyType.${type}`)}</span>
+              </Link>
+            )
+          })}
         </div>
       </section>
 
@@ -152,6 +211,37 @@ export default function HomePage() {
           </>
         )}
       </section>
+
+      {/* ---------------------------------------------------------------
+          FOR SALE (only shown when something is for sale)
+          --------------------------------------------------------------- */}
+      {saleProperties.length > 0 && (
+        <section className="mx-auto w-full max-w-6xl px-4 pt-12 sm:px-6">
+          <div className="mb-6 flex items-end justify-between gap-5">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+                {t('search.saleTitle')}
+              </h2>
+              <p className="mt-1 text-sm text-gray-500">{t('search.saleSubtitle')}</p>
+            </div>
+            <Link
+              to="/buy"
+              className="group flex shrink-0 items-center gap-1.5 text-sm font-semibold text-brand-600 transition hover:text-brand-700"
+            >
+              {t('search.seeAllSales')}
+              <ArrowRight
+                className="size-4 transition group-hover:translate-x-0.5 rtl:rotate-180"
+                aria-hidden
+              />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {saleProperties.map((property) => (
+              <PropertyCard key={property.id} property={property} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ---------------------------------------------------------------
           OWNER CALL TO ACTION

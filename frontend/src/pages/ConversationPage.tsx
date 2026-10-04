@@ -77,11 +77,17 @@ function linkifyMessage(body: string): ReactNode[] {
 function SharedListingCard({ message }: { message: Message }) {
   if (message.shared_property) {
     const listing = message.shared_property
-    const priceLabel = listing.price_per_month
-      ? `${formatMad(listing.price_per_month)} / mois`
-      : listing.price_per_night
-        ? `${formatMad(listing.price_per_night)} / nuit`
-        : null
+    // A sale carries sale_price and no rental price (both null).
+    const priceLabel =
+      listing.listing_type === 'sale'
+        ? listing.sale_price
+          ? formatMad(listing.sale_price)
+          : null
+        : listing.price_per_month
+          ? `${formatMad(listing.price_per_month)} / mois`
+          : listing.price_per_night
+            ? `${formatMad(listing.price_per_night)} / nuit`
+            : null
 
     return (
       <Link

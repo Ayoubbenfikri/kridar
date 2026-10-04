@@ -1,12 +1,30 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
-import { AlertCircle, Banknote, Building2, Check, MapPin, Sparkles, Users } from 'lucide-react'
+import {
+  AlertCircle,
+  Banknote,
+  Building2,
+  Check,
+  KeyRound,
+  MapPin,
+  Sparkles,
+  Tag,
+  Users,
+} from 'lucide-react'
 import { useAmenities } from '@/features/amenities/useAmenities'
 import { useAmenityLabels } from '@/features/amenities/useAmenityLabels'
 import LocationPicker from '@/components/map/LocationPicker'
 import { Button, Card, Input, Select, Skeleton, Textarea } from '@/components/ui'
 import type { PropertyFormPayload } from '@/features/properties/propertiesApi'
 import type { ValidationErrors } from '@/lib/apiErrors'
-import type { Amenity, Property, PropertyType, RentalType } from '@/types/property'
+import type {
+  Amenity,
+  LegalStatus,
+  ListingType,
+  Property,
+  PropertyCondition,
+  PropertyType,
+  RentalType,
+} from '@/types/property'
 
 const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
   apartment: 'Appartement',
@@ -14,12 +32,27 @@ const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
   studio: 'Studio',
   riad: 'Riad',
   office: 'Bureau',
+  land: 'Terrain',
+  commercial: 'Local commercial',
 }
 
 const RENTAL_TYPE_LABELS: Record<RentalType, string> = {
   short_term: 'Courte durée (par nuit)',
   long_term: 'Longue durée (par mois)',
   both: 'Les deux',
+}
+
+const CONDITION_LABELS: Record<PropertyCondition, string> = {
+  new: 'Neuf',
+  good: 'Bon état',
+  to_renovate: 'À rénover',
+}
+
+const LEGAL_STATUS_LABELS: Record<LegalStatus, string> = {
+  titled: 'Titre foncier',
+  registering: "En cours d'immatriculation",
+  melkia: 'Melkia',
+  other: 'Autre',
 }
 
 /**
@@ -29,6 +62,7 @@ const RENTAL_TYPE_LABELS: Record<RentalType, string> = {
  * PropertyFormPayload shape on submit.
  */
 interface FormState {
+  listing_type: ListingType
   title: string
   description: string
   property_type: PropertyType | ''
@@ -44,26 +78,40 @@ interface FormState {
   area_sqm: string
   price_per_night: string
   price_per_month: string
+  // Sale listings only
+  sale_price: string
+  price_negotiable: boolean
+  year_built: string
+  property_condition: PropertyCondition | ''
+  legal_status: LegalStatus | ''
   amenity_ids: number[]
 }
 
-const EMPTY_FORM: FormState = {
-  title: '',
-  description: '',
-  property_type: '',
-  rental_type: '',
-  address: '',
-  city: '',
-  region: '',
-  latitude: '',
-  longitude: '',
-  bedrooms: '',
-  bathrooms: '',
-  max_guests: '',
-  area_sqm: '',
-  price_per_night: '',
-  price_per_month: '',
-  amenity_ids: [],
+function emptyForm(listingType: ListingType): FormState {
+  return {
+    listing_type: listingType,
+    title: '',
+    description: '',
+    property_type: '',
+    rental_type: '',
+    address: '',
+    city: '',
+    region: '',
+    latitude: '',
+    longitude: '',
+    bedrooms: '',
+    bathrooms: '',
+    max_guests: '',
+    area_sqm: '',
+    price_per_night: '',
+    price_per_month: '',
+    sale_price: '',
+    price_negotiable: false,
+    year_built: '',
+    property_condition: '',
+    legal_status: '',
+    amenity_ids: [],
+  }
 }
 
 /**
@@ -73,10 +121,12 @@ const EMPTY_FORM: FormState = {
  */
 function formStateFromProperty(property: Property): FormState {
   return {
+    listing_type: property.listing_type,
     title: property.title,
     description: property.description,
     property_type: property.property_type,
-    rental_type: property.rental_type,
+    // Null on a sale — the form uses '' for "nothing chosen".
+    rental_type: property.rental_type ?? '',
     address: property.address,
     city: property.city,
     region: property.region ?? '',
@@ -88,6 +138,11 @@ function formStateFromProperty(property: Property): FormState {
     area_sqm: property.area_sqm ?? '',
     price_per_night: property.price_per_night ?? '',
     price_per_month: property.price_per_month ?? '',
+    sale_price: property.sale_price ?? '',
+    price_negotiable: property.price_negotiable,
+    year_built: property.year_built !== null ? String(property.year_built) : '',
+    property_condition: property.property_condition ?? '',
+    legal_status: property.legal_status ?? '',
     amenity_ids: property.amenities.map((amenity) => amenity.id),
   }
 }
@@ -106,26 +161,59 @@ function toOptionalCoordinate(value: string): number | null {
   return Number.isNaN(parsed) ? null : parsed
 }
 
+/**
+ * Builds what is sent to the API. Only the fields that belong to the kind
+ * of listing are included — the backend would drop the others anyway, but
+ * not sending them keeps the request honest.
+ */
 function buildPayload(form: FormState): PropertyFormPayload {
-  return {
+  // Empty string can't happen for a submitted form (property_type is
+  // required), the cast just satisfies TypeScript.
+  const propertyType = form.property_type as PropertyType
+
+  const common = {
+    listing_type: form.listing_type,
     title: form.title,
     description: form.description,
-    // Empty string can't happen for a submitted form (both selects are
-    // required), the cast just satisfies TypeScript.
-    property_type: form.property_type as PropertyType,
-    rental_type: form.rental_type as RentalType,
+    property_type: propertyType,
     address: form.address,
     city: form.city,
     region: form.region.trim() === '' ? undefined : form.region,
     latitude: toOptionalNumber(form.latitude),
     longitude: toOptionalNumber(form.longitude),
+    area_sqm: toOptionalNumber(form.area_sqm),
+    amenity_ids: form.amenity_ids,
+  }
+
+  if (form.listing_type === 'sale') {
+    const isLand = propertyType === 'land'
+
+    return {
+      ...common,
+      // The equipment list is hidden for land, so nothing picked before
+      // switching the type to "Terrain" must slip through.
+      amenity_ids: isLand ? [] : form.amenity_ids,
+      // A plot of land has no rooms: not sent, the backend stores 0.
+      bedrooms: isLand ? undefined : toOptionalNumber(form.bedrooms),
+      bathrooms: isLand ? undefined : toOptionalNumber(form.bathrooms),
+      sale_price: Number(form.sale_price),
+      price_negotiable: form.price_negotiable,
+      // null (not undefined) so that emptying a field on the edit form
+      // really clears it — these three are nullable on the backend.
+      year_built: isLand ? null : (toOptionalNumber(form.year_built) ?? null),
+      property_condition: form.property_condition === '' ? null : form.property_condition,
+      legal_status: form.legal_status === '' ? null : form.legal_status,
+    }
+  }
+
+  return {
+    ...common,
+    rental_type: form.rental_type as RentalType,
     bedrooms: Number(form.bedrooms),
     bathrooms: Number(form.bathrooms),
     max_guests: toOptionalNumber(form.max_guests),
-    area_sqm: toOptionalNumber(form.area_sqm),
     price_per_night: toOptionalNumber(form.price_per_night),
     price_per_month: toOptionalNumber(form.price_per_month),
-    amenity_ids: form.amenity_ids,
   }
 }
 
@@ -178,8 +266,82 @@ function Section({
   )
 }
 
+/**
+ * "Louer" / "Vendre" — the first question of a new listing. Two radio
+ * inputs hidden visually, the labels are the clickable cards, same
+ * keyboard-focus trick as the amenity chips below.
+ */
+function ListingTypeChooser({
+  value,
+  onChange,
+}: {
+  value: ListingType
+  onChange: (value: ListingType) => void
+}) {
+  const options: Array<{ value: ListingType; icon: ReactNode; title: string; hint: string }> = [
+    {
+      value: 'rent',
+      icon: <KeyRound className="size-5" aria-hidden />,
+      title: 'Louer',
+      hint: 'Courte ou longue durée, avec réservations.',
+    },
+    {
+      value: 'sale',
+      icon: <Tag className="size-5" aria-hidden />,
+      title: 'Vendre',
+      hint: 'Appartement, villa, terrain, local... Les acheteurs vous contactent.',
+    },
+  ]
+
+  return (
+    <div role="radiogroup" aria-label="Type d'annonce" className="grid gap-3 sm:grid-cols-2">
+      {options.map((option) => {
+        const checked = value === option.value
+        return (
+          <label
+            key={option.value}
+            className={
+              'flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition ' +
+              'has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-brand-500/30 ' +
+              (checked
+                ? 'border-brand-500 bg-brand-50'
+                : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50')
+            }
+          >
+            <input
+              type="radio"
+              name="listing_type"
+              value={option.value}
+              checked={checked}
+              onChange={() => onChange(option.value)}
+              className="sr-only"
+            />
+            <span
+              className={
+                'flex size-9 shrink-0 items-center justify-center rounded-lg ' +
+                (checked ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-500')
+              }
+            >
+              {option.icon}
+            </span>
+            <span>
+              <span className="block font-semibold text-gray-900">{option.title}</span>
+              <span className="block text-sm text-gray-500">{option.hint}</span>
+            </span>
+          </label>
+        )
+      })}
+    </div>
+  )
+}
+
 interface PropertyFormProps {
   initialProperty?: Property
+  /**
+   * New listing only: which kind to start on ("Louer" by default). Ignored
+   * when editing — an existing listing keeps the kind it was created with.
+   */
+  defaultListingType?: ListingType
   onSubmit: (payload: PropertyFormPayload) => void
   isSubmitting: boolean
   submitLabel: string
@@ -189,6 +351,7 @@ interface PropertyFormProps {
 
 export default function PropertyForm({
   initialProperty,
+  defaultListingType = 'rent',
   onSubmit,
   isSubmitting,
   submitLabel,
@@ -196,7 +359,7 @@ export default function PropertyForm({
   generalError,
 }: PropertyFormProps) {
   const [form, setForm] = useState<FormState>(
-    initialProperty ? formStateFromProperty(initialProperty) : EMPTY_FORM,
+    initialProperty ? formStateFromProperty(initialProperty) : emptyForm(defaultListingType),
   )
   const {
     data: amenities,
@@ -206,6 +369,10 @@ export default function PropertyForm({
   const { amenityName, categoryName } = useAmenityLabels()
   const amenityGroups = useMemo(() => groupByCategory(amenities ?? []), [amenities])
 
+  const isEditing = initialProperty !== undefined
+  const isSale = form.listing_type === 'sale'
+  const isLand = form.property_type === 'land'
+
   // Mirrors StorePropertyRequest: a nightly price (and max_guests) is
   // required as soon as the property is rented by the night, a monthly
   // price as soon as it is rented by the month. The backend enforces
@@ -213,8 +380,25 @@ export default function PropertyForm({
   const needsNightly = form.rental_type === 'short_term' || form.rental_type === 'both'
   const needsMonthly = form.rental_type === 'long_term' || form.rental_type === 'both'
 
+  // Land can only be sold: the backend refuses it on a rental, so it is
+  // not offered there.
+  const propertyTypeOptions = (Object.keys(PROPERTY_TYPE_LABELS) as PropertyType[])
+    .filter((type) => isSale || type !== 'land')
+    .map((type) => ({ value: type, label: PROPERTY_TYPE_LABELS[type] }))
+
   function update<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [field]: value }))
+  }
+
+  function chooseListingType(listingType: ListingType) {
+    setForm((current) => ({
+      ...current,
+      listing_type: listingType,
+      // Switching to "Louer" while "Terrain" is selected would leave a
+      // choice the rental form does not offer — clear it.
+      property_type:
+        listingType === 'rent' && current.property_type === 'land' ? '' : current.property_type,
+    }))
   }
 
   function toggleAmenity(amenityId: number) {
@@ -237,17 +421,40 @@ export default function PropertyForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Only when creating: the kind of listing is fixed afterwards (the
+          backend ignores listing_type on update), so an existing listing
+          shows it as plain text instead of a chooser. */}
+      {!isEditing && (
+        <Section
+          icon={<Building2 className="size-4.5" />}
+          title="Que souhaitez-vous faire ?"
+          description="Ce choix ne pourra plus être modifié après la création"
+        >
+          <ListingTypeChooser value={form.listing_type} onChange={chooseListingType} />
+        </Section>
+      )}
+
       <Section
         icon={<Building2 className="size-4.5" />}
         title="Informations"
-        description="Ce que le voyageur voit en premier"
+        description={
+          isSale ? "Ce que l'acheteur voit en premier" : 'Ce que le voyageur voit en premier'
+        }
       >
+        {isEditing && (
+          <p className="mb-4 text-sm text-gray-500">
+            Type d'annonce :{' '}
+            <span className="font-semibold text-gray-900">{isSale ? 'À vendre' : 'À louer'}</span>{' '}
+            (non modifiable)
+          </p>
+        )}
+
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <Input
               label="Titre"
               required
-              placeholder="Villa avec piscine privée"
+              placeholder={isSale ? 'Villa avec piscine à vendre' : 'Villa avec piscine privée'}
               value={form.title}
               onChange={(event) => update('title', event.target.value)}
               error={fieldError('title')}
@@ -260,7 +467,11 @@ export default function PropertyForm({
               required
               minLength={20}
               rows={5}
-              placeholder="Décrivez le logement, le quartier, ce qui le rend agréable..."
+              placeholder={
+                isSale
+                  ? 'Décrivez le bien, le quartier, ses atouts...'
+                  : 'Décrivez le logement, le quartier, ce qui le rend agréable...'
+              }
               value={form.description}
               onChange={(event) => update('description', event.target.value)}
               error={fieldError('description')}
@@ -273,22 +484,21 @@ export default function PropertyForm({
             value={form.property_type}
             onChange={(value) => update('property_type', value as PropertyType)}
             error={fieldError('property_type')}
-            options={[
-              { value: '', label: 'Choisir...' },
-              ...Object.entries(PROPERTY_TYPE_LABELS).map(([value, label]) => ({ value, label })),
-            ]}
+            options={[{ value: '', label: 'Choisir...' }, ...propertyTypeOptions]}
           />
 
-          <Select
-            label="Type de location"
-            value={form.rental_type}
-            onChange={(value) => update('rental_type', value as RentalType)}
-            error={fieldError('rental_type')}
-            options={[
-              { value: '', label: 'Choisir...' },
-              ...Object.entries(RENTAL_TYPE_LABELS).map(([value, label]) => ({ value, label })),
-            ]}
-          />
+          {!isSale && (
+            <Select
+              label="Type de location"
+              value={form.rental_type}
+              onChange={(value) => update('rental_type', value as RentalType)}
+              error={fieldError('rental_type')}
+              options={[
+                { value: '', label: 'Choisir...' },
+                ...Object.entries(RENTAL_TYPE_LABELS).map(([value, label]) => ({ value, label })),
+              ]}
+            />
+          )}
         </div>
       </Section>
 
@@ -356,143 +566,268 @@ export default function PropertyForm({
         </div>
       </Section>
 
-      <Section icon={<Users className="size-4.5" />} title="Capacité">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Input
-            label="Chambres"
-            type="number"
-            min={0}
-            required
-            value={form.bedrooms}
-            onChange={(event) => update('bedrooms', event.target.value)}
-            error={fieldError('bedrooms')}
-          />
+      {isSale ? (
+        <Section
+          icon={<Users className="size-4.5" />}
+          title="Caractéristiques"
+          description={isLand ? 'Un terrain n’a ni chambres ni salles de bain' : undefined}
+        >
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {!isLand && (
+              <>
+                <Input
+                  label="Chambres (optionnel)"
+                  type="number"
+                  min={0}
+                  value={form.bedrooms}
+                  onChange={(event) => update('bedrooms', event.target.value)}
+                  error={fieldError('bedrooms')}
+                />
 
-          <Input
-            label="Salles de bain"
-            type="number"
-            min={0}
-            required
-            value={form.bathrooms}
-            onChange={(event) => update('bathrooms', event.target.value)}
-            error={fieldError('bathrooms')}
-          />
+                <Input
+                  label="Salles de bain (optionnel)"
+                  type="number"
+                  min={0}
+                  value={form.bathrooms}
+                  onChange={(event) => update('bathrooms', event.target.value)}
+                  error={fieldError('bathrooms')}
+                />
+              </>
+            )}
 
-          <Input
-            label={needsNightly ? 'Voyageurs max *' : 'Voyageurs max (optionnel)'}
-            type="number"
-            min={1}
-            required={needsNightly}
-            value={form.max_guests}
-            onChange={(event) => update('max_guests', event.target.value)}
-            error={fieldError('max_guests')}
-          />
-
-          <Input
-            label="Surface m² (optionnel)"
-            type="number"
-            min={0}
-            step="any"
-            value={form.area_sqm}
-            onChange={(event) => update('area_sqm', event.target.value)}
-            error={fieldError('area_sqm')}
-          />
-        </div>
-      </Section>
-
-      <Section
-        icon={<Banknote className="size-4.5" />}
-        title="Tarifs"
-        description={
-          form.rental_type === ''
-            ? "Choisissez d'abord un type de location ci-dessus"
-            : 'Les champs marqués * sont obligatoires pour ce type de location'
-        }
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label={needsNightly ? 'Prix par nuit (MAD) *' : 'Prix par nuit (MAD)'}
-            type="number"
-            min={0}
-            step="any"
-            required={needsNightly}
-            value={form.price_per_night}
-            onChange={(event) => update('price_per_night', event.target.value)}
-            error={fieldError('price_per_night')}
-          />
-
-          <Input
-            label={needsMonthly ? 'Prix par mois (MAD) *' : 'Prix par mois (MAD)'}
-            type="number"
-            min={0}
-            step="any"
-            required={needsMonthly}
-            value={form.price_per_month}
-            onChange={(event) => update('price_per_month', event.target.value)}
-            error={fieldError('price_per_month')}
-          />
-        </div>
-      </Section>
-
-      <Section
-        icon={<Sparkles className="size-4.5" />}
-        title="Équipements"
-        description="Ce qui est inclus dans le logement"
-      >
-        {amenitiesFailed ? (
-          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            <AlertCircle className="size-4 shrink-0" aria-hidden />
-            <span>Impossible de charger les équipements.</span>
-            <Button type="button" variant="secondary" size="sm" onClick={() => refetchAmenities()}>
-              Réessayer
-            </Button>
+            <Input
+              label="Surface m² (optionnel)"
+              type="number"
+              min={0}
+              step="any"
+              value={form.area_sqm}
+              onChange={(event) => update('area_sqm', event.target.value)}
+              error={fieldError('area_sqm')}
+            />
           </div>
-        ) : !amenities ? (
-          <div className="flex flex-wrap gap-2">
-            {[0, 1, 2, 3, 4, 5].map((index) => (
-              <Skeleton key={index} className="h-9 w-28 rounded-full" />
-            ))}
+        </Section>
+      ) : (
+        <Section icon={<Users className="size-4.5" />} title="Capacité">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Input
+              label="Chambres"
+              type="number"
+              min={0}
+              required
+              value={form.bedrooms}
+              onChange={(event) => update('bedrooms', event.target.value)}
+              error={fieldError('bedrooms')}
+            />
+
+            <Input
+              label="Salles de bain"
+              type="number"
+              min={0}
+              required
+              value={form.bathrooms}
+              onChange={(event) => update('bathrooms', event.target.value)}
+              error={fieldError('bathrooms')}
+            />
+
+            <Input
+              label={needsNightly ? 'Voyageurs max *' : 'Voyageurs max (optionnel)'}
+              type="number"
+              min={1}
+              required={needsNightly}
+              value={form.max_guests}
+              onChange={(event) => update('max_guests', event.target.value)}
+              error={fieldError('max_guests')}
+            />
+
+            <Input
+              label="Surface m² (optionnel)"
+              type="number"
+              min={0}
+              step="any"
+              value={form.area_sqm}
+              onChange={(event) => update('area_sqm', event.target.value)}
+              error={fieldError('area_sqm')}
+            />
           </div>
-        ) : amenities.length === 0 ? (
-          <p className="text-sm text-gray-500">Aucun équipement n'est disponible pour le moment.</p>
-        ) : (
-          <div className="space-y-5">
-            {amenityGroups.map((group) => (
-              <fieldset key={group.category ?? 'other'}>
-                <legend className="mb-2 text-sm font-medium text-gray-500">
-                  {categoryName(group.category)}
-                </legend>
-                <div className="flex flex-wrap gap-2">
-                  {group.items.map((amenity) => {
-                    const checked = form.amenity_ids.includes(amenity.id)
-                    return (
-                      <label
-                        key={amenity.id}
-                        className={
-                          'flex cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm transition ' +
-                          'has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-brand-500/30 ' +
-                          (checked
-                            ? 'border-brand-500 bg-brand-50 font-medium text-brand-700'
-                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50')
-                        }
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => toggleAmenity(amenity.id)}
-                          className="sr-only"
-                        />
-                        {checked && <Check className="size-3.5 shrink-0" aria-hidden />}
-                        {amenityName(amenity.name)}
-                      </label>
-                    )
-                  })}
-                </div>
-              </fieldset>
-            ))}
+        </Section>
+      )}
+
+      {isSale ? (
+        <Section
+          icon={<Banknote className="size-4.5" />}
+          title="Prix et informations de vente"
+          description="Ce que vous déclarez ici est affiché tel quel aux acheteurs"
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input
+              label="Prix de vente (MAD) *"
+              type="number"
+              min={1}
+              step="any"
+              required
+              value={form.sale_price}
+              onChange={(event) => update('sale_price', event.target.value)}
+              error={fieldError('sale_price')}
+            />
+
+            <div className="flex items-end">
+              <label
+                className={
+                  'flex w-full cursor-pointer items-center gap-2 rounded-lg border px-3.5 py-2.5 text-sm transition ' +
+                  'has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-brand-500/30 ' +
+                  (form.price_negotiable
+                    ? 'border-brand-500 bg-brand-50 font-medium text-brand-700'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50')
+                }
+              >
+                <input
+                  type="checkbox"
+                  checked={form.price_negotiable}
+                  onChange={(event) => update('price_negotiable', event.target.checked)}
+                  className="sr-only"
+                />
+                {form.price_negotiable && <Check className="size-4 shrink-0" aria-hidden />}
+                Prix négociable
+              </label>
+            </div>
+
+            {!isLand && (
+              <Input
+                label="Année de construction (optionnel)"
+                type="number"
+                min={1800}
+                max={new Date().getFullYear() + 5}
+                step={1}
+                value={form.year_built}
+                onChange={(event) => update('year_built', event.target.value)}
+                error={fieldError('year_built')}
+              />
+            )}
+
+            {!isLand && (
+              <Select
+                label="État du bien (optionnel)"
+                value={form.property_condition}
+                onChange={(value) => update('property_condition', value as PropertyCondition | '')}
+                error={fieldError('property_condition')}
+                options={[
+                  { value: '', label: 'Non précisé' },
+                  ...Object.entries(CONDITION_LABELS).map(([value, label]) => ({ value, label })),
+                ]}
+              />
+            )}
+
+            <Select
+              label="Statut juridique (optionnel)"
+              value={form.legal_status}
+              onChange={(value) => update('legal_status', value as LegalStatus | '')}
+              error={fieldError('legal_status')}
+              options={[
+                { value: '', label: 'Non précisé' },
+                ...Object.entries(LEGAL_STATUS_LABELS).map(([value, label]) => ({ value, label })),
+              ]}
+            />
           </div>
-        )}
-      </Section>
+        </Section>
+      ) : (
+        <Section
+          icon={<Banknote className="size-4.5" />}
+          title="Tarifs"
+          description={
+            form.rental_type === ''
+              ? "Choisissez d'abord un type de location ci-dessus"
+              : 'Les champs marqués * sont obligatoires pour ce type de location'
+          }
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input
+              label={needsNightly ? 'Prix par nuit (MAD) *' : 'Prix par nuit (MAD)'}
+              type="number"
+              min={0}
+              step="any"
+              required={needsNightly}
+              value={form.price_per_night}
+              onChange={(event) => update('price_per_night', event.target.value)}
+              error={fieldError('price_per_night')}
+            />
+
+            <Input
+              label={needsMonthly ? 'Prix par mois (MAD) *' : 'Prix par mois (MAD)'}
+              type="number"
+              min={0}
+              step="any"
+              required={needsMonthly}
+              value={form.price_per_month}
+              onChange={(event) => update('price_per_month', event.target.value)}
+              error={fieldError('price_per_month')}
+            />
+          </div>
+        </Section>
+      )}
+
+      {/* A plot of land has no kitchen or Wi-Fi: the equipment list would
+          only confuse, so it is not offered for land. */}
+      {!(isSale && isLand) && (
+        <Section
+          icon={<Sparkles className="size-4.5" />}
+          title="Équipements"
+          description={isSale ? 'Ce qui est inclus avec le bien' : 'Ce qui est inclus dans le logement'}
+        >
+          {amenitiesFailed ? (
+            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              <AlertCircle className="size-4 shrink-0" aria-hidden />
+              <span>Impossible de charger les équipements.</span>
+              <Button type="button" variant="secondary" size="sm" onClick={() => refetchAmenities()}>
+                Réessayer
+              </Button>
+            </div>
+          ) : !amenities ? (
+            <div className="flex flex-wrap gap-2">
+              {[0, 1, 2, 3, 4, 5].map((index) => (
+                <Skeleton key={index} className="h-9 w-28 rounded-full" />
+              ))}
+            </div>
+          ) : amenities.length === 0 ? (
+            <p className="text-sm text-gray-500">Aucun équipement n'est disponible pour le moment.</p>
+          ) : (
+            <div className="space-y-5">
+              {amenityGroups.map((group) => (
+                <fieldset key={group.category ?? 'other'}>
+                  <legend className="mb-2 text-sm font-medium text-gray-500">
+                    {categoryName(group.category)}
+                  </legend>
+                  <div className="flex flex-wrap gap-2">
+                    {group.items.map((amenity) => {
+                      const checked = form.amenity_ids.includes(amenity.id)
+                      return (
+                        <label
+                          key={amenity.id}
+                          className={
+                            'flex cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm transition ' +
+                            'has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-brand-500/30 ' +
+                            (checked
+                              ? 'border-brand-500 bg-brand-50 font-medium text-brand-700'
+                              : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50')
+                          }
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleAmenity(amenity.id)}
+                            className="sr-only"
+                          />
+                          {checked && <Check className="size-3.5 shrink-0" aria-hidden />}
+                          {amenityName(amenity.name)}
+                        </label>
+                      )
+                    })}
+                  </div>
+                </fieldset>
+              ))}
+            </div>
+          )}
+        </Section>
+      )}
 
       {generalError && (
         <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">

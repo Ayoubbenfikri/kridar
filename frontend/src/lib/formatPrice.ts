@@ -45,14 +45,23 @@ function numberLocale(): string {
  * to change one word in each. DELETE IT in the phase that translates the
  * last of those three; tsc will point at every remaining reader.
  */
-export function primaryPrice(
-  property: Property,
-): {
+export interface PrimaryPrice {
   amount: string
-  unitKey: 'price.perNight' | 'price.perMonth'
-  /** @deprecated Legacy French label — use t(unitKey). */
-  unit: 'nuit' | 'mois'
-} | null {
+  /** Null for a property for sale: a sale price has no "per night/month". */
+  unitKey: 'price.perNight' | 'price.perMonth' | null
+  /** @deprecated Legacy French label — use t(unitKey). Null for a sale. */
+  unit: 'nuit' | 'mois' | null
+}
+
+export function primaryPrice(property: Property): PrimaryPrice | null {
+  // A property for sale shows its sale price, with no unit. Tested before
+  // the rental branches: its rental_type and nightly/monthly prices are null.
+  if (property.listing_type === 'sale') {
+    return property.sale_price
+      ? { amount: property.sale_price, unitKey: null, unit: null }
+      : null
+  }
+
   if (property.rental_type === 'long_term') {
     return property.price_per_month
       ? { amount: property.price_per_month, unitKey: 'price.perMonth', unit: 'mois' }
@@ -61,6 +70,15 @@ export function primaryPrice(
   return property.price_per_night
     ? { amount: property.price_per_night, unitKey: 'price.perNight', unit: 'nuit' }
     : null
+}
+
+/**
+ * "1 850 000 MAD" for a sale, "500 MAD / nuit" for a rental. For the pages
+ * that are still hardcoded French (owner and admin screens) — the
+ * translated pages build their own label from unitKey with t().
+ */
+export function formatPriceLabelFr(price: PrimaryPrice): string {
+  return price.unit ? `${formatMad(price.amount)} / ${price.unit}` : formatMad(price.amount)
 }
 
 /**

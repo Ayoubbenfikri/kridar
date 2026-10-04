@@ -4,7 +4,7 @@ import { RotateCcw } from 'lucide-react'
 import { Button, Select } from '@/components/ui'
 import { useAmenities } from '@/features/amenities/useAmenities'
 import { useAmenityLabels } from '@/features/amenities/useAmenityLabels'
-import type { PropertyType, RentalType } from '@/types/property'
+import type { ListingType, PropertyType, RentalType } from '@/types/property'
 
 /**
  * Every value here is a string because it comes from - and goes back
@@ -39,7 +39,27 @@ export const EMPTY_FILTERS: FilterValues = {
  * A module constant of translated strings would be evaluated once at
  * import time and stay in the language the app booted in.
  */
-const TYPE_VALUES: Array<PropertyType | ''> = ['', 'apartment', 'villa', 'studio', 'riad', 'office']
+const RENT_TYPE_VALUES: Array<PropertyType | ''> = [
+  '',
+  'apartment',
+  'villa',
+  'studio',
+  'riad',
+  'office',
+  'commercial',
+]
+
+// Land can only be sold, so it only exists in the sale list.
+const SALE_TYPE_VALUES: Array<PropertyType | ''> = [
+  '',
+  'apartment',
+  'villa',
+  'studio',
+  'riad',
+  'office',
+  'land',
+  'commercial',
+]
 
 const RENTAL_VALUES: Array<RentalType | ''> = ['', 'short_term', 'long_term']
 
@@ -63,10 +83,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 export default function PropertyFilters({
   value,
+  listingType,
   onApply,
   onReset,
 }: {
   value: FilterValues
+  /** Which list this panel filters: a sale has no rental duration or guest count. */
+  listingType: ListingType
   onApply: (next: FilterValues) => void
   onReset: () => void
 }) {
@@ -89,11 +112,18 @@ export default function PropertyFilters({
     }))
   }
 
-  // The price column the backend compares depends on rental_type
-  // (price_per_month for long_term, price_per_night otherwise), so the
-  // label has to follow the same rule or it would lie.
-  const priceUnit =
-    draft.rental_type === 'long_term' ? t('filters.perMonth') : t('filters.perNight')
+  const isSale = listingType === 'sale'
+  const typeValues = isSale ? SALE_TYPE_VALUES : RENT_TYPE_VALUES
+
+  // The price column the backend compares depends on what is searched:
+  // sale_price for a sale, price_per_month for a long_term rental,
+  // price_per_night otherwise — so the label has to follow the same rule
+  // or it would lie.
+  const priceUnit = isSale
+    ? t('common.currency')
+    : draft.rental_type === 'long_term'
+      ? t('filters.perMonth')
+      : t('filters.perNight')
 
   return (
     <form
@@ -108,21 +138,23 @@ export default function PropertyFilters({
           label={t('filters.propertyType')}
           value={draft.property_type}
           onChange={(value) => set('property_type', value)}
-          options={TYPE_VALUES.map((option) => ({
+          options={typeValues.map((option) => ({
             value: option,
             label: option === '' ? t('propertyType.all') : t(`propertyType.${option}`),
           }))}
         />
 
-        <Select
-          label={t('filters.rentalType')}
-          value={draft.rental_type}
-          onChange={(value) => set('rental_type', value)}
-          options={RENTAL_VALUES.map((option) => ({
-            value: option,
-            label: option === '' ? t('rentalType.both') : t(`rentalType.${option}`),
-          }))}
-        />
+        {!isSale && (
+          <Select
+            label={t('filters.rentalType')}
+            value={draft.rental_type}
+            onChange={(value) => set('rental_type', value)}
+            options={RENTAL_VALUES.map((option) => ({
+              value: option,
+              label: option === '' ? t('rentalType.both') : t(`rentalType.${option}`),
+            }))}
+          />
+        )}
 
         <Field label={t('filters.minPrice', { unit: priceUnit })}>
           <input
@@ -169,17 +201,19 @@ export default function PropertyFilters({
           }))}
         />
 
-        <Field label={t('filters.guests')}>
-          <input
-            type="number"
-            min={1}
-            inputMode="numeric"
-            placeholder={t('filters.any')}
-            value={draft.max_guests}
-            onChange={(event) => set('max_guests', event.target.value)}
-            className={NUMBER_CLASS}
-          />
-        </Field>
+        {!isSale && (
+          <Field label={t('filters.guests')}>
+            <input
+              type="number"
+              min={1}
+              inputMode="numeric"
+              placeholder={t('filters.any')}
+              value={draft.max_guests}
+              onChange={(event) => set('max_guests', event.target.value)}
+              className={NUMBER_CLASS}
+            />
+          </Field>
+        )}
       </div>
 
       {amenities && amenities.length > 0 && (

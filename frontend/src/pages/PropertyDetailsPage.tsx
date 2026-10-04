@@ -7,6 +7,7 @@ import {
   Bath,
   BedDouble,
   Building2,
+  CalendarDays,
   CalendarRange,
   Check,
   ImageOff,
@@ -14,8 +15,10 @@ import {
   MapPin,
   Phone,
   Ruler,
+  ScrollText,
   Star,
   Users,
+  Wrench,
 } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
 import { useAmenityLabels } from '@/features/amenities/useAmenityLabels'
@@ -28,8 +31,14 @@ import FavoriteButton from '@/components/properties/FavoriteButton'
 import ContactOwnerCard from '@/components/properties/ContactOwnerCard'
 import BookingPanel from '@/components/reservations/BookingPanel'
 import PropertyLocationMap from '@/components/map/PropertyLocationMap'
-import { Button, Card, EmptyState, Skeleton, UserAvatar, buttonClasses } from '@/components/ui'
-import type { Property, PropertyType, RentalType } from '@/types/property'
+import { Badge, Button, Card, EmptyState, Skeleton, UserAvatar, buttonClasses } from '@/components/ui'
+import type {
+  LegalStatus,
+  Property,
+  PropertyCondition,
+  PropertyType,
+  RentalType,
+} from '@/types/property'
 
 const TYPE_LABELS: Record<PropertyType, string> = {
   apartment: 'Appartement',
@@ -37,12 +46,28 @@ const TYPE_LABELS: Record<PropertyType, string> = {
   studio: 'Studio',
   riad: 'Riad',
   office: 'Bureau',
+  land: 'Terrain',
+  commercial: 'Local commercial',
 }
 
 const RENTAL_LABELS: Record<RentalType, string> = {
   short_term: 'Courte duree',
   long_term: 'Longue duree',
   both: 'Courte et longue duree',
+}
+
+// Sale listings only. What the seller declared, shown as-is.
+const CONDITION_LABELS: Record<PropertyCondition, string> = {
+  new: 'Neuf',
+  good: 'Bon état',
+  to_renovate: 'À rénover',
+}
+
+const LEGAL_STATUS_LABELS: Record<LegalStatus, string> = {
+  titled: 'Titre foncier',
+  registering: "En cours d'immatriculation",
+  melkia: 'Melkia',
+  other: 'Autre statut juridique',
 }
 
 function Fact({ icon, label }: { icon: React.ReactNode; label: string }) {
@@ -178,7 +203,7 @@ export default function PropertyDetailsPage() {
         <EmptyState
           icon={<Building2 className="size-6" />}
           title="Propriété introuvable"
-          description="Cette propriété n'existe pas, ou n'est plus disponible à la location."
+          description="Cette propriété n'existe pas, ou n'est plus disponible."
           action={
             <Link to="/properties" className={buttonClasses()}>
               Voir les autres propriétés
@@ -209,6 +234,10 @@ export default function PropertyDetailsPage() {
     )
   }
 
+  // A property for sale has no rental mode, no booking and no reviews
+  // (reviews come from completed stays) — it is shown with its sale price
+  // and the "contact the seller" card only.
+  const isSale = property.listing_type === 'sale'
   const price = primaryPrice(property)
   const images = property.images
   const cover = images[activeImage] ?? images[0] ?? null
@@ -234,11 +263,11 @@ export default function PropertyDetailsPage() {
       </Helmet>
 
       <Link
-        to="/properties"
+        to={isSale ? '/buy' : '/properties'}
         className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-brand-600"
       >
         <ArrowLeft className="size-4" aria-hidden />
-        Retour aux propriétés
+        {isSale ? 'Retour aux biens à vendre' : 'Retour aux propriétés'}
       </Link>
 
       {/* Header */}
@@ -313,18 +342,50 @@ export default function PropertyDetailsPage() {
           <Card className="p-5">
             <div className="grid gap-4 sm:grid-cols-2">
               <Fact icon={<Building2 className="size-4.5" />} label={TYPE_LABELS[property.property_type]} />
-              <Fact
-                icon={<CalendarRange className="size-4.5" />}
-                label={RENTAL_LABELS[property.rental_type]}
-              />
-              <Fact
-                icon={<BedDouble className="size-4.5" />}
-                label={`${property.bedrooms} chambre${property.bedrooms > 1 ? 's' : ''}`}
-              />
-              <Fact
-                icon={<Bath className="size-4.5" />}
-                label={`${property.bathrooms} salle${property.bathrooms > 1 ? 's' : ''} de bain`}
-              />
+
+              {/* rental_type is null on a sale. */}
+              {property.rental_type && (
+                <Fact
+                  icon={<CalendarRange className="size-4.5" />}
+                  label={RENTAL_LABELS[property.rental_type]}
+                />
+              )}
+
+              {/* A sale can have 0 rooms (land, commercial premises): a
+                  line saying "0 chambre" would only be noise there. A
+                  rental always shows them, as before. */}
+              {(!isSale || property.bedrooms > 0) && (
+                <Fact
+                  icon={<BedDouble className="size-4.5" />}
+                  label={`${property.bedrooms} chambre${property.bedrooms > 1 ? 's' : ''}`}
+                />
+              )}
+              {(!isSale || property.bathrooms > 0) && (
+                <Fact
+                  icon={<Bath className="size-4.5" />}
+                  label={`${property.bathrooms} salle${property.bathrooms > 1 ? 's' : ''} de bain`}
+                />
+              )}
+
+              {property.legal_status && (
+                <Fact
+                  icon={<ScrollText className="size-4.5" />}
+                  label={LEGAL_STATUS_LABELS[property.legal_status]}
+                />
+              )}
+              {property.property_condition && (
+                <Fact
+                  icon={<Wrench className="size-4.5" />}
+                  label={CONDITION_LABELS[property.property_condition]}
+                />
+              )}
+              {property.year_built !== null && (
+                <Fact
+                  icon={<CalendarDays className="size-4.5" />}
+                  label={`Construit en ${property.year_built}`}
+                />
+              )}
+
               {property.max_guests !== null && (
                 <Fact
                   icon={<Users className="size-4.5" />}
@@ -383,27 +444,34 @@ export default function PropertyDetailsPage() {
               />
               <div>
                 <p className="font-medium text-gray-900">{property.owner?.name ?? 'Compte supprimé'}</p>
-                <p className="text-sm text-gray-500">Propose ce logement</p>
+                <p className="text-sm text-gray-500">
+                  {isSale ? 'Vend ce bien' : 'Propose ce logement'}
+                </p>
               </div>
             </div>
             <OwnerPhone property={property} />
           </section>
 
-          <ReviewsSection propertyId={property.id.toString()} />
+          {!isSale && <ReviewsSection propertyId={property.id.toString()} />}
         </div>
 
         {/* ---------------- Right column ---------------- */}
         <div className="lg:col-span-1">
           <div className="lg:sticky lg:top-24">
             {price && (
-              <div className="mb-4 flex items-baseline gap-2">
+              <div className="mb-4 flex flex-wrap items-baseline gap-x-2 gap-y-1">
                 <span className="text-2xl font-bold tracking-tight text-gray-900">
                   {formatMad(price.amount)}
                 </span>
-                <span className="text-gray-500">/ {price.unit}</span>
+                {/* No unit on a sale price. */}
+                {price.unit && <span className="text-gray-500">/ {price.unit}</span>}
+                {isSale && property.price_negotiable && <Badge tone="green">Prix négociable</Badge>}
               </div>
             )}
-            <BookingPanel property={property} />
+
+            {/* A property for sale cannot be booked (the backend refuses
+                it too, with a 422). */}
+            {!isSale && <BookingPanel property={property} />}
 
             {/* Under the booking panel on purpose. For a short-term stay
                 booking is the main action and messaging is the fallback;

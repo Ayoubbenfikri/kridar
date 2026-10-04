@@ -58,7 +58,11 @@ export const router = createBrowserRouter([
       // to gate either of these behind.
       { path: 'forgot-password', element: <ForgotPasswordPage /> },
       { path: 'reset-password', element: <ResetPasswordPage /> },
-      { path: 'properties', element: <PropertiesPage /> },
+      // Rent and sale are the same page in two modes. The `key` makes React
+      // remount it when you switch (so the filter panel's draft never
+      // leaks from one mode to the other).
+      { path: 'properties', element: <PropertiesPage key="rent" listingType="rent" /> },
+      { path: 'buy', element: <PropertiesPage key="sale" listingType="sale" /> },
       { path: 'ui', element: <UiKitPage /> },
       { path: 'properties/:id', element: <PropertyDetailsPage /> },
       // Shared Accommodation / Roommates (Phase R5) — public browse +

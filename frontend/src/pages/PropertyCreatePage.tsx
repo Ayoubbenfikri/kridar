@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import PropertyForm from '@/components/properties/PropertyForm'
 import PropertyImageStager from '@/components/properties/PropertyImageStager'
@@ -21,6 +21,11 @@ import type { PropertyFormPayload } from '@/features/properties/propertiesApi'
  */
 export default function PropertyCreatePage() {
   const navigate = useNavigate()
+  // /owner/properties/new?listing_type=sale opens the form on "Vendre".
+  // Only a starting point: the chooser in the form still decides, and the
+  // backend validates listing_type itself.
+  const [searchParams] = useSearchParams()
+  const defaultListingType = searchParams.get('listing_type') === 'sale' ? 'sale' : 'rent'
   const createMutation = useCreateProperty()
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false)
@@ -62,6 +67,7 @@ export default function PropertyCreatePage() {
       </p>
 
       <PropertyForm
+        defaultListingType={defaultListingType}
         onSubmit={handleSubmit}
         isSubmitting={createMutation.isPending || isUploadingPhotos}
         submitLabel="Créer la propriété"

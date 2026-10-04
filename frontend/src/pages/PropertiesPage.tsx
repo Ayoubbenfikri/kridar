@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Helmet } from 'react-helmet-async'
 import {
+  Building2,
   ChevronLeft,
   ChevronRight,
+  KeyRound,
   LayoutGrid,
   Map as MapIcon,
   Search,
@@ -19,7 +21,8 @@ import PropertiesMapView from '@/components/map/PropertiesMapView'
 import { useProperties } from '@/features/properties/useProperties'
 import { useAmenities } from '@/features/amenities/useAmenities'
 import { Button, Card, EmptyState, Skeleton } from '@/components/ui'
-import type { PropertyType, RentalType } from '@/types/property'
+import { cn } from '@/lib/cn'
+import type { ListingType, PropertySort, PropertyType, RentalType } from '@/types/property'
 
 function PropertyCardSkeleton() {
   return (
@@ -36,35 +39,51 @@ function PropertyCardSkeleton() {
 }
 
 /**
- * /properties - the listing. The URL is the single source of truth for
- * every filter: the query reads it, the filter form writes to it, and
- * the browser Back button therefore walks back through searches for
- * free. Nothing about a search is kept in component state.
+ * /properties (rentals) and /buy (properties for sale) - the listing. The
+ * two routes render this same page; `listingType` says which one. It is a
+ * prop (not a URL param) so the mode is part of the path: NavLink can tell
+ * "Louer" and "Acheter" apart, and a link to /buy never needs a query.
+ *
+ * The URL is the single source of truth for every filter: the query reads
+ * it, the quick chips and the filter form write to it, and the browser
+ * Back button therefore walks back through searches for free. Nothing
+ * about a search is kept in component state.
  */
-export default function PropertiesPage() {
+export default function PropertiesPage({ listingType }: { listingType: ListingType }) {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [showFilters, setShowFilters] = useState(false)
   const [view, setView] = useState<'list' | 'map'>('list')
   const { data: amenities } = useAmenities()
 
+  const isSale = listingType === 'sale'
   const get = (key: string) => searchParams.get(key) ?? ''
   const page = Number(get('page') || '1')
 
+  const sortParam = get('sort')
+  const sort: PropertySort | undefined =
+    sortParam === 'price_asc' || sortParam === 'price_desc' ? sortParam : undefined
+
   // Only the keys the backend accepts (PropertySearchRequest) are ever
   // forwarded, and only when non-empty - an empty `city=` would be sent
-  // as a real filter and return nothing.
+  // as a real filter and return nothing. A sale has no rental duration or
+  // guest count, so those two are never sent in a sale search (a leftover
+  // in the URL is ignored; the backend would ignore it too).
   const query = {
     page: page > 1 ? page : undefined,
+    listing_type: (isSale ? 'sale' : undefined) as ListingType | undefined,
+    sort,
     q: get('q') || undefined,
     city: get('city') || undefined,
     property_type: (get('property_type') || undefined) as PropertyType | undefined,
-    rental_type: (get('rental_type') || undefined) as RentalType | undefined,
+    rental_type: (!isSale && get('rental_type') ? get('rental_type') : undefined) as
+      | RentalType
+      | undefined,
     min_price: get('min_price') ? Number(get('min_price')) : undefined,
     max_price: get('max_price') ? Number(get('max_price')) : undefined,
     bedrooms: get('bedrooms') ? Number(get('bedrooms')) : undefined,
     bathrooms: get('bathrooms') ? Number(get('bathrooms')) : undefined,
-    max_guests: get('max_guests') ? Number(get('max_guests')) : undefined,
+    max_guests: !isSale && get('max_guests') ? Number(get('max_guests')) : undefined,
     amenities: searchParams.getAll('amenities').map(Number),
   }
   if (query.amenities.length === 0) delete (query as { amenities?: number[] }).amenities
@@ -85,13 +104,41 @@ export default function PropertiesPage() {
 
   const filterValues: FilterValues = {
     property_type: get('property_type'),
-    rental_type: get('rental_type'),
+    rental_type: isSale ? '' : get('rental_type'),
     min_price: get('min_price'),
     max_price: get('max_price'),
     bedrooms: get('bedrooms'),
     bathrooms: get('bathrooms'),
-    max_guests: get('max_guests'),
+    max_guests: isSale ? '' : get('max_guests'),
     amenities: searchParams.getAll('amenities'),
+  }
+
+  /**
+   * The sort select writes here: merge these into the URL
+   * (undefined removes a param) and go back to page 1.
+   */
+  function updateParams(updates: Record<string, string | undefined>) {
+    const params = new URLSearchParams(searchParams)
+    for (const [key, value] of Object.entries(updates)) {
+      if (value === undefined) params.delete(key)
+      else params.set(key, value)
+    }
+    params.delete('page')
+    setSearchParams(params)
+  }
+
+  /**
+   * The Louer | Acheter switch. Carries over only what means the same in
+   * both modes (the text search and the city): a price range, a rental
+   * duration or a property type chosen for one mode would be misread in
+   * the other (nightly rent vs a sale price, "terrain" in a rental...).
+   */
+  function otherModeSearch(): string {
+    const params = new URLSearchParams()
+    if (get('q')) params.set('q', get('q'))
+    if (get('city')) params.set('city', get('city'))
+    const search = params.toString()
+    return search ? `?${search}` : ''
   }
 
   /** Rewrites the URL, always dropping empty values and resetting to page 1. */
@@ -99,6 +146,8 @@ export default function PropertiesPage() {
     const params = new URLSearchParams()
     if (get('q')) params.set('q', get('q'))
     if (get('city')) params.set('city', get('city'))
+    // The sort is a preference, not a filter: applying filters keeps it.
+    if (sort) params.set('sort', sort)
 
     for (const [key, raw] of Object.entries(next)) {
       if (Array.isArray(raw)) {
@@ -183,21 +232,109 @@ export default function PropertiesPage() {
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
       <Helmet>
-        <title>Propriétés à louer au Maroc — Krihouse</title>
+        <title>
+          {isSale
+            ? 'Biens à vendre au Maroc — Krihouse'
+            : 'Propriétés à louer au Maroc — Krihouse'}
+        </title>
         <meta
           name="description"
-          content="Parcourez les appartements, villas, studios et riads disponibles à la location au Maroc, avec filtres par ville, prix et type de bien."
+          content={
+            isSale
+              ? 'Parcourez les appartements, villas, terrains et locaux commerciaux à vendre au Maroc, avec filtres par ville, prix et type de bien.'
+              : 'Parcourez les appartements, villas, studios et riads disponibles à la location au Maroc, avec filtres par ville, prix et type de bien.'
+          }
         />
       </Helmet>
 
-      <h1 className="text-3xl font-bold tracking-tight text-gray-900">{t('properties.title')}</h1>
-      <p className="mt-1.5 text-gray-500">
-        {isError
-          ? t('properties.serverDown')
-          : data
-            ? t('properties.available', { n: data.meta.total })
-            : t('properties.loading')}
-      </p>
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            {isSale ? t('properties.saleTitle') : t('properties.title')}
+          </h1>
+          <p className="mt-1.5 text-gray-500">
+            {isError
+              ? t('properties.serverDown')
+              : data
+                ? t(isSale ? 'properties.saleAvailable' : 'properties.available', { n: data.meta.total })
+                : t(isSale ? 'properties.saleLoading' : 'properties.loading')}
+          </p>
+        </div>
+
+        {/* Sort: not a filter, so it lives next to the count rather than in
+            the filter panel. Written to the same ?sort= param the backend
+            validates (PropertySearchRequest). */}
+        <label className="flex items-center gap-2 text-sm text-gray-500">
+          {t('quick.sort')}
+          <select
+            value={sort ?? 'newest'}
+            onChange={(event) =>
+              updateParams({ sort: event.target.value === 'newest' ? undefined : event.target.value })
+            }
+            className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 transition hover:border-gray-300 focus:border-brand-500 focus:ring-[3px] focus:ring-brand-500/20 focus:outline-none"
+          >
+            <option value="newest">{t('quick.sortNewest')}</option>
+            <option value="price_asc">{t('quick.sortPriceAsc')}</option>
+            <option value="price_desc">{t('quick.sortPriceDesc')}</option>
+          </select>
+        </label>
+      </div>
+
+      {/* Louer | Acheter - same two big cards as the roommates page. The
+          active one is plain markup, the other a link to the other route
+          (see otherModeSearch for what it carries). */}
+      <nav
+        aria-label={t('properties.modeLabel')}
+        className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2"
+      >
+        {(
+          [
+            { type: 'rent', to: '/properties', label: t('nav.rent'), icon: KeyRound },
+            { type: 'sale', to: '/buy', label: t('nav.buy'), icon: Building2 },
+          ] as const
+        ).map(({ type: modeType, to, label, icon: Icon }) => {
+          const isActive = modeType === listingType
+          const content = (
+            <>
+              <span
+                className={cn(
+                  'flex size-10 shrink-0 items-center justify-center rounded-lg',
+                  isActive ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-500',
+                )}
+              >
+                <Icon className="size-5" aria-hidden />
+              </span>
+              <span
+                className={cn(
+                  'text-sm font-semibold',
+                  isActive ? 'text-brand-900' : 'text-gray-900',
+                )}
+              >
+                {label}
+              </span>
+            </>
+          )
+          const classes = cn(
+            'flex items-center gap-3 rounded-xl border p-4 text-start transition',
+            isActive
+              ? 'border-brand-500 bg-brand-50 ring-[3px] ring-brand-500/20'
+              : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50',
+          )
+          return isActive ? (
+            <span key={modeType} aria-current="page" className={classes}>
+              {content}
+            </span>
+          ) : (
+            <Link
+              key={modeType}
+              to={{ pathname: to, search: otherModeSearch() }}
+              className={classes}
+            >
+              {content}
+            </Link>
+          )
+        })}
+      </nav>
 
       {/* Toolbar: free-text search (q = partial match on title or city)
           and the filters toggle. */}
@@ -263,7 +400,13 @@ export default function PropertiesPage() {
       {showFilters && (
         <div className="mt-4">
           <PropertyFilters
+            // The panel edits a local draft. A chip clicked while it is
+            // open changes the URL underneath it: remounting on any URL
+            // change keeps the draft from going stale and then undoing the
+            // chip on "Apply".
+            key={searchParams.toString()}
             value={filterValues}
+            listingType={listingType}
             onApply={applyFilters}
             onReset={() => {
               const params = new URLSearchParams()
@@ -314,7 +457,7 @@ export default function PropertiesPage() {
         ) : properties.length === 0 ? (
           <EmptyState
             icon={<SearchX className="size-6" />}
-            title={t('properties.emptyTitle')}
+            title={t(isSale ? 'properties.saleEmptyTitle' : 'properties.emptyTitle')}
             description={t('properties.emptyDescription')}
             action={
               chips.length > 0 ? (

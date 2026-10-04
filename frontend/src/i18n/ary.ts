@@ -39,6 +39,8 @@ export const ary: TranslationSchema = {
   nav: {
     home: 'الرئيسية',
     properties: 'الديور',
+    rent: 'كرا',
+    buy: 'شراء',
     roommates: 'تقاسم السكن',
     myReservations: 'الحجوزات ديالي',
     ownerSpace: 'فضاء الملّاك',
@@ -119,6 +121,8 @@ export const ary: TranslationSchema = {
     studio: 'ستوديو',
     riad: 'رياض',
     office: 'مكتب',
+    land: 'أرض',
+    commercial: 'محل تجاري',
   },
 
   rentalType: {
@@ -140,6 +144,7 @@ export const ary: TranslationSchema = {
     bathrooms: '{{n}} حمامات',
     guests: '{{n}} ضياف',
     area: '{{n}} م²',
+    negotiable: 'قابل للتفاوض',
   },
 
   search: {
@@ -149,10 +154,22 @@ export const ary: TranslationSchema = {
     guests: 'شحال ديال الناس',
     guestsPlaceholder: '2',
     submit: 'قلّب',
+    modeLabel: 'نوع البحث',
+    modeShort: 'إقامة قصيرة',
+    modeLong: 'كراء مديد',
+    modeBuy: 'شراء',
+    budget: 'الميزانية',
+    budgetMonth: 'الميزانية فـ الشهر',
+    budgetAny: 'أي حاجة',
+    typesTitle: 'تصفح حسب النوع',
+    typesSubtitle: 'كليكة وحدة باش تشوف گاع الديور ديال هاد النوع',
+    saleTitle: 'ديور للبيع',
+    saleSubtitle: 'شقق، فيلات، أراضي ومحلات تجارية للشراء',
+    seeAllSales: 'شوف گاع للبيع',
   },
 
   home: {
-    badge: 'كراء قصير ومديد المدة فالمغرب',
+    badge: 'كراء وشراء فالمغرب',
     title: 'لقا الدار الجاية ديالك فالمغرب',
     subtitle:
       'شقق، فيلات ورياضات فمراكش، الدار البيضاء، الرباط وفين ما بغيتي. حجز مباشر مع المالك.',
@@ -201,6 +218,26 @@ export const ary: TranslationSchema = {
     viewList: 'اللائحة',
     viewMap: 'الخريطة',
     mapLoading: 'كنجيبو الخريطة...',
+    // ⚠️ Darija wording for the sale mode — Ayoub, please adjust the words.
+    modeLabel: 'نوع الإعلان',
+    saleTitle: 'ديور للبيع',
+    saleAvailable: 'الديور المتاحة للبيع: {{n}}',
+    saleLoading: 'كنجيبو الديور للبيع...',
+    saleEmptyTitle: 'ماكاين حتى دار مناسبة',
+  },
+
+  // ⚠️ Same: Darija wording to be checked by Ayoub.
+  quick: {
+    type: 'النوع',
+    duration: 'المدة',
+    priceNight: 'الثمن فـ الليلة',
+    priceMonth: 'الثمن فـ الشهر',
+    priceSale: 'الثمن',
+    bedrooms: 'البيوت',
+    sort: 'رتّب',
+    sortNewest: 'الأحدث',
+    sortPriceAsc: 'من الرخيص للغالي',
+    sortPriceDesc: 'من الغالي للرخيص',
   },
 
   filters: {

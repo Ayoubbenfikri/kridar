@@ -195,7 +195,20 @@ export default function Navbar({
             </NavLink>
 
             {PUBLIC_LINKS.map((link) => (
-              <NavLink key={link.to} to={link.to} end={link.end} className={sidebarLinkClass}>
+              <NavLink
+                key={link.to}
+                to={link.to}
+                end={link.end}
+                // /buy is the same page as /properties (the Louer | Acheter
+                // switch lives inside it), so the one "Propriétés" link
+                // stays highlighted on both.
+                className={({ isActive }) =>
+                  sidebarLinkClass({
+                    isActive:
+                      isActive || (link.to === '/properties' && location.pathname.startsWith('/buy')),
+                  })
+                }
+              >
                 <link.icon className="size-4.5 shrink-0 text-gray-400" aria-hidden />
                 {t(link.labelKey)}
               </NavLink>

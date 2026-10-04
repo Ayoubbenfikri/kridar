@@ -140,11 +140,17 @@ export default function ShareListingPicker({
             <>
               {publishedProperties.map((property) => {
                 const cover = property.images.find((image) => image.is_cover) ?? property.images[0]
-                const priceLabel = property.price_per_month
-                  ? `${formatMad(property.price_per_month)} / mois`
-                  : property.price_per_night
-                    ? `${formatMad(property.price_per_night)} / nuit`
-                    : ''
+                // A sale has sale_price and no rental price.
+                const priceLabel =
+                  property.listing_type === 'sale'
+                    ? property.sale_price
+                      ? formatMad(property.sale_price)
+                      : ''
+                    : property.price_per_month
+                      ? `${formatMad(property.price_per_month)} / mois`
+                      : property.price_per_night
+                        ? `${formatMad(property.price_per_night)} / nuit`
+                        : ''
 
                 return (
                   <button

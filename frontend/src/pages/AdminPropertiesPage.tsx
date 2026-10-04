@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from 'react-router-dom'
 import { Ban, Building2, Check, ImageOff, TriangleAlert } from 'lucide-react'
 import { useAdminProperties, useApproveProperty, useSuspendProperty } from '@/features/admin/useAdmin'
-import { formatMad, primaryPrice } from '@/lib/formatPrice'
+import { formatPriceLabelFr, primaryPrice } from '@/lib/formatPrice'
 import { getErrorMessage } from '@/lib/apiErrors'
 import { Badge, Button, Card, EmptyState, Pagination, Skeleton, useToast } from '@/components/ui'
 import type { BadgeTone } from '@/components/ui'
@@ -134,7 +134,8 @@ export default function AdminPropertiesPage() {
                           </Link>
                           <p className="truncate text-sm text-gray-500">
                             {property.city} · {property.owner?.name ?? 'Propriétaire supprimé'}
-                            {price && ` · ${formatMad(price.amount)} / ${price.unit}`}
+                            {property.listing_type === 'sale' && ' · À vendre'}
+                            {price && ` · ${formatPriceLabelFr(price)}`}
                           </p>
                         </div>
                       </div>

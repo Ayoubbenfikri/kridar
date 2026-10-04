@@ -40,6 +40,9 @@ export const fr = {
   nav: {
     home: 'Accueil',
     properties: 'Propriétés',
+    // The two modes of the property list: /properties and /buy.
+    rent: 'Louer',
+    buy: 'Acheter',
     // Same word as roommates.title (Phase R5) — one term for this
     // feature across the whole site, not a second name in the nav.
     roommates: 'Colocations',
@@ -135,6 +138,8 @@ export const fr = {
     studio: 'Studio',
     riad: 'Riad',
     office: 'Bureau',
+    land: 'Terrain',
+    commercial: 'Local commercial',
   },
 
   rentalType: {
@@ -158,6 +163,7 @@ export const fr = {
     bathrooms: '{{n}} sdb',
     guests: '{{n}} pers.',
     area: '{{n}} m²',
+    negotiable: 'Négociable',
   },
 
   search: {
@@ -167,10 +173,22 @@ export const fr = {
     guests: 'Voyageurs',
     guestsPlaceholder: '2',
     submit: 'Rechercher',
+    modeLabel: 'Type de recherche',
+    modeShort: 'Séjour court',
+    modeLong: 'Location longue',
+    modeBuy: 'Acheter',
+    budget: 'Budget',
+    budgetMonth: 'Budget / mois',
+    budgetAny: 'Peu importe',
+    typesTitle: 'Explorer par type',
+    typesSubtitle: 'Un clic pour voir tous les biens de ce type',
+    saleTitle: 'Biens à vendre',
+    saleSubtitle: 'Appartements, villas, terrains et locaux à acheter',
+    seeAllSales: 'Voir les ventes',
   },
 
   home: {
-    badge: 'Location courte et longue durée au Maroc',
+    badge: 'Location et achat au Maroc',
     title: 'Trouvez votre prochain logement au Maroc',
     subtitle:
       'Appartements, villas et riads à Marrakech, Casablanca, Rabat et partout ailleurs. Réservation directe avec le propriétaire.',
@@ -223,6 +241,26 @@ export const fr = {
     viewList: 'Liste',
     viewMap: 'Carte',
     mapLoading: 'Chargement de la carte...',
+    // The sale mode (/buy) of the same page.
+    modeLabel: "Type d'annonce",
+    saleTitle: 'Biens à vendre',
+    saleAvailable: 'Biens disponibles : {{n}}',
+    saleLoading: 'Chargement des biens...',
+    saleEmptyTitle: 'Aucun bien ne correspond',
+  },
+
+  // One-click filters above the property list (QuickFilters).
+  quick: {
+    type: 'Type',
+    duration: 'Durée',
+    priceNight: 'Prix / nuit',
+    priceMonth: 'Prix / mois',
+    priceSale: 'Prix',
+    bedrooms: 'Chambres',
+    sort: 'Trier',
+    sortNewest: 'Plus récents',
+    sortPriceAsc: 'Prix croissant',
+    sortPriceDesc: 'Prix décroissant',
   },
 
   filters: {

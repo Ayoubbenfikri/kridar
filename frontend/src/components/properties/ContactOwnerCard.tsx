@@ -205,6 +205,10 @@ export default function ContactOwnerCard({ property }: { property: Property }) {
   const validationErrors = getValidationErrors(startConversation.error)
   const isPaywallError = isPaymentRequiredError(startConversation.error)
 
+  // For a property for sale this card IS the way to reach the seller: Kridar
+  // does not handle the sale, it only puts buyer and seller in touch.
+  const isSale = property.listing_type === 'sale'
+
   return (
     <Card className="mt-4 p-5">
       <div className="flex items-center gap-3">
@@ -217,7 +221,7 @@ export default function ContactOwnerCard({ property }: { property: Property }) {
         <div>
           <h2 className="flex items-center gap-2 font-semibold text-gray-900">
             <MessageSquare className="size-4.5 text-brand-600" aria-hidden />
-            Contacter le propriétaire
+            {isSale ? 'Contacter le vendeur' : 'Contacter le propriétaire'}
           </h2>
           <p className="mt-0.5 text-sm text-gray-500">
             Posez vos questions directement à {property.owner.name}.
@@ -231,7 +235,11 @@ export default function ContactOwnerCard({ property }: { property: Property }) {
           label="Votre message"
           rows={4}
           maxLength={2000}
-          placeholder="Bonjour, ce logement est-il toujours disponible ?"
+          placeholder={
+            isSale
+              ? 'Bonjour, ce bien est-il toujours à vendre ? Le prix est-il négociable ?'
+              : 'Bonjour, ce logement est-il toujours disponible ?'
+          }
           value={body}
           onChange={(event) => setBody(event.target.value)}
           error={validationErrors?.body?.[0]}

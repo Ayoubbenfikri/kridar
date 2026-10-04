@@ -20,6 +20,8 @@ export const en: TranslationSchema = {
   nav: {
     home: 'Home',
     properties: 'Properties',
+    rent: 'Rent',
+    buy: 'Buy',
     roommates: 'Roommates',
     myReservations: 'bookings',
     ownerSpace: 'Owner space',
@@ -102,6 +104,8 @@ export const en: TranslationSchema = {
     studio: 'Studio',
     riad: 'Riad',
     office: 'Office',
+    land: 'Land',
+    commercial: 'Commercial space',
   },
 
   rentalType: {
@@ -123,6 +127,7 @@ export const en: TranslationSchema = {
     bathrooms: '{{n}} ba',
     guests: '{{n}} guests',
     area: '{{n}} m²',
+    negotiable: 'Negotiable',
   },
 
   search: {
@@ -132,10 +137,22 @@ export const en: TranslationSchema = {
     guests: 'Guests',
     guestsPlaceholder: '2',
     submit: 'Search',
+    modeLabel: 'Search type',
+    modeShort: 'Short stay',
+    modeLong: 'Long-term rent',
+    modeBuy: 'Buy',
+    budget: 'Budget',
+    budgetMonth: 'Budget / month',
+    budgetAny: 'Any',
+    typesTitle: 'Browse by type',
+    typesSubtitle: 'One click to see every property of that type',
+    saleTitle: 'Properties for sale',
+    saleSubtitle: 'Apartments, villas, land and commercial spaces to buy',
+    seeAllSales: 'See all for sale',
   },
 
   home: {
-    badge: 'Short and long term rentals in Morocco',
+    badge: 'Rent and buy in Morocco',
     title: 'Find your next home in Morocco',
     subtitle:
       'Apartments, villas and riads in Marrakech, Casablanca, Rabat and everywhere else. Book directly with the owner.',
@@ -187,6 +204,24 @@ export const en: TranslationSchema = {
     viewList: 'List',
     viewMap: 'Map',
     mapLoading: 'Loading map...',
+    modeLabel: 'Listing type',
+    saleTitle: 'Properties for sale',
+    saleAvailable: 'Properties available: {{n}}',
+    saleLoading: 'Loading properties...',
+    saleEmptyTitle: 'No property matches',
+  },
+
+  quick: {
+    type: 'Type',
+    duration: 'Duration',
+    priceNight: 'Price / night',
+    priceMonth: 'Price / month',
+    priceSale: 'Price',
+    bedrooms: 'Bedrooms',
+    sort: 'Sort',
+    sortNewest: 'Newest',
+    sortPriceAsc: 'Price: low to high',
+    sortPriceDesc: 'Price: high to low',
   },
 
   filters: {

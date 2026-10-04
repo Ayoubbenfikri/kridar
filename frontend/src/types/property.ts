@@ -4,8 +4,31 @@
  * back from Laravel as strings, not numbers — format them with
  * Number(...) when displaying.
  */
-export type PropertyType = 'apartment' | 'villa' | 'studio' | 'riad' | 'office'
+// 'land' (terrain) can only be SOLD — the backend refuses it on a rental.
+export type PropertyType =
+  | 'apartment'
+  | 'villa'
+  | 'studio'
+  | 'riad'
+  | 'office'
+  | 'land'
+  | 'commercial'
+
+/** 'rent' = a rental (the original kind of listing), 'sale' = a property for sale. */
+export type ListingType = 'rent' | 'sale'
 export type RentalType = 'short_term' | 'long_term' | 'both'
+
+/** Sale listings only. Mirrors backend App\Enums\PropertyCondition. */
+export type PropertyCondition = 'new' | 'good' | 'to_renovate'
+
+/**
+ * Sale listings only. Mirrors backend App\Enums\LegalStatus. Whatever the
+ * seller declares — Kridar does not verify the title.
+ */
+export type LegalStatus = 'titled' | 'registering' | 'melkia' | 'other'
+
+/** Backend PropertySearchRequest `sort`. Missing means 'newest'. */
+export type PropertySort = 'newest' | 'price_asc' | 'price_desc'
 export type PropertyStatusValue = 'draft' | 'pending_review' | 'published' | 'suspended' | 'archived'
 
 /**
@@ -49,7 +72,9 @@ export interface Property {
   slug: string
   description: string
   property_type: PropertyType
-  rental_type: RentalType
+  listing_type: ListingType
+  /** Null on a property for sale — it has no rental mode. */
+  rental_type: RentalType | null
 
   address: string
   city: string
@@ -63,8 +88,17 @@ export interface Property {
   max_guests: number | null
   area_sqm: string | null
 
+  /** Both null on a property for sale. */
   price_per_night: string | null
   price_per_month: string | null
+
+  /** Sale listings only (null on a rental) — what the seller declared. */
+  sale_price: string | null
+  price_negotiable: boolean
+  year_built: number | null
+  property_condition: PropertyCondition | null
+  legal_status: LegalStatus | null
+
   currency: string
 
   status: PropertyStatusValue

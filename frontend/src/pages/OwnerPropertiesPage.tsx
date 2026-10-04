@@ -8,7 +8,7 @@ import {
 } from '@/features/owner/useOwner'
 import { useSettings } from '@/features/settings/useSettings'
 import { usePaymentResult } from '@/hooks/usePaymentResult'
-import { formatMad, primaryPrice } from '@/lib/formatPrice'
+import { formatMad, formatPriceLabelFr, primaryPrice } from '@/lib/formatPrice'
 import { getErrorMessage } from '@/lib/apiErrors'
 import { Badge, Button, Card, EmptyState, Skeleton, buttonClasses, useToast } from '@/components/ui'
 import type { BadgeTone } from '@/components/ui'
@@ -41,6 +41,22 @@ const STATUS_TONES: Record<PropertyStatusValue, BadgeTone> = {
  */
 function owesPublicationFee(property: Property): boolean {
   return property.requires_publication_fee && property.publication_status !== 'paid'
+}
+
+/**
+ * The small grey line under a listing's title: "À vendre" for a sale, then
+ * the rooms that exist ("0 ch." on a plot of land is noise, so a sale only
+ * lists what is above zero). A rental always shows both, as before.
+ */
+function listingSummary(property: Property): string {
+  if (property.listing_type === 'sale') {
+    const parts = ['À vendre']
+    if (property.bedrooms > 0) parts.push(`${property.bedrooms} ch.`)
+    if (property.bathrooms > 0) parts.push(`${property.bathrooms} sdb`)
+    return parts.join(' · ')
+  }
+
+  return `${property.bedrooms} ch. · ${property.bathrooms} sdb`
 }
 
 /**
@@ -273,15 +289,13 @@ export default function OwnerPropertiesPage() {
                               >
                                 {property.title}
                               </Link>
-                              <p className="text-xs text-gray-500">
-                                {property.bedrooms} ch. · {property.bathrooms} sdb
-                              </p>
+                              <p className="text-xs text-gray-500">{listingSummary(property)}</p>
                             </div>
                           </div>
                         </td>
                         <td className="truncate px-4 py-3 text-sm text-gray-600">{property.city}</td>
                         <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-600">
-                          {price ? `${formatMad(price.amount)} / ${price.unit}` : '—'}
+                          {price ? formatPriceLabelFr(price) : '—'}
                         </td>
                         <td className="px-4 py-3">
                           <Badge tone={STATUS_TONES[property.status]}>
@@ -331,12 +345,11 @@ export default function OwnerPropertiesPage() {
                         >
                           {property.title}
                         </Link>
-                        <p className="text-sm text-gray-500">{property.city}</p>
-                        {price && (
-                          <p className="text-sm text-gray-600">
-                            {formatMad(price.amount)} / {price.unit}
-                          </p>
-                        )}
+                        <p className="text-sm text-gray-500">
+                          {property.city}
+                          {property.listing_type === 'sale' && ' · À vendre'}
+                        </p>
+                        {price && <p className="text-sm text-gray-600">{formatPriceLabelFr(price)}</p>}
                       </div>
                       <div className="shrink-0 text-right">
                         <Badge tone={STATUS_TONES[property.status]}>{STATUS_LABELS[property.status]}</Badge>

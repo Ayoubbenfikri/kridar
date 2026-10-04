@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Building2, Home, MessageSquare, User, Users } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
@@ -28,6 +28,7 @@ export default function MobileTabBar() {
   const { t } = useTranslation()
   const { user, isAuthenticated, isLoadingUser } = useAuth()
   const unreadMessages = useMessagesUnreadCount(isAuthenticated)
+  const { pathname } = useLocation()
 
   const initials = (user?.name ?? '')
     .split(' ')
@@ -50,7 +51,13 @@ export default function MobileTabBar() {
         {t('nav.home')}
       </NavLink>
 
-      <NavLink to="/properties" className={tabClass}>
+      {/* /buy (properties for sale) is the same list as /properties with
+          the other mode on — the switch is inside the page — so this tab
+          stays highlighted on both. */}
+      <NavLink
+        to="/properties"
+        className={({ isActive }) => tabClass({ isActive: isActive || pathname.startsWith('/buy') })}
+      >
         <Building2 className="size-5.5" aria-hidden />
         {t('nav.properties')}
       </NavLink>

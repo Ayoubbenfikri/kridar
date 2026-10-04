@@ -1,5 +1,15 @@
 import axiosClient from '@/api/axiosClient'
-import type { PaginatedResponse, Property, PropertyImage, PropertyType, RentalType } from '@/types/property'
+import type {
+  LegalStatus,
+  ListingType,
+  PaginatedResponse,
+  Property,
+  PropertyCondition,
+  PropertyImage,
+  PropertySort,
+  PropertyType,
+  RentalType,
+} from '@/types/property'
 
 /**
  * Mirrors backend PropertySearchRequest exactly - every key below is a
@@ -9,6 +19,10 @@ import type { PaginatedResponse, Property, PropertyImage, PropertyType, RentalTy
 export interface FetchPropertiesParams {
   page?: number
   per_page?: number
+  /** Missing means 'rent' — the backend never mixes sales into a rental search. */
+  listing_type?: ListingType
+  /** Missing means newest first. Price sorts follow the price filter's column. */
+  sort?: PropertySort
   q?: string
   city?: string
   property_type?: PropertyType
@@ -41,23 +55,41 @@ async function fetchProperty(id: number | string): Promise<Property> {
  * matters for each endpoint. Optional numeric fields are `undefined`
  * (not sent) rather than empty string, since the backend rules are
  * `numeric`/`integer`, not "accepts empty string".
+ *
+ * Two kinds of listing share this payload (property sales):
+ *  - a rental sends rental_type + bedrooms/bathrooms + the nightly/monthly
+ *    prices;
+ *  - a sale sends sale_price (+ the optional sale fields) and NO
+ *    rental_type or rental prices.
+ * The backend keeps only the fields that belong to the listing's kind, so
+ * anything extra is silently dropped there — PropertyForm's buildPayload()
+ * simply doesn't send what doesn't apply. `listing_type` is read on create
+ * only; it can never change afterwards (UpdatePropertyRequest ignores it).
  */
 export interface PropertyFormPayload {
+  listing_type: ListingType
   title: string
   description: string
   property_type: PropertyType
-  rental_type: RentalType
+  rental_type?: RentalType
   address: string
   city: string
   region?: string
   latitude?: number
   longitude?: number
-  bedrooms: number
-  bathrooms: number
+  /** Required for a rental. Optional for a sale (a plot of land has none). */
+  bedrooms?: number
+  bathrooms?: number
   max_guests?: number
   area_sqm?: number
   price_per_night?: number
   price_per_month?: number
+  sale_price?: number
+  price_negotiable?: boolean
+  /** null (not undefined) = "clear it": these three are nullable on update. */
+  year_built?: number | null
+  property_condition?: PropertyCondition | null
+  legal_status?: LegalStatus | null
   amenity_ids: number[]
 }
 
