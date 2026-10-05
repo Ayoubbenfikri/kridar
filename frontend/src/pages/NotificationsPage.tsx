@@ -1,14 +1,18 @@
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { BellOff, CheckCheck, TriangleAlert } from 'lucide-react'
 import { useMarkAllAsRead, useMarkAsRead, useNotifications } from '@/features/notifications/useNotifications'
 import { Button, Card, EmptyState, Pagination, Skeleton, useToast } from '@/components/ui'
 import { cn } from '@/lib/cn'
+import { formatDateTime } from '@/lib/formatDate'
+import { notificationText } from '@/lib/notificationMessage'
 
 /**
  * The current user's notifications, newest first, paginated. Reachable
  * only when logged in (router.tsx wraps it in ProtectedRoute).
  */
 export default function NotificationsPage() {
+  const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Number(searchParams.get('page') ?? '1')
 
@@ -27,7 +31,7 @@ export default function NotificationsPage() {
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Notifications</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">{t('notifications.title')}</h1>
         {hasUnread && (
           <Button
             variant="secondary"
@@ -36,11 +40,11 @@ export default function NotificationsPage() {
             isLoading={markAllAsRead.isPending}
             onClick={() =>
               markAllAsRead.mutate(undefined, {
-                onSuccess: () => showToast('success', 'Toutes les notifications sont marquees comme lues.'),
+                onSuccess: () => showToast('success', t('notifications.markAllReadToast')),
               })
             }
           >
-            Tout marquer comme lu
+            {t('notifications.markAllRead')}
           </Button>
         )}
       </div>
@@ -49,7 +53,7 @@ export default function NotificationsPage() {
         {isError ? (
           <Card className="flex items-start gap-3 border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
             <TriangleAlert className="mt-0.5 size-4.5 shrink-0" aria-hidden />
-            Impossible de charger vos notifications.
+            {t('notifications.loadError')}
           </Card>
         ) : !data ? (
           <div className="space-y-3">
@@ -60,8 +64,8 @@ export default function NotificationsPage() {
         ) : data.data.length === 0 ? (
           <EmptyState
             icon={<BellOff className="size-6" />}
-            title="Aucune notification"
-            description="Vous serez prévenu ici des confirmations, annulations et nouveaux avis."
+            title={t('notifications.emptyTitle')}
+            description={t('notifications.emptyDescription')}
           />
         ) : (
           <>
@@ -87,10 +91,10 @@ export default function NotificationsPage() {
                         )}
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="text-[15px] text-gray-800">{notification.data.message}</p>
+                        <p className="text-[15px] text-gray-800">{notificationText(notification.data, t)}</p>
                         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                           <time className="text-xs text-gray-400" dateTime={notification.created_at}>
-                            {new Date(notification.created_at).toLocaleString('fr-FR')}
+                            {formatDateTime(notification.created_at)}
                           </time>
                           {isUnread && (
                             <button
@@ -99,7 +103,7 @@ export default function NotificationsPage() {
                               disabled={markAsRead.isPending}
                               className="text-xs font-semibold text-brand-600 transition hover:text-brand-700 disabled:opacity-50"
                             >
-                              Marquer comme lu
+                              {t('notifications.markRead')}
                             </button>
                           )}
                         </div>

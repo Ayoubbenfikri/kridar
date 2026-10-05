@@ -1,4 +1,5 @@
 import { Link, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, HeartHandshake, ImageOff, Pencil, Plus, TriangleAlert } from 'lucide-react'
 import {
   useOwnRoommateListings,
@@ -9,25 +10,13 @@ import { formatMad } from '@/lib/formatPrice'
 import { getErrorMessage } from '@/lib/apiErrors'
 import { Badge, Button, Card, EmptyState, Skeleton, buttonClasses, useToast } from '@/components/ui'
 import type { BadgeTone } from '@/components/ui'
-import type { RoommateListing, RoommateListingStatusValue, RoommateListingType } from '@/types/roommateListing'
-
-const STATUS_LABELS: Record<RoommateListingStatusValue, string> = {
-  draft: 'Brouillon',
-  published: 'Publié',
-  suspended: 'Suspendu',
-  archived: 'Archivé',
-}
+import type { RoommateListing, RoommateListingStatusValue } from '@/types/roommateListing'
 
 const STATUS_TONES: Record<RoommateListingStatusValue, BadgeTone> = {
   draft: 'slate',
   published: 'green',
   suspended: 'red',
   archived: 'slate',
-}
-
-const TYPE_LABELS: Record<RoommateListingType, string> = {
-  offer: 'Offre',
-  request: 'Recherche',
 }
 
 /**
@@ -43,6 +32,7 @@ const TYPE_LABELS: Record<RoommateListingType, string> = {
  * is no unarchive action yet either, for the same "admin-only" reason.
  */
 export default function OwnerRoommateListingsPage() {
+  const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Number(searchParams.get('page') ?? '1')
 
@@ -65,16 +55,16 @@ export default function OwnerRoommateListingsPage() {
   function StatusAction({ listing }: { listing: RoommateListing }) {
     if (listing.status === 'archived') {
       return (
-        <span className="text-xs text-gray-400" title="Seul un administrateur peut lever une archive">
-          Archivé
+        <span className="text-xs text-gray-400" title={t('owner.roommates.archivedHint')}>
+          {t('owner.roommates.status.archived')}
         </span>
       )
     }
 
     if (listing.status === 'suspended') {
       return (
-        <span className="text-xs text-red-500" title="Suspendu par un administrateur — contactez le support">
-          Suspendu
+        <span className="text-xs text-red-500" title={t('owner.roommates.suspendedHint')}>
+          {t('owner.roommates.status.suspended')}
         </span>
       )
     }
@@ -87,11 +77,11 @@ export default function OwnerRoommateListingsPage() {
           disabled={isMutating(listing)}
           onClick={() =>
             unpublishMutation.mutate(listing.id, {
-              onSuccess: () => showToast('success', `"${listing.title}" n'est plus visible publiquement.`),
+              onSuccess: () => showToast('success', t('owner.roommates.unpublishedToast', { title: listing.title })),
             })
           }
         >
-          {isMutating(listing) ? '...' : 'Dépublier'}
+          {isMutating(listing) ? '...' : t('common.unpublish')}
         </Button>
       )
     }
@@ -102,11 +92,11 @@ export default function OwnerRoommateListingsPage() {
         disabled={isMutating(listing)}
         onClick={() =>
           publishMutation.mutate(listing.id, {
-            onSuccess: () => showToast('success', `"${listing.title}" est maintenant publié.`),
+            onSuccess: () => showToast('success', t('owner.roommates.publishedToast', { title: listing.title })),
           })
         }
       >
-        {isMutating(listing) ? '...' : 'Publier'}
+        {isMutating(listing) ? '...' : t('common.publish')}
       </Button>
     )
   }
@@ -132,16 +122,16 @@ export default function OwnerRoommateListingsPage() {
     <>
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Mes colocations</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">{t('owner.roommates.title')}</h1>
           {data && (
             <p className="mt-1 text-sm text-gray-500">
-              {data.meta.total} post{data.meta.total > 1 ? 's' : ''}
+              {t('owner.roommates.count', { n: data.meta.total })}
             </p>
           )}
         </div>
         <Link to="/owner/roommates/new" className={buttonClasses({ size: 'sm', className: 'lg:hidden' })}>
           <Plus className="size-4" aria-hidden />
-          Ajouter
+          {t('common.add')}
         </Link>
       </div>
 
@@ -167,12 +157,12 @@ export default function OwnerRoommateListingsPage() {
         ) : data.data.length === 0 ? (
           <EmptyState
             icon={<HeartHandshake className="size-6" />}
-            title="Aucun post pour le moment"
-            description="Publiez une annonce pour trouver un colocataire ou une place à partager."
+            title={t('owner.roommates.emptyTitle')}
+            description={t('owner.roommates.emptyDescription')}
             action={
               <Link to="/owner/roommates/new" className={buttonClasses()}>
                 <Plus className="size-4" aria-hidden />
-                Ajouter un post
+                {t('owner.roommates.addPost')}
               </Link>
             }
           />
@@ -191,10 +181,16 @@ export default function OwnerRoommateListingsPage() {
                 </colgroup>
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/60">
-                    {['Post', 'Type', 'Ville', 'Statut', ''].map((heading) => (
+                    {[
+                      t('owner.roommates.columnPost'),
+                      t('owner.roommates.columnType'),
+                      t('common.city'),
+                      t('common.status'),
+                      '',
+                    ].map((heading, index) => (
                       <th
-                        key={heading}
-                        className="px-4 py-3 text-left text-[11px] font-semibold tracking-wider text-gray-500 uppercase"
+                        key={index}
+                        className="px-4 py-3 text-start text-[11px] font-semibold tracking-wider text-gray-500 uppercase"
                       >
                         {heading}
                       </th>
@@ -220,23 +216,23 @@ export default function OwnerRoommateListingsPage() {
                             </Link>
                             {listing.price_per_person && (
                               <p className="text-xs text-gray-500">
-                                {formatMad(Number(listing.price_per_person))} / personne
+                                {formatMad(Number(listing.price_per_person))} {t('roommateCard.perPerson')}
                               </p>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{TYPE_LABELS[listing.type]}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{t(`owner.roommates.type.${listing.type}`)}</td>
                       <td className="truncate px-4 py-3 text-sm text-gray-600">{listing.city}</td>
                       <td className="px-4 py-3">
-                        <Badge tone={STATUS_TONES[listing.status]}>{STATUS_LABELS[listing.status]}</Badge>
+                        <Badge tone={STATUS_TONES[listing.status]}>{t(`owner.roommates.status.${listing.status}`)}</Badge>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1.5">
                           <Link
                             to={`/owner/roommates/${listing.id}/edit`}
-                            aria-label={`Modifier ${listing.title}`}
-                            title="Modifier"
+                            aria-label={t('owner.properties.editLabel', { title: listing.title })}
+                            title={t('common.edit')}
                             className={buttonClasses({
                               variant: 'secondary',
                               size: 'sm',
@@ -267,16 +263,16 @@ export default function OwnerRoommateListingsPage() {
                         {listing.title}
                       </Link>
                       <p className="text-sm text-gray-500">
-                        {TYPE_LABELS[listing.type]} · {listing.city}
+                        {t(`owner.roommates.type.${listing.type}`)} · {listing.city}
                       </p>
                       {listing.price_per_person && (
                         <p className="text-sm text-gray-600">
-                          {formatMad(Number(listing.price_per_person))} / personne
+                          {formatMad(Number(listing.price_per_person))} {t('roommateCard.perPerson')}
                         </p>
                       )}
                     </div>
-                    <div className="shrink-0 text-right">
-                      <Badge tone={STATUS_TONES[listing.status]}>{STATUS_LABELS[listing.status]}</Badge>
+                    <div className="shrink-0 text-end">
+                      <Badge tone={STATUS_TONES[listing.status]}>{t(`owner.roommates.status.${listing.status}`)}</Badge>
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
@@ -285,7 +281,7 @@ export default function OwnerRoommateListingsPage() {
                       className={buttonClasses({ variant: 'secondary', size: 'sm' })}
                     >
                       <Pencil className="size-4" aria-hidden />
-                      Modifier
+                      {t('common.edit')}
                     </Link>
                     <StatusAction listing={listing} />
                   </div>
@@ -298,14 +294,14 @@ export default function OwnerRoommateListingsPage() {
                 <Button
                   variant="secondary"
                   size="sm"
-                  icon={<ChevronLeft className="size-4" />}
+                  icon={<ChevronLeft className="size-4 rtl:rotate-180" />}
                   disabled={page <= 1}
                   onClick={() => goToPage(page - 1)}
                 >
-                  Précédent
+                  {t('properties.previous')}
                 </Button>
                 <span className="text-sm text-gray-500">
-                  Page {data.meta.current_page} / {data.meta.last_page}
+                  {t('properties.pageOf', { current: data.meta.current_page, last: data.meta.last_page })}
                 </span>
                 <Button
                   variant="secondary"
@@ -313,8 +309,8 @@ export default function OwnerRoommateListingsPage() {
                   disabled={page >= data.meta.last_page}
                   onClick={() => goToPage(page + 1)}
                 >
-                  Suivant
-                  <ChevronRight className="size-4" aria-hidden />
+                  {t('properties.next')}
+                  <ChevronRight className="size-4 rtl:rotate-180" aria-hidden />
                 </Button>
               </div>
             )}

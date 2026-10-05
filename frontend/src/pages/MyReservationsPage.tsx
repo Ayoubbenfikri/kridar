@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   AlertCircle,
   CalendarX,
@@ -18,6 +19,7 @@ import { usePaymentResult } from '@/hooks/usePaymentResult'
 import { usePaymentsEnabled } from '@/features/settings/useSettings'
 import { getErrorMessage } from '@/lib/apiErrors'
 import { formatMad } from '@/lib/formatPrice'
+import { formatDate } from '@/lib/formatDate'
 import ReservationStatusBadge from '@/components/reservations/ReservationStatusBadge'
 import { Button, Card, EmptyState, Pagination, Skeleton, Textarea, buttonClasses } from '@/components/ui'
 import type { Reservation } from '@/types/reservation'
@@ -40,6 +42,7 @@ import type { Reservation } from '@/types/reservation'
  * them would make a guest's own history look wrong.
  */
 export default function MyReservationsPage() {
+  const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Number(searchParams.get('page') ?? '1')
 
@@ -87,10 +90,10 @@ export default function MyReservationsPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
-      <h1 className="text-2xl font-bold tracking-tight text-gray-900">Mes réservations</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-gray-900">{t('reservations.title')}</h1>
       {data && (
         <p className="mt-1 text-sm text-gray-500">
-          {data.meta.total} réservation{data.meta.total > 1 ? 's' : ''}
+          {t('reservations.count', { n: data.meta.total })}
         </p>
       )}
 
@@ -98,7 +101,7 @@ export default function MyReservationsPage() {
         {isError ? (
           <Card className="flex items-start gap-3 border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
             <TriangleAlert className="mt-0.5 size-4.5 shrink-0" aria-hidden />
-            Impossible de charger vos réservations.
+            {t('reservations.loadError')}
           </Card>
         ) : !data ? (
           <div className="space-y-4">
@@ -109,11 +112,11 @@ export default function MyReservationsPage() {
         ) : data.data.length === 0 ? (
           <EmptyState
             icon={<CalendarX className="size-6" />}
-            title="Aucune réservation"
-            description="Vos demandes et séjours apparaîtront ici une fois une réservation envoyée."
+            title={t('reservations.emptyTitle')}
+            description={t('reservations.emptyDescription')}
             action={
               <Link to="/properties" className={buttonClasses()}>
-                Parcourir les propriétés
+                {t('reservations.browse')}
               </Link>
             }
           />
@@ -141,19 +144,19 @@ export default function MyReservationsPage() {
                   <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
                     <div className="rounded-lg border border-gray-200 px-3 py-2">
                       <p className="text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
-                        Arrivée
+                        {t('reservations.arrival')}
                       </p>
-                      <p className="text-sm font-medium text-gray-900">{reservation.start_date}</p>
+                      <p className="text-sm font-medium text-gray-900">{formatDate(reservation.start_date)}</p>
                     </div>
                     <div className="rounded-lg border border-gray-200 px-3 py-2">
                       <p className="text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
-                        Départ
+                        {t('reservations.departure')}
                       </p>
-                      <p className="text-sm font-medium text-gray-900">{reservation.end_date}</p>
+                      <p className="text-sm font-medium text-gray-900">{formatDate(reservation.end_date)}</p>
                     </div>
                     <div className="col-span-2 rounded-lg border border-gray-200 px-3 py-2 sm:col-span-1">
                       <p className="text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
-                        Total
+                        {t('reservations.total')}
                       </p>
                       <p className="text-sm font-semibold text-gray-900">
                         {formatMad(reservation.total_price)}
@@ -163,7 +166,7 @@ export default function MyReservationsPage() {
 
                   {reservation.cancellation_reason && (
                     <p className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-600">
-                      Motif d'annulation : {reservation.cancellation_reason}
+                      {t('reservations.cancellationReason', { reason: reservation.cancellation_reason })}
                     </p>
                   )}
 
@@ -175,14 +178,14 @@ export default function MyReservationsPage() {
                         isLoading={payReservation.isPending && payReservation.variables === reservation.id}
                         onClick={() => handlePay(reservation.id)}
                       >
-                        Payer {formatMad(reservation.total_price)}
+                        {t('reservations.pay', { amount: formatMad(reservation.total_price) })}
                       </Button>
                     )}
 
                     {reservation.is_paid && (
                       <span className="flex items-center gap-1.5 text-sm font-semibold text-green-700">
                         <CheckCircle2 className="size-4" aria-hidden />
-                        Payé
+                        {t('reservations.paid')}
                       </span>
                     )}
 
@@ -192,7 +195,7 @@ export default function MyReservationsPage() {
                         className={buttonClasses({ variant: 'secondary', size: 'sm' })}
                       >
                         <Star className="size-4" aria-hidden />
-                        Laisser un avis
+                        {t('reservations.leaveReview')}
                       </Link>
                     )}
 
@@ -202,7 +205,7 @@ export default function MyReservationsPage() {
                         variant="ghost"
                         onClick={() => startCancelling(reservation.id)}
                       >
-                        Annuler
+                        {t('reservations.cancel')}
                       </Button>
                     )}
                   </div>
@@ -210,7 +213,7 @@ export default function MyReservationsPage() {
                   {cancellingId === reservation.id && (
                     <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
                       <Textarea
-                        label="Motif de l'annulation (optionnel)"
+                        label={t('reservations.cancelReasonLabel')}
                         rows={2}
                         value={cancelReason}
                         onChange={(event) => setCancelReason(event.target.value)}
@@ -222,10 +225,10 @@ export default function MyReservationsPage() {
                           isLoading={cancelReservation.isPending}
                           onClick={() => confirmCancel(reservation.id)}
                         >
-                          Confirmer l'annulation
+                          {t('reservations.confirmCancel')}
                         </Button>
                         <Button size="sm" variant="secondary" onClick={() => setCancellingId(null)}>
-                          Retour
+                          {t('reservations.back')}
                         </Button>
                       </div>
                     </div>

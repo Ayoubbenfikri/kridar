@@ -37,6 +37,9 @@ class ReservationCancelledNotification extends Notification
             'reservation_id' => $this->reservation->id,
             'property_id' => $this->reservation->property_id,
             'property_title' => $this->reservation->property->title,
+            // Which side cancelled, so the frontend can write the sentence in the
+            // reader's language (the French `message` below is only a fallback).
+            'cancelled_by' => $this->cancelledByGuest ? 'guest' : 'owner',
             'message' => "La réservation pour \"{$this->reservation->property->title}\" a été annulée par {$who}.",
         ];
     }

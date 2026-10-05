@@ -1,4 +1,5 @@
 import { isAxiosError } from 'axios'
+import i18n from '@/i18n'
 
 export type ValidationErrors = Record<string, string[]>
 
@@ -22,7 +23,7 @@ export function getErrorMessage(error: unknown): string {
   if (isAxiosError(error) && typeof error.response?.data?.message === 'string') {
     return error.response.data.message
   }
-  return 'Une erreur est survenue. Reessaie.'
+  return i18n.t('errors.generic')
 }
 
 /**

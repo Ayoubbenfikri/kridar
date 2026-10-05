@@ -1,4 +1,5 @@
 import { Link, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { HeartOff, TriangleAlert } from 'lucide-react'
 import { useFavorites } from '@/features/favorites/useFavorites'
 import PropertyCard from '@/components/properties/PropertyCard'
@@ -23,6 +24,7 @@ function PropertyCardSkeleton() {
 }
 
 export default function FavoritesPage() {
+  const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Number(searchParams.get('page') ?? '1')
 
@@ -35,11 +37,10 @@ export default function FavoritesPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
-      <h1 className="text-2xl font-bold tracking-tight text-gray-900">Mes favoris</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-gray-900">{t('favorites.title')}</h1>
       {data && (
         <p className="mt-1 text-sm text-gray-500">
-          {data.meta.total} logement{data.meta.total > 1 ? 's' : ''} sauvegardé
-          {data.meta.total > 1 ? 's' : ''}
+          {t('favorites.count', { n: data.meta.total })}
         </p>
       )}
 
@@ -47,7 +48,7 @@ export default function FavoritesPage() {
         {isError ? (
           <Card className="flex items-start gap-3 border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
             <TriangleAlert className="mt-0.5 size-4.5 shrink-0" aria-hidden />
-            Impossible de charger vos favoris.
+            {t('favorites.loadError')}
           </Card>
         ) : !data ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -58,11 +59,11 @@ export default function FavoritesPage() {
         ) : data.data.length === 0 ? (
           <EmptyState
             icon={<HeartOff className="size-6" />}
-            title="Aucun favori pour le moment"
-            description="Touchez le cœur sur un logement pour le retrouver ici."
+            title={t('favorites.emptyTitle')}
+            description={t('favorites.emptyDescription')}
             action={
               <Link to="/properties" className={buttonClasses()}>
-                Parcourir les propriétés
+                {t('reservations.browse')}
               </Link>
             }
           />

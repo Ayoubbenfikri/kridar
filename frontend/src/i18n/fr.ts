@@ -129,6 +129,16 @@ export const fr = {
     /** Appended to every price. Krihouse only ever prices in dirhams. */
     currency: 'MAD',
     backToHome: "Retour à l'accueil",
+    edit: 'Modifier',
+    add: 'Ajouter',
+    city: 'Ville',
+    status: 'Statut',
+    publish: 'Publier',
+    unpublish: 'Dépublier',
+    seeAll: 'Voir tout',
+    cancel: 'Annuler',
+    save: 'Enregistrer',
+    saving: 'Enregistrement...',
   },
 
   propertyType: {
@@ -472,6 +482,230 @@ export const fr = {
     modalIntro:
       "Merci de lire et d'accepter nos Conditions d'Utilisation et notre Politique de Confidentialité pour continuer à utiliser Krihouse.",
     modalButton: "J'accepte",
+  },
+
+  errors: {
+    generic: 'Une erreur est survenue. Réessayez.',
+  },
+
+  // Owner area (/owner/*): the layout, the dashboard and the two lists.
+  owner: {
+    nav: {
+      label: 'Propriétaire',
+      dashboard: 'Tableau de bord',
+      properties: 'Mes propriétés',
+      roommates: 'Mes colocations',
+      reservations: 'Réservations',
+    },
+    dashboard: {
+      title: 'Espace propriétaire',
+      subtitle: "Vue d'ensemble de votre activité",
+      properties: 'Propriétés',
+      published: 'Publiées',
+      pendingRequests: 'Demandes en attente',
+      netRevenue: 'Revenu net',
+      afterCommission: 'Après {{amount}} de commission Krihouse',
+      noCommission: 'Aucune commission prélevée',
+      totalReservations: 'Réservations au total',
+      completedStays: 'Séjours terminés',
+      reviews: 'Avis : {{n}}',
+      pendingTitle: 'Demandes en attente',
+      noPending: 'Aucune demande en attente pour le moment.',
+      guestFallback: 'Client',
+      dateRange: '{{start}} au {{end}}',
+    },
+    properties: {
+      title: 'Mes propriétés',
+      count: 'Propriétés : {{n}}',
+      emptyTitle: 'Aucune propriété pour le moment',
+      emptyDescription: 'Publiez votre premier logement pour commencer à recevoir des réservations.',
+      addProperty: 'Ajouter une propriété',
+      columnProperty: 'Propriété',
+      columnPrice: 'Prix',
+      // Keyed by the backend status value (PropertyStatusValue).
+      status: {
+        draft: 'Brouillon',
+        pending_review: 'En révision',
+        published: 'Publiée',
+        suspended: 'Suspendue',
+        archived: 'Archivée',
+      },
+      forSale: 'À vendre',
+      unpaid: 'Publication non payée',
+      unpaidShort: 'Non payée',
+      suspendedShort: 'Suspendue',
+      suspendedByAdmin: 'Suspendue par un admin',
+      suspendedHint: 'Seul un administrateur peut lever une suspension',
+      pay: 'Payer {{amount}}',
+      payFees: 'Payer les frais',
+      editLabel: 'Modifier {{title}}',
+      unpublishedToast: '"{{title}}" n\'est plus visible publiquement.',
+      publishedToast: '"{{title}}" est maintenant publiée.',
+      freePublishedToast: 'Publication gratuite — "{{title}}" est en ligne.',
+    },
+    roommates: {
+      title: 'Mes colocations',
+      count: 'Posts : {{n}}',
+      emptyTitle: 'Aucun post pour le moment',
+      emptyDescription: 'Publiez une annonce pour trouver un colocataire ou une place à partager.',
+      addPost: 'Ajouter un post',
+      columnPost: 'Post',
+      columnType: 'Type',
+      // Keyed by the backend status / type value.
+      status: {
+        draft: 'Brouillon',
+        published: 'Publié',
+        suspended: 'Suspendu',
+        archived: 'Archivé',
+      },
+      type: {
+        offer: 'Offre',
+        request: 'Recherche',
+      },
+      archivedHint: 'Seul un administrateur peut lever une archive',
+      suspendedHint: 'Suspendu par un administrateur — contactez le support',
+      unpublishedToast: '"{{title}}" n\'est plus visible publiquement.',
+      publishedToast: '"{{title}}" est maintenant publié.',
+    },
+  },
+
+  // My reservations (/reservations): the guest's own bookings.
+  reservationStatus: {
+    pending: 'En attente',
+    confirmed: 'Confirmée',
+    rejected: 'Refusée',
+    cancelled: 'Annulée',
+    completed: 'Terminée',
+  },
+
+  reservations: {
+    title: 'Mes réservations',
+    count: 'Réservations : {{n}}',
+    loadError: 'Impossible de charger vos réservations.',
+    emptyTitle: 'Aucune réservation',
+    emptyDescription: 'Vos demandes et séjours apparaîtront ici une fois une réservation envoyée.',
+    browse: 'Parcourir les propriétés',
+    arrival: 'Arrivée',
+    departure: 'Départ',
+    total: 'Total',
+    cancellationReason: "Motif d'annulation : {{reason}}",
+    pay: 'Payer {{amount}}',
+    paid: 'Payé',
+    leaveReview: 'Laisser un avis',
+    cancel: 'Annuler',
+    cancelReasonLabel: "Motif de l'annulation (optionnel)",
+    confirmCancel: "Confirmer l'annulation",
+    back: 'Retour',
+  },
+
+  favorites: {
+    title: 'Mes favoris',
+    count: 'Logements sauvegardés : {{n}}',
+    loadError: 'Impossible de charger vos favoris.',
+    emptyTitle: 'Aucun favori pour le moment',
+    emptyDescription: 'Touchez le cœur sur un logement pour le retrouver ici.',
+  },
+
+  // Inbox (/messages) - the list column and the empty right-hand pane.
+  messages: {
+    title: 'Messages',
+    count: 'Conversations : {{n}}',
+    pickConversation: "Sélectionnez une conversation pour l'ouvrir.",
+    userFallback: 'Utilisateur',
+    listingDeleted: 'Annonce supprimée',
+    aboutYourListing: 'À propos de votre annonce',
+    yourRequest: 'Votre demande',
+    emptyTitle: 'Aucune conversation',
+    emptyDescription: "Contactez un propriétaire depuis la page d'une annonce pour démarrer une conversation.",
+    browse: 'Parcourir les propriétés',
+  },
+
+  // The notifications page. The BACKEND stores a French `message` in every
+  // notification (see App\Notifications\*), so the page builds its own
+  // sentence from the notification's type + data in the current language
+  // (lib/notificationMessage.ts) and only falls back to that stored text
+  // for a notification it does not know.
+  notifications: {
+    title: 'Notifications',
+    markAllRead: 'Tout marquer comme lu',
+    markAllReadToast: 'Toutes les notifications sont marquées comme lues.',
+    markRead: 'Marquer comme lu',
+    loadError: 'Impossible de charger vos notifications.',
+    emptyTitle: 'Aucune notification',
+    emptyDescription: 'Vous serez prévenu ici des confirmations, annulations et nouveaux avis.',
+    message: {
+      new_message: '{{sender}} vous a envoyé un message à propos de "{{title}}".',
+      reservation_requested: 'Nouvelle demande de réservation pour "{{title}}".',
+      reservation_confirmed: 'Votre réservation pour "{{title}}" a été confirmée.',
+      reservation_rejected: 'Votre demande de réservation pour "{{title}}" a été refusée.',
+      reservation_cancelled_by_guest: 'La réservation pour "{{title}}" a été annulée par le voyageur.',
+      reservation_cancelled_by_owner: 'La réservation pour "{{title}}" a été annulée par le propriétaire.',
+      review_submitted: 'Vous avez reçu un nouvel avis ({{rating}}/5) pour "{{title}}".',
+      review_replied: 'Le propriétaire a répondu à votre avis sur "{{title}}".',
+    },
+  },
+
+  account: {
+    greeting: 'Bonjour {{name}}',
+    settings: 'Paramètres',
+    reservations: 'Réservations',
+    favorites: 'Favoris',
+    unreadNotifications: 'Notifications non lues',
+    upcoming: 'Prochaines réservations',
+    noUpcoming: 'Aucune réservation en attente ou confirmée pour le moment.',
+    dateRange: '{{start}} au {{end}}',
+  },
+
+  accountSettings: {
+    back: 'Mon compte',
+    title: 'Paramètres',
+    subtitle: 'Vos informations et votre mot de passe',
+    avatar: {
+      title: 'Photo de profil',
+      description: 'Visible par les autres dans vos messages et sur vos annonces.',
+      change: 'Changer la photo',
+      add: 'Ajouter une photo',
+      remove: 'Retirer',
+      hint: 'JPEG, PNG ou WebP. 2 Mo maximum.',
+      unsupportedFormat: 'Format non supporté. Utilisez une image JPEG, PNG ou WebP.',
+      tooLarge: 'Image trop volumineuse (2 Mo maximum).',
+      updated: 'Photo mise à jour.',
+      removed: 'Photo supprimée.',
+    },
+    profile: {
+      title: 'Profil',
+      description: "L'adresse email ne peut pas être modifiée ici.",
+      name: 'Nom complet',
+      phone: 'Téléphone (optionnel)',
+      phoneHint: 'Videz le champ pour supprimer votre numéro.',
+      showPhone: 'Afficher mon numéro sur mes annonces longue durée',
+      showPhoneOn:
+        "Visible uniquement par les visiteurs connectés dont l'email est vérifié. Jamais sur les annonces courte durée.",
+      showPhoneOff: 'Ajoutez un numéro pour activer cette option.',
+      email: 'Email',
+      updated: 'Profil mis à jour.',
+    },
+    password: {
+      title: 'Mot de passe',
+      description: "Le mot de passe actuel est demandé pour confirmer que c'est bien vous.",
+      current: 'Mot de passe actuel',
+      new: 'Nouveau mot de passe',
+      newHint: '8 caractères minimum',
+      confirm: 'Confirmer le nouveau mot de passe',
+      mismatch: 'Les deux mots de passe ne correspondent pas.',
+      submit: 'Changer le mot de passe',
+      updated: 'Mot de passe mis à jour.',
+    },
+    danger: {
+      title: 'Supprimer mon compte',
+      description:
+        'Cette action est irréversible. Vos annonces publiées seront automatiquement archivées. Impossible si vous avez une réservation à venir, comme voyageur ou comme propriétaire.',
+      confirmLabel: 'Tapez {{word}} pour confirmer',
+      // The word the user must type. Compared case-insensitively.
+      word: 'SUPPRIMER',
+      deleting: 'Suppression...',
+      confirm: 'Oui, supprimer définitivement mon compte',
+    },
   },
 }
 

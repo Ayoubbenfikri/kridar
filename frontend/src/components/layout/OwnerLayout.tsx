@@ -1,16 +1,17 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Building2, CalendarCheck, HeartHandshake, LayoutDashboard, Plus } from 'lucide-react'
 import { buttonClasses } from '@/components/ui'
 import { cn } from '@/lib/cn'
 
 const LINKS = [
-  { to: '/owner', label: 'Tableau de bord', icon: LayoutDashboard, end: true },
-  { to: '/owner/properties', label: 'Mes propriétés', icon: Building2, end: false },
+  { to: '/owner', labelKey: 'owner.nav.dashboard', icon: LayoutDashboard, end: true },
+  { to: '/owner/properties', labelKey: 'owner.nav.properties', icon: Building2, end: false },
   // Phase R6 part 2 — same layout shell, own section: unlike Mes
   // propriétés, reaching this tab has nothing to do with owning a
   // property (see the routing note in router.tsx).
-  { to: '/owner/roommates', label: 'Mes colocations', icon: HeartHandshake, end: false },
-  { to: '/owner/reservations', label: 'Réservations', icon: CalendarCheck, end: false },
+  { to: '/owner/roommates', labelKey: 'owner.nav.roommates', icon: HeartHandshake, end: false },
+  { to: '/owner/reservations', labelKey: 'owner.nav.reservations', icon: CalendarCheck, end: false },
 ]
 
 /**
@@ -23,6 +24,7 @@ const LINKS = [
  * routes - without it, /owner would look active on /owner/properties.
  */
 export default function OwnerLayout() {
+  const { t } = useTranslation()
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
       'flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium whitespace-nowrap transition',
@@ -34,14 +36,14 @@ export default function OwnerLayout() {
       <div className="lg:grid lg:grid-cols-[232px_1fr] lg:gap-8">
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <p className="mb-3 hidden px-3 text-xs font-semibold tracking-wider text-gray-400 uppercase lg:block">
-            Propriétaire
+            {t('owner.nav.label')}
           </p>
 
           <nav className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-2 lg:mx-0 lg:flex-col lg:px-0 lg:pb-0">
             {LINKS.map((link) => (
               <NavLink key={link.to} to={link.to} end={link.end} className={linkClass}>
                 <link.icon className="size-4.5 shrink-0" aria-hidden />
-                {link.label}
+                {t(link.labelKey)}
               </NavLink>
             ))}
           </nav>
@@ -51,7 +53,7 @@ export default function OwnerLayout() {
             className={buttonClasses({ size: 'sm', className: 'mt-3 hidden w-full lg:inline-flex' })}
           >
             <Plus className="size-4" aria-hidden />
-            Ajouter
+            {t('common.add')}
           </NavLink>
         </aside>
 

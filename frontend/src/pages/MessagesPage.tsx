@@ -1,4 +1,5 @@
 import { Outlet, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { MessageSquare } from 'lucide-react'
 import ConversationListPanel from '@/components/messaging/ConversationListPanel'
 import { cn } from '@/lib/cn'
@@ -11,10 +12,11 @@ import { cn } from '@/lib/cn'
  * <Outlet /> exactly like ConversationPage is for 'messages/:id'.
  */
 export function MessagesEmptyState() {
+  const { t } = useTranslation()
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2 p-8 text-center text-gray-400">
       <MessageSquare className="size-10" aria-hidden />
-      <p className="text-sm">Sélectionnez une conversation pour l'ouvrir.</p>
+      <p className="text-sm">{t('messages.pickConversation')}</p>
     </div>
   )
 }
@@ -43,7 +45,7 @@ export default function MessagesPage() {
       <div className="flex h-[calc(100dvh-8rem)] overflow-hidden border border-gray-200 bg-white shadow-sm sm:rounded-2xl lg:h-[calc(100dvh-6rem)]">
         <aside
           className={cn(
-            'w-full shrink-0 flex-col border-gray-200 sm:border-r md:flex md:w-80 lg:w-96',
+            'w-full shrink-0 flex-col border-gray-200 sm:border-e md:flex md:w-80 lg:w-96',
             hasActiveThread ? 'hidden md:flex' : 'flex',
           )}
         >

@@ -73,12 +73,23 @@ export function primaryPrice(property: Property): PrimaryPrice | null {
 }
 
 /**
- * "1 850 000 MAD" for a sale, "500 MAD / nuit" for a rental. For the pages
- * that are still hardcoded French (owner and admin screens) — the
- * translated pages build their own label from unitKey with t().
+ * French-only label, kept for the admin screens (which stay in French).
+ * Everything else uses formatPriceLabel() below.
  */
 export function formatPriceLabelFr(price: PrimaryPrice): string {
   return price.unit ? `${formatMad(price.amount)} / ${price.unit}` : formatMad(price.amount)
+}
+
+/**
+ * "1 850 000 MAD" for a sale, "500 MAD / nuit" for a rental, in the
+ * current language: the unit comes from t(unitKey), so the separator is
+ * the right one for each language. Use this one on every public and owner
+ * page; formatPriceLabelFr above survives only for the admin screens.
+ */
+export function formatPriceLabel(price: PrimaryPrice): string {
+  return price.unitKey
+    ? `${formatMad(price.amount)} ${i18n.t(price.unitKey)}`
+    : formatMad(price.amount)
 }
 
 /**

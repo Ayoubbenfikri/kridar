@@ -1,8 +1,10 @@
 import { Link, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Home, MessageSquare, TriangleAlert, Users } from 'lucide-react'
 import { useConversations } from '@/features/messaging/useMessaging'
 import { getErrorMessage } from '@/lib/apiErrors'
+import { formatDate, formatDateTime } from '@/lib/formatDate'
 import { Badge, Card, EmptyState, Pagination, Skeleton, UserAvatar, buttonClasses } from '@/components/ui'
 import { cn } from '@/lib/cn'
 import type { Conversation } from '@/types/conversation'
@@ -20,15 +22,15 @@ function formatActivity(value: string | null): string {
   const sameDay = date.toDateString() === now.toDateString()
 
   if (sameDay) {
-    return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    return formatDateTime(date, { hour: '2-digit', minute: '2-digit' })
   }
 
   const daysAgo = (now.getTime() - date.getTime()) / 86_400_000
   if (daysAgo < 7) {
-    return date.toLocaleDateString('fr-FR', { weekday: 'long' })
+    return formatDate(date, { weekday: 'long' })
   }
 
-  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
+  return formatDate(date, { day: '2-digit', month: 'short' })
 }
 
 function Avatar({ conversation }: { conversation: Conversation }) {
@@ -48,7 +50,7 @@ function Avatar({ conversation }: { conversation: Conversation }) {
       {/* Property vs roommate post — a tiny badge so it reads at a
           glance while scanning the inbox, instead of only showing up in
           the text line below. */}
-      <div className="absolute -right-1 -bottom-1 flex size-5 items-center justify-center rounded-full border-2 border-white bg-gray-100">
+      <div className="absolute -end-1 -bottom-1 flex size-5 items-center justify-center rounded-full border-2 border-white bg-gray-100">
         {conversation.listing_type === 'roommate_listing' ? (
           <Users className="size-2.5 text-gray-500" aria-hidden />
         ) : (
@@ -70,6 +72,7 @@ function ConversationRow({
       its own highlight, on top of the existing unread tint. */
   isActive: boolean
 }) {
+  const { t } = useTranslation()
   const hasUnread = conversation.unread_count > 0
 
   // Phase R2 (roommate listings) — a thread is about a property OR a
@@ -109,21 +112,21 @@ function ConversationRow({
                 hasUnread ? 'truncate font-semibold text-gray-900' : 'truncate font-medium text-gray-900'
               }
             >
-              {conversation.counterpart?.name ?? 'Utilisateur'}
+              {conversation.counterpart?.name ?? t('messages.userFallback')}
             </p>
             <span className="shrink-0 text-xs text-gray-400">
               {formatActivity(conversation.last_message_at)}
             </span>
           </div>
 
-          <p className="mt-0.5 truncate text-sm text-gray-500">{listingTitle ?? 'Annonce supprimée'}</p>
+          <p className="mt-0.5 truncate text-sm text-gray-500">{listingTitle ?? t('messages.listingDeleted')}</p>
 
           <div className="mt-1.5 flex items-center justify-between gap-3">
             {/* Which hat the viewer is wearing in this thread. Without
                 it, an inbox mixing "listings I asked about" and "people
                 asking about my listings" is confusing. */}
             <p className="truncate text-xs text-gray-400">
-              {conversation.viewer_is_owner ? 'À propos de votre annonce' : 'Votre demande'}
+              {conversation.viewer_is_owner ? t('messages.aboutYourListing') : t('messages.yourRequest')}
             </p>
             {hasUnread && (
               <motion.div
@@ -153,6 +156,7 @@ function ConversationRow({
  * gone" with "list stays, thread opens next to it".
  */
 export default function ConversationListPanel({ activeConversationId }: { activeConversationId?: number }) {
+  const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Number(searchParams.get('page') ?? '1')
 
@@ -165,10 +169,10 @@ export default function ConversationListPanel({ activeConversationId }: { active
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="shrink-0 border-b border-gray-200 p-4">
-        <h1 className="text-lg font-bold tracking-tight text-gray-900">Messages</h1>
+        <h1 className="text-lg font-bold tracking-tight text-gray-900">{t('messages.title')}</h1>
         {data && (
           <p className="mt-0.5 text-xs text-gray-500">
-            {data.meta.total} conversation{data.meta.total > 1 ? 's' : ''}
+            {t('messages.count', { n: data.meta.total })}
           </p>
         )}
       </div>
@@ -188,11 +192,11 @@ export default function ConversationListPanel({ activeConversationId }: { active
         ) : data.data.length === 0 ? (
           <EmptyState
             icon={<MessageSquare className="size-6" />}
-            title="Aucune conversation"
-            description="Contactez un propriétaire depuis la page d'une annonce pour démarrer une conversation."
+            title={t('messages.emptyTitle')}
+            description={t('messages.emptyDescription')}
             action={
               <Link to="/properties" className={buttonClasses()}>
-                Parcourir les propriétés
+                {t('messages.browse')}
               </Link>
             }
           />

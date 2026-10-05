@@ -1,10 +1,14 @@
 /**
  * Mirrors backend App\Http\Resources\NotificationResource. `data` is
  * whatever the specific App\Notifications\* class's toArray() put
- * there - every one of them includes `type` and a ready-to-display
- * French `message`, plus a few related ids depending on the type.
+ * there - every one of them includes `type` and a French `message`
+ * (kept as a fallback), plus a few related ids depending on the type.
+ * The page does NOT show `message`: it builds the sentence itself from
+ * `type` + the fields below, in the current language
+ * (lib/notificationMessage.ts).
  */
 export type NotificationType =
+  | 'new_message'
   | 'reservation_requested'
   | 'reservation_confirmed'
   | 'reservation_rejected'
@@ -20,6 +24,10 @@ export interface NotificationData {
   property_title?: string
   review_id?: number
   rating?: number
+  /** new_message: who wrote. */
+  sender_name?: string
+  /** reservation_cancelled: which side cancelled (absent on older rows). */
+  cancelled_by?: 'guest' | 'owner'
 }
 
 // Named AppNotification, not Notification - that name is already taken

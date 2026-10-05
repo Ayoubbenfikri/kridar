@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   ArrowRight,
   Building2,
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react'
 import { useOwnerReservations, useOwnerStats } from '@/features/owner/useOwner'
 import { formatMad } from '@/lib/formatPrice'
+import { formatDate } from '@/lib/formatDate'
 import { getErrorMessage } from '@/lib/apiErrors'
 import { Card, Skeleton } from '@/components/ui'
 
@@ -60,13 +62,14 @@ function Stat({
 }
 
 export default function OwnerDashboardPage() {
+  const { t } = useTranslation()
   const { data: stats, isError: statsIsError, error: statsError } = useOwnerStats()
   const { data: reservationsData } = useOwnerReservations(1)
 
   if (statsIsError) {
     return (
       <>
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Espace propriétaire</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">{t('owner.dashboard.title')}</h1>
         <Card className="mt-6 flex items-start gap-3 border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
           <TriangleAlert className="mt-0.5 size-4.5 shrink-0" aria-hidden />
           {getErrorMessage(statsError)}
@@ -81,8 +84,8 @@ export default function OwnerDashboardPage() {
 
   return (
     <>
-      <h1 className="text-2xl font-bold tracking-tight text-gray-900">Espace propriétaire</h1>
-      <p className="mt-1 text-sm text-gray-500">Vue d'ensemble de votre activité</p>
+      <h1 className="text-2xl font-bold tracking-tight text-gray-900">{t('owner.dashboard.title')}</h1>
+      <p className="mt-1 text-sm text-gray-500">{t('owner.dashboard.subtitle')}</p>
 
       {!stats ? (
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -96,18 +99,18 @@ export default function OwnerDashboardPage() {
             <Stat
               icon={<Building2 className="size-4.5" />}
               value={stats.properties_count}
-              label="Propriétés"
+              label={t('owner.dashboard.properties')}
               to="/owner/properties"
             />
             <Stat
               icon={<CheckCircle2 className="size-4.5" />}
               value={stats.published_properties_count}
-              label="Publiées"
+              label={t('owner.dashboard.published')}
             />
             <Stat
               icon={<Clock className="size-4.5" />}
               value={stats.pending_reservations_count}
-              label="Demandes en attente"
+              label={t('owner.dashboard.pendingRequests')}
               to="/owner/reservations"
             />
             {/* What the owner RECEIVES, commission already deducted.
@@ -116,11 +119,11 @@ export default function OwnerDashboardPage() {
             <Stat
               icon={<Wallet className="size-4.5" />}
               value={formatMad(stats.total_revenue)}
-              label="Revenu net"
+              label={t('owner.dashboard.netRevenue')}
               hint={
                 stats.total_commission > 0
-                  ? `Après ${formatMad(stats.total_commission)} de commission Kridar`
-                  : 'Aucune commission prélevée'
+                  ? t('owner.dashboard.afterCommission', { amount: formatMad(stats.total_commission) })
+                  : t('owner.dashboard.noCommission')
               }
             />
           </div>
@@ -129,17 +132,17 @@ export default function OwnerDashboardPage() {
             <Stat
               icon={<CalendarCheck className="size-4.5" />}
               value={stats.reservations_count}
-              label="Réservations au total"
+              label={t('owner.dashboard.totalReservations')}
             />
             <Stat
               icon={<CheckCircle2 className="size-4.5" />}
               value={stats.completed_reservations_count}
-              label="Séjours terminés"
+              label={t('owner.dashboard.completedStays')}
             />
             <Stat
               icon={<Star className="size-4.5" />}
               value={stats.average_rating !== null ? `${stats.average_rating} / 5` : '—'}
-              label={`${stats.reviews_count} avis`}
+              label={t('owner.dashboard.reviews', { n: stats.reviews_count })}
             />
           </div>
         </>
@@ -147,20 +150,20 @@ export default function OwnerDashboardPage() {
 
       <section className="mt-10">
         <div className="mb-4 flex items-center justify-between gap-4">
-          <h2 className="text-lg font-semibold tracking-tight text-gray-900">Demandes en attente</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-gray-900">{t('owner.dashboard.pendingTitle')}</h2>
           <Link
             to="/owner/reservations"
             className="group flex shrink-0 items-center gap-1.5 text-sm font-semibold text-brand-600 transition hover:text-brand-700"
           >
-            Voir tout
-            <ArrowRight className="size-4 transition group-hover:translate-x-0.5" aria-hidden />
+            {t('common.seeAll')}
+            <ArrowRight className="size-4 transition group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" aria-hidden />
           </Link>
         </div>
 
         {pendingReservations.length === 0 ? (
           <Card className="flex items-center gap-3 p-4 text-sm text-gray-500">
             <Inbox className="size-5 shrink-0 text-gray-400" aria-hidden />
-            Aucune demande en attente pour le moment.
+            {t('owner.dashboard.noPending')}
           </Card>
         ) : (
           <div className="space-y-3">
@@ -173,8 +176,11 @@ export default function OwnerDashboardPage() {
                 <div className="min-w-0">
                   <p className="truncate font-medium text-gray-900">{reservation.property.title}</p>
                   <p className="mt-0.5 text-sm text-gray-500">
-                    {reservation.guest?.name ?? 'Client'} · {reservation.start_date} au{' '}
-                    {reservation.end_date}
+                    {reservation.guest?.name ?? t('owner.dashboard.guestFallback')} ·{' '}
+                    {t('owner.dashboard.dateRange', {
+                      start: formatDate(reservation.start_date),
+                      end: formatDate(reservation.end_date),
+                    })}
                   </p>
                 </div>
                 {/* The owner's own figure, not the guest's total. */}

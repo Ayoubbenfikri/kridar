@@ -1,14 +1,10 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { AlertCircle, AlertTriangle, ArrowLeft, Camera, CheckCircle2, Lock, Phone, Trash2, User } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
 import { getErrorMessage, getValidationErrors } from '@/lib/apiErrors'
 import { Button, Card, Input, UserAvatar } from '@/components/ui'
-
-// What the user must type, exactly, before the delete button is enabled.
-// Uppercase in the UI (a visual "this is serious" cue); compared
-// case-insensitively so a lowercase "supprimer" still counts.
-const DELETE_CONFIRMATION_WORD = 'SUPPRIMER'
 
 // Mirrors the backend's UpdateAvatarRequest rules (image, jpeg/png/webp,
 // max 2048 KB) so an obviously-bad file is rejected instantly instead of
@@ -23,6 +19,7 @@ const MAX_AVATAR_SIZE_BYTES = 2048 * 1024
  * result, so a failed password change never loses a typed name.
  */
 export default function AccountSettingsPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { user, updateProfile, updatePassword, deleteAccount, uploadAvatar, deleteAvatar } = useAuth()
 
@@ -46,10 +43,14 @@ export default function AccountSettingsPage() {
   // and only shows the confirmation field + the real "confirm" button
   // once that button has been clicked. No window.confirm() popup - this
   // stays inside the page instead of a browser dialog.
+  // What the user must type, exactly, before the delete button is enabled.
+  // Translated (SUPPRIMER / DELETE / مسح), uppercased in the UI as a
+  // "this is serious" cue, and compared case-insensitively.
+  const deleteWord = t('accountSettings.danger.word').toUpperCase()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const isDeleteConfirmTextValid =
-    deleteConfirmText.trim().toUpperCase() === DELETE_CONFIRMATION_WORD
+    deleteConfirmText.trim().toUpperCase() === deleteWord
 
   const profileErrors = getValidationErrors(updateProfile.error)
   const passwordErrors = getValidationErrors(updatePassword.error)
@@ -115,17 +116,17 @@ export default function AccountSettingsPage() {
     setAvatarNotice(null)
 
     if (!ACCEPTED_AVATAR_TYPES.includes(file.type)) {
-      setAvatarError('Format non supporté. Utilisez une image JPEG, PNG ou WebP.')
+      setAvatarError(t('accountSettings.avatar.unsupportedFormat'))
       return
     }
     if (file.size > MAX_AVATAR_SIZE_BYTES) {
-      setAvatarError('Image trop volumineuse (2 Mo maximum).')
+      setAvatarError(t('accountSettings.avatar.tooLarge'))
       return
     }
 
     setAvatarError(null)
     uploadAvatar.mutate(file, {
-      onSuccess: () => setAvatarNotice('Photo mise à jour.'),
+      onSuccess: () => setAvatarNotice(t('accountSettings.avatar.updated')),
     })
   }
 
@@ -133,7 +134,7 @@ export default function AccountSettingsPage() {
     setAvatarError(null)
     setAvatarNotice(null)
     deleteAvatar.mutate(undefined, {
-      onSuccess: () => setAvatarNotice('Photo supprimée.'),
+      onSuccess: () => setAvatarNotice(t('accountSettings.avatar.removed')),
     })
   }
 
@@ -143,18 +144,18 @@ export default function AccountSettingsPage() {
         to="/account"
         className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-brand-600"
       >
-        <ArrowLeft className="size-4" aria-hidden />
-        Mon compte
+        <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden />
+        {t('accountSettings.back')}
       </Link>
 
-      <h1 className="mt-3 text-2xl font-bold tracking-tight text-gray-900">Paramètres</h1>
-      <p className="mt-1 text-sm text-gray-500">Vos informations et votre mot de passe</p>
+      <h1 className="mt-3 text-2xl font-bold tracking-tight text-gray-900">{t('accountSettings.title')}</h1>
+      <p className="mt-1 text-sm text-gray-500">{t('accountSettings.subtitle')}</p>
 
       {/* ---------------- Photo de profil ---------------- */}
       <Card className="mt-6 p-5 sm:p-6">
-        <h2 className="font-semibold text-gray-900">Photo de profil</h2>
+        <h2 className="font-semibold text-gray-900">{t('accountSettings.avatar.title')}</h2>
         <p className="mt-0.5 mb-5 text-sm text-gray-500">
-          Visible par les autres dans vos messages et sur vos annonces.
+          {t('accountSettings.avatar.description')}
         </p>
 
         <div className="flex items-center gap-4">
@@ -170,7 +171,7 @@ export default function AccountSettingsPage() {
                 disabled={deleteAvatar.isPending}
                 onClick={() => fileInputRef.current?.click()}
               >
-                {user?.avatar_url ? 'Changer la photo' : 'Ajouter une photo'}
+                {user?.avatar_url ? t('accountSettings.avatar.change') : t('accountSettings.avatar.add')}
               </Button>
 
               {user?.avatar_url && (
@@ -182,7 +183,7 @@ export default function AccountSettingsPage() {
                   disabled={uploadAvatar.isPending}
                   onClick={handleRemoveAvatar}
                 >
-                  Retirer
+                  {t('accountSettings.avatar.remove')}
                 </Button>
               )}
             </div>
@@ -198,7 +199,7 @@ export default function AccountSettingsPage() {
               onChange={handleAvatarChange}
             />
 
-            <p className="text-xs text-gray-500">JPEG, PNG ou WebP. 2 Mo maximum.</p>
+            <p className="text-xs text-gray-500">{t('accountSettings.avatar.hint')}</p>
           </div>
         </div>
 
@@ -218,14 +219,14 @@ export default function AccountSettingsPage() {
 
       {/* ---------------- Profile ---------------- */}
       <Card className="mt-6 p-5 sm:p-6">
-        <h2 className="font-semibold text-gray-900">Profil</h2>
+        <h2 className="font-semibold text-gray-900">{t('accountSettings.profile.title')}</h2>
         <p className="mt-0.5 mb-5 text-sm text-gray-500">
-          L'adresse email ne peut pas être modifiée ici.
+          {t('accountSettings.profile.description')}
         </p>
 
         <form onSubmit={handleProfileSubmit} className="space-y-4">
           <Input
-            label="Nom complet"
+            label={t('accountSettings.profile.name')}
             required
             icon={<User className="size-5" />}
             value={name}
@@ -234,13 +235,13 @@ export default function AccountSettingsPage() {
           />
 
           <Input
-            label="Téléphone (optionnel)"
+            label={t('accountSettings.profile.phone')}
             type="tel"
             icon={<Phone className="size-5" />}
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
             error={profileErrors?.phone?.[0]}
-            hint="Videz le champ pour supprimer votre numéro."
+            hint={t('accountSettings.profile.phoneHint')}
           />
 
           {/* Consent, not a preference: nothing is shown until this is
@@ -261,17 +262,17 @@ export default function AccountSettingsPage() {
             />
             <span className="text-sm">
               <span className="font-medium text-gray-900">
-                Afficher mon numéro sur mes annonces longue durée
+                {t('accountSettings.profile.showPhone')}
               </span>
               <span className="mt-0.5 block text-gray-500">
                 {hasPhone
-                  ? "Visible uniquement par les visiteurs connectés dont l'email est vérifié. Jamais sur les annonces courte durée."
-                  : 'Ajoutez un numéro pour activer cette option.'}
+                  ? t('accountSettings.profile.showPhoneOn')
+                  : t('accountSettings.profile.showPhoneOff')}
               </span>
             </span>
           </label>
 
-          <Input label="Email" value={user?.email ?? ''} disabled />
+          <Input label={t('accountSettings.profile.email')} value={user?.email ?? ''} disabled />
 
           {updateProfile.isError && !profileErrors && (
             <p className="flex items-start gap-2 text-sm text-red-600">
@@ -282,26 +283,26 @@ export default function AccountSettingsPage() {
           {updateProfile.isSuccess && (
             <p className="flex items-center gap-2 text-sm text-green-700">
               <CheckCircle2 className="size-4 shrink-0" aria-hidden />
-              Profil mis à jour.
+              {t('accountSettings.profile.updated')}
             </p>
           )}
 
           <Button type="submit" isLoading={updateProfile.isPending}>
-            {updateProfile.isPending ? 'Enregistrement...' : 'Enregistrer'}
+            {updateProfile.isPending ? t('common.saving') : t('common.save')}
           </Button>
         </form>
       </Card>
 
       {/* ---------------- Password ---------------- */}
       <Card className="mt-5 p-5 sm:p-6">
-        <h2 className="font-semibold text-gray-900">Mot de passe</h2>
+        <h2 className="font-semibold text-gray-900">{t('accountSettings.password.title')}</h2>
         <p className="mt-0.5 mb-5 text-sm text-gray-500">
-          Le mot de passe actuel est demandé pour confirmer que c'est bien vous.
+          {t('accountSettings.password.description')}
         </p>
 
         <form onSubmit={handlePasswordSubmit} className="space-y-4">
           <Input
-            label="Mot de passe actuel"
+            label={t('accountSettings.password.current')}
             type="password"
             required
             autoComplete="current-password"
@@ -312,7 +313,7 @@ export default function AccountSettingsPage() {
           />
 
           <Input
-            label="Nouveau mot de passe"
+            label={t('accountSettings.password.new')}
             type="password"
             required
             autoComplete="new-password"
@@ -320,11 +321,11 @@ export default function AccountSettingsPage() {
             value={newPassword}
             onChange={(event) => setNewPassword(event.target.value)}
             error={passwordErrors?.password?.[0]}
-            hint="8 caracteres minimum"
+            hint={t('accountSettings.password.newHint')}
           />
 
           <Input
-            label="Confirmer le nouveau mot de passe"
+            label={t('accountSettings.password.confirm')}
             type="password"
             required
             autoComplete="new-password"
@@ -333,7 +334,7 @@ export default function AccountSettingsPage() {
             onChange={(event) => setNewPasswordConfirmation(event.target.value)}
             error={
               newPasswordConfirmation && newPasswordConfirmation !== newPassword
-                ? 'Les deux mots de passe ne correspondent pas.'
+                ? t('accountSettings.password.mismatch')
                 : undefined
             }
           />
@@ -347,12 +348,12 @@ export default function AccountSettingsPage() {
           {updatePassword.isSuccess && (
             <p className="flex items-center gap-2 text-sm text-green-700">
               <CheckCircle2 className="size-4 shrink-0" aria-hidden />
-              Mot de passe mis à jour.
+              {t('accountSettings.password.updated')}
             </p>
           )}
 
           <Button type="submit" isLoading={updatePassword.isPending}>
-            {updatePassword.isPending ? 'Enregistrement...' : 'Changer le mot de passe'}
+            {updatePassword.isPending ? t('common.saving') : t('accountSettings.password.submit')}
           </Button>
         </form>
       </Card>
@@ -365,11 +366,10 @@ export default function AccountSettingsPage() {
       <Card className="mt-5 border-l-4 border-l-red-400 p-5 sm:p-6">
         <h2 className="flex items-center gap-2 font-semibold text-red-700">
           <AlertTriangle className="size-5" aria-hidden />
-          Supprimer mon compte
+          {t('accountSettings.danger.title')}
         </h2>
         <p className="mt-0.5 mb-5 text-sm text-gray-500">
-          Cette action est irréversible. Vos annonces publiées seront automatiquement archivées.
-          Impossible si vous avez une réservation à venir, comme voyageur ou comme propriétaire.
+          {t('accountSettings.danger.description')}
         </p>
 
         {!showDeleteConfirm && (
@@ -379,18 +379,18 @@ export default function AccountSettingsPage() {
             icon={<Trash2 className="size-4" aria-hidden />}
             onClick={() => setShowDeleteConfirm(true)}
           >
-            Supprimer mon compte
+            {t('accountSettings.danger.title')}
           </Button>
         )}
 
         {showDeleteConfirm && (
           <form onSubmit={handleDeleteSubmit} className="space-y-4">
             <Input
-              label={`Tapez ${DELETE_CONFIRMATION_WORD} pour confirmer`}
+              label={t('accountSettings.danger.confirmLabel', { word: deleteWord })}
               type="text"
               required
               autoComplete="off"
-              placeholder={DELETE_CONFIRMATION_WORD}
+              placeholder={deleteWord}
               value={deleteConfirmText}
               onChange={(event) => setDeleteConfirmText(event.target.value)}
             />
@@ -409,7 +409,9 @@ export default function AccountSettingsPage() {
                 isLoading={deleteAccount.isPending}
                 disabled={!isDeleteConfirmTextValid}
               >
-                {deleteAccount.isPending ? 'Suppression...' : 'Oui, supprimer définitivement mon compte'}
+                {deleteAccount.isPending
+                  ? t('accountSettings.danger.deleting')
+                  : t('accountSettings.danger.confirm')}
               </Button>
               <Button
                 type="button"
@@ -420,7 +422,7 @@ export default function AccountSettingsPage() {
                 }}
                 disabled={deleteAccount.isPending}
               >
-                Annuler
+                {t('common.cancel')}
               </Button>
             </div>
           </form>

@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowRight, Bell, CalendarCheck, Heart, Inbox, Settings } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
 import { useMyReservations } from '@/features/reservations/useReservations'
 import { useFavorites } from '@/features/favorites/useFavorites'
 import { useUnreadCount } from '@/features/notifications/useNotifications'
 import { formatMad } from '@/lib/formatPrice'
+import { formatDate } from '@/lib/formatDate'
 import { Card, UserAvatar, buttonClasses } from '@/components/ui'
 import ReservationStatusBadge from '@/components/reservations/ReservationStatusBadge'
 import type { ReservationStatusValue } from '@/types/reservation'
@@ -42,6 +44,7 @@ function StatLink({
 }
 
 export default function AccountPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const { data: reservationsData } = useMyReservations(1)
   const { data: favoritesData } = useFavorites(1)
@@ -57,14 +60,14 @@ export default function AccountPage() {
         <div className="flex items-center gap-4">
           <UserAvatar name={user?.name} avatarUrl={user?.avatar_url} seed={user?.id ?? 0} size="lg" />
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900">Bonjour {user?.name}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900">{t('account.greeting', { name: user?.name ?? '' })}</h1>
             <p className="text-sm text-gray-500">{user?.email}</p>
           </div>
         </div>
 
         <Link to="/account/settings" className={buttonClasses({ variant: 'secondary', size: 'sm' })}>
           <Settings className="size-4" aria-hidden />
-          Paramètres
+          {t('account.settings')}
         </Link>
       </div>
 
@@ -73,38 +76,41 @@ export default function AccountPage() {
           to="/reservations"
           icon={<CalendarCheck className="size-4.5" />}
           value={reservationsData?.meta.total ?? 0}
-          label="Réservations"
+          label={t('account.reservations')}
         />
         <StatLink
           to="/favorites"
           icon={<Heart className="size-4.5" />}
           value={favoritesData?.meta.total ?? 0}
-          label="Favoris"
+          label={t('account.favorites')}
         />
         <StatLink
           to="/notifications"
           icon={<Bell className="size-4.5" />}
           value={unreadCount}
-          label="Notifications non lues"
+          label={t('account.unreadNotifications')}
         />
       </div>
 
       <section className="mt-10">
         <div className="mb-4 flex items-center justify-between gap-4">
-          <h2 className="text-lg font-semibold tracking-tight text-gray-900">Prochaines réservations</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-gray-900">{t('account.upcoming')}</h2>
           <Link
             to="/reservations"
             className="group flex shrink-0 items-center gap-1.5 text-sm font-semibold text-brand-600 transition hover:text-brand-700"
           >
-            Voir tout
-            <ArrowRight className="size-4 transition group-hover:translate-x-0.5" aria-hidden />
+            {t('common.seeAll')}
+            <ArrowRight
+              className="size-4 transition group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5"
+              aria-hidden
+            />
           </Link>
         </div>
 
         {upcomingReservations.length === 0 ? (
           <Card className="flex items-center gap-3 p-4 text-sm text-gray-500">
             <Inbox className="size-5 shrink-0 text-gray-400" aria-hidden />
-            Aucune réservation en attente ou confirmée pour le moment.
+            {t('account.noUpcoming')}
           </Card>
         ) : (
           <div className="space-y-3">
@@ -117,7 +123,10 @@ export default function AccountPage() {
                 <div className="min-w-0">
                   <p className="truncate font-medium text-gray-900">{reservation.property.title}</p>
                   <p className="mt-0.5 text-sm text-gray-500">
-                    {reservation.start_date} au {reservation.end_date}
+                    {t('account.dateRange', {
+                      start: formatDate(reservation.start_date),
+                      end: formatDate(reservation.end_date),
+                    })}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
