@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMap } from 'react-leaflet'
 import { Locate, LocateFixed, Map as MapIcon, Satellite } from 'lucide-react'
 import type { MapStyle } from './mapTileStyles'
@@ -44,6 +45,7 @@ export default function MapOverlayControls({
    */
   onLocate?: (lat: number, lng: number) => void
 }) {
+  const { t } = useTranslation()
   const map = useMap()
   const [locating, setLocating] = useState(false)
   const [denied, setDenied] = useState(false)
@@ -74,7 +76,7 @@ export default function MapOverlayControls({
       <div className="leaflet-control flex flex-col overflow-hidden rounded-md border border-gray-300 bg-white shadow-md">
         <button
           type="button"
-          title={mapStyle === 'street' ? 'Vue satellite' : 'Vue carte'}
+          title={mapStyle === 'street' ? t('map.satelliteView') : t('map.mapView')}
           onClick={() => onToggleStyle(mapStyle === 'street' ? 'satellite' : 'street')}
           className={`flex size-[30px] items-center justify-center bg-white text-gray-700 transition hover:bg-gray-50 ${
             showLocate ? 'border-b border-gray-200' : ''
@@ -90,7 +92,7 @@ export default function MapOverlayControls({
         {showLocate && (
           <button
             type="button"
-            title={denied ? 'Localisation refusée' : 'Me localiser'}
+            title={denied ? t('map.locationDenied') : t('map.locateMe')}
             onClick={locate}
             disabled={locating}
             className="flex size-[30px] items-center justify-center bg-white text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"

@@ -1,11 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { Trans, useTranslation } from 'react-i18next'
 import { AlertCircle, ArrowRight, CalendarCheck, CheckCircle2, LogIn, MailWarning } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
 import { useCreateReservation, usePricePreview } from '@/features/reservations/useReservations'
 import AvailabilityCalendar from './AvailabilityCalendar'
 import { getErrorMessage, getValidationErrors } from '@/lib/apiErrors'
 import { formatMad } from '@/lib/formatPrice'
+import { formatDate } from '@/lib/formatDate'
 import { Button, Card, Input, Skeleton, buttonClasses } from '@/components/ui'
 import { cn } from '@/lib/cn'
 import type { Property } from '@/types/property'
@@ -26,6 +28,7 @@ interface BookingPanelProps {
  * ahead, so what they see and what gets saved cannot drift apart.
  */
 export default function BookingPanel({ property }: BookingPanelProps) {
+  const { t } = useTranslation()
   const { user, isAuthenticated } = useAuth()
   const createReservation = useCreateReservation()
 
@@ -64,12 +67,12 @@ export default function BookingPanel({ property }: BookingPanelProps) {
         <span className="flex size-10 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
           <LogIn className="size-5" aria-hidden />
         </span>
-        <p className="mt-3 font-semibold text-gray-900">Connectez-vous pour réserver</p>
+        <p className="mt-3 font-semibold text-gray-900">{t('booking.signInTitle')}</p>
         <p className="mt-1 text-sm text-gray-500">
-          Il faut un compte pour envoyer une demande de réservation au propriétaire.
+          {t('booking.signInText')}
         </p>
         <Link to="/login" className={buttonClasses({ fullWidth: true, className: 'mt-4' })}>
-          Se connecter
+          {t('auth.login')}
         </Link>
       </Card>
     )
@@ -85,9 +88,9 @@ export default function BookingPanel({ property }: BookingPanelProps) {
         <span className="flex size-10 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
           <MailWarning className="size-5" aria-hidden />
         </span>
-        <p className="mt-3 font-semibold text-amber-900">Vérifiez votre email</p>
+        <p className="mt-3 font-semibold text-amber-900">{t('booking.verifyTitle')}</p>
         <p className="mt-1 text-sm text-amber-800">
-          La réservation est réservée aux comptes dont l'adresse email est vérifiée.
+          {t('booking.verifyText')}
         </p>
       </Card>
     )
@@ -121,38 +124,40 @@ export default function BookingPanel({ property }: BookingPanelProps) {
         <span className="flex size-10 items-center justify-center rounded-lg bg-green-100 text-green-700">
           <CheckCircle2 className="size-5" aria-hidden />
         </span>
-        <p className="mt-3 font-semibold text-green-900">Demande envoyée</p>
+        <p className="mt-3 font-semibold text-green-900">{t('booking.sentTitle')}</p>
         <p className="mt-1 text-sm text-green-800">
-          Total : <strong>{formatMad(reservation.total_price)}</strong>. Le propriétaire a 48h pour
-          confirmer.
+          <Trans
+            i18nKey="booking.sentText"
+            values={{ total: formatMad(reservation.total_price) }}
+            components={{ strong: <strong /> }}
+          />
         </p>
         <Link
           to="/reservations"
           className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-green-900 transition hover:gap-2.5"
         >
-          Voir mes réservations
-          <ArrowRight className="size-4" aria-hidden />
+          {t('booking.viewMine')}
+          <ArrowRight className="size-4 rtl:rotate-180" aria-hidden />
         </Link>
       </Card>
     )
   }
 
   const validationErrors = getValidationErrors(createReservation.error)
-  const unitLabel = rentalType === 'short_term' ? 'nuit' : 'mois'
 
   return (
     <Card className="p-5">
       <h2 className="flex items-center gap-2 font-semibold text-gray-900">
         <CalendarCheck className="size-4.5 text-brand-600" aria-hidden />
-        Réserver ce logement
+        {t('booking.title')}
       </h2>
 
       {offersBoth && (
         <div className="mt-4 grid grid-cols-2 gap-1 rounded-lg bg-gray-100 p-1">
           {(
             [
-              ['short_term', 'Courte durée'],
-              ['long_term', 'Longue durée'],
+              ['short_term', t('rentalType.short_term')],
+              ['long_term', t('rentalType.long_term')],
             ] as Array<[ReservationRentalType, string]>
           ).map(([value, label]) => (
             <button
@@ -188,24 +193,28 @@ export default function BookingPanel({ property }: BookingPanelProps) {
       <form onSubmit={handleSubmit} className="mt-4 space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-lg border border-gray-200 px-3 py-2">
-            <p className="text-[11px] font-semibold tracking-wider text-gray-500 uppercase">Arrivée</p>
-            <p className="text-sm font-medium text-gray-900">{startDate ?? '—'}</p>
+            <p className="text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
+              {t('reservations.arrival')}
+            </p>
+            <p className="text-sm font-medium text-gray-900">{startDate ? formatDate(startDate) : '—'}</p>
           </div>
           <div className="rounded-lg border border-gray-200 px-3 py-2">
-            <p className="text-[11px] font-semibold tracking-wider text-gray-500 uppercase">Départ</p>
-            <p className="text-sm font-medium text-gray-900">{endDate ?? '—'}</p>
+            <p className="text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
+              {t('reservations.departure')}
+            </p>
+            <p className="text-sm font-medium text-gray-900">{endDate ? formatDate(endDate) : '—'}</p>
           </div>
         </div>
 
         {rentalType === 'short_term' && (
           <Input
-            label="Nombre de voyageurs"
+            label={t('booking.guests')}
             type="number"
             min={1}
             max={property.max_guests ?? undefined}
             value={guestsCount}
             onChange={(event) => setGuestsCount(event.target.value)}
-            hint={property.max_guests !== null ? `${property.max_guests} maximum` : undefined}
+            hint={property.max_guests !== null ? t('booking.guestsMax', { n: property.max_guests }) : undefined}
           />
         )}
 
@@ -220,14 +229,16 @@ export default function BookingPanel({ property }: BookingPanelProps) {
               <>
                 <div className="flex items-baseline justify-between text-sm text-gray-600">
                   <span>
-                    {formatMad(pricing.unit_price)} × {pricing.units} {unitLabel}
-                    {pricing.units > 1 ? 's' : ''}
+                    {t(rentalType === 'short_term' ? 'booking.nights' : 'booking.months', {
+                      price: formatMad(pricing.unit_price),
+                      n: pricing.units,
+                    })}
                   </span>
                   <span>{formatMad(pricing.total_price)}</span>
                 </div>
 
                 <div className="mt-2 flex items-baseline justify-between border-t border-gray-100 pt-2">
-                  <span className="font-semibold text-gray-900">Total à payer</span>
+                  <span className="font-semibold text-gray-900">{t('booking.totalToPay')}</span>
                   <span className="text-lg font-bold text-gray-900">
                     {formatMad(pricing.total_price)}
                   </span>
@@ -235,13 +246,14 @@ export default function BookingPanel({ property }: BookingPanelProps) {
 
                 {pricing.commission_rate > 0 ? (
                   <p className="mt-2 text-xs text-gray-500">
-                    Dont commission Kridar ({pricing.commission_rate}%) :{' '}
-                    {formatMad(pricing.commission_amount)}. Elle est incluse dans le total, vous ne
-                    payez rien en plus.
+                    {t('booking.commission', {
+                      rate: pricing.commission_rate,
+                      amount: formatMad(pricing.commission_amount),
+                    })}
                   </p>
                 ) : (
                   <p className="mt-2 text-xs text-gray-500">
-                    Location longue durée : Kridar ne prélève aucune commission sur le loyer.
+                    {t('booking.noCommission')}
                   </p>
                 )}
               </>
@@ -274,11 +286,11 @@ export default function BookingPanel({ property }: BookingPanelProps) {
           disabled={!startDate || !endDate}
           isLoading={createReservation.isPending}
         >
-          {createReservation.isPending ? 'Envoi...' : 'Demander à réserver'}
+          {createReservation.isPending ? t('booking.sending') : t('booking.submit')}
         </Button>
 
         <p className="text-center text-xs text-gray-500">
-          Le montant est confirmé par le serveur au moment de la demande.
+          {t('booking.footnote')}
         </p>
       </form>
     </Card>

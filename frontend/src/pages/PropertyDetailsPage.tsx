@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { useTranslation, Trans } from 'react-i18next'
 import { Helmet } from 'react-helmet-async'
 import {
   AlertCircle,
@@ -32,43 +33,7 @@ import ContactOwnerCard from '@/components/properties/ContactOwnerCard'
 import BookingPanel from '@/components/reservations/BookingPanel'
 import PropertyLocationMap from '@/components/map/PropertyLocationMap'
 import { Badge, Button, Card, EmptyState, Skeleton, UserAvatar, buttonClasses } from '@/components/ui'
-import type {
-  LegalStatus,
-  Property,
-  PropertyCondition,
-  PropertyType,
-  RentalType,
-} from '@/types/property'
-
-const TYPE_LABELS: Record<PropertyType, string> = {
-  apartment: 'Appartement',
-  villa: 'Villa',
-  studio: 'Studio',
-  riad: 'Riad',
-  office: 'Bureau',
-  land: 'Terrain',
-  commercial: 'Local commercial',
-}
-
-const RENTAL_LABELS: Record<RentalType, string> = {
-  short_term: 'Courte duree',
-  long_term: 'Longue duree',
-  both: 'Courte et longue duree',
-}
-
-// Sale listings only. What the seller declared, shown as-is.
-const CONDITION_LABELS: Record<PropertyCondition, string> = {
-  new: 'Neuf',
-  good: 'Bon état',
-  to_renovate: 'À rénover',
-}
-
-const LEGAL_STATUS_LABELS: Record<LegalStatus, string> = {
-  titled: 'Titre foncier',
-  registering: "En cours d'immatriculation",
-  melkia: 'Melkia',
-  other: 'Autre statut juridique',
-}
+import type { Property } from '@/types/property'
 
 function Fact({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
@@ -102,6 +67,7 @@ function Fact({ icon, label }: { icon: React.ReactNode; label: string }) {
  * messaging credits entirely.
  */
 function OwnerPhone({ property }: { property: Property }) {
+  const { t } = useTranslation()
   const { isAuthenticated, user } = useAuth()
   const { data: settings } = useSettings()
   const revealPhone = useRevealPhone()
@@ -127,10 +93,14 @@ function OwnerPhone({ property }: { property: Property }) {
       <p className="mt-4 flex items-center gap-2 text-sm text-gray-500">
         <Phone className="size-4 shrink-0 text-gray-400" aria-hidden />
         <span>
-          <Link to="/login" className="font-semibold text-brand-600 transition hover:text-brand-700">
-            Connectez-vous
-          </Link>{' '}
-          pour voir le numéro du propriétaire.
+          <Trans
+            i18nKey="propertyDetails.phone.logIn"
+            components={{
+              login: (
+                <Link to="/login" className="font-semibold text-brand-600 transition hover:text-brand-700" />
+              ),
+            }}
+          />
         </span>
       </p>
     )
@@ -140,7 +110,7 @@ function OwnerPhone({ property }: { property: Property }) {
     return (
       <p className="mt-4 flex items-center gap-2 text-sm text-gray-500">
         <Phone className="size-4 shrink-0 text-gray-400" aria-hidden />
-        Vérifiez votre email pour voir le numéro du propriétaire.
+        {t('propertyDetails.phone.verifyEmail')}
       </p>
     )
   }
@@ -175,8 +145,8 @@ function OwnerPhone({ property }: { property: Property }) {
           {revealPhone.isPending
             ? '...'
             : settings
-              ? `Voir le numéro — ${formatMad(settings.phone_reveal_fee)}`
-              : 'Voir le numéro'}
+              ? t('propertyDetails.phone.revealWithFee', { fee: formatMad(settings.phone_reveal_fee) })
+              : t('propertyDetails.phone.reveal')}
         </Button>
         {revealPhone.isError && (
           <p className="mt-2 flex items-start gap-2 text-sm text-red-600">
@@ -192,6 +162,7 @@ function OwnerPhone({ property }: { property: Property }) {
 }
 
 export default function PropertyDetailsPage() {
+  const { t } = useTranslation()
   const { id } = useParams<{ id: string }>()
   const { data: property, isError } = useProperty(id)
   const [activeImage, setActiveImage] = useState(0)
@@ -202,11 +173,11 @@ export default function PropertyDetailsPage() {
       <main className="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6">
         <EmptyState
           icon={<Building2 className="size-6" />}
-          title="Propriété introuvable"
-          description="Cette propriété n'existe pas, ou n'est plus disponible."
+          title={t('propertyDetails.notFoundTitle')}
+          description={t('propertyDetails.notFoundText')}
           action={
             <Link to="/properties" className={buttonClasses()}>
-              Voir les autres propriétés
+              {t('propertyDetails.seeOthers')}
             </Link>
           }
         />
@@ -266,8 +237,8 @@ export default function PropertyDetailsPage() {
         to={isSale ? '/buy' : '/properties'}
         className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-brand-600"
       >
-        <ArrowLeft className="size-4" aria-hidden />
-        {isSale ? 'Retour aux biens à vendre' : 'Retour aux propriétés'}
+        <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden />
+        {isSale ? t('propertyDetails.backToSales') : t('propertyDetails.backToProperties')}
       </Link>
 
       {/* Header */}
@@ -286,7 +257,9 @@ export default function PropertyDetailsPage() {
               <span className="flex items-center gap-1.5 font-semibold text-gray-900">
                 <Star className="size-4 fill-accent text-accent" aria-hidden />
                 {property.average_rating}
-                <span className="font-normal text-gray-500">({property.reviews_count} avis)</span>
+                <span className="font-normal text-gray-500">
+                  ({t('propertyDetails.reviewsCount', { n: property.reviews_count })})
+                </span>
               </span>
             )}
           </div>
@@ -314,7 +287,7 @@ export default function PropertyDetailsPage() {
                     key={image.id}
                     type="button"
                     onClick={() => setActiveImage(index)}
-                    aria-label={`Photo ${index + 1}`}
+                    aria-label={t('propertyDetails.photoN', { n: index + 1 })}
                     aria-current={index === activeImage}
                     className={`size-20 shrink-0 overflow-hidden rounded-lg border-2 transition ${
                       index === activeImage
@@ -331,7 +304,7 @@ export default function PropertyDetailsPage() {
         ) : (
           <div className="flex aspect-[16/10] w-full flex-col items-center justify-center gap-2 rounded-xl border border-gray-200 bg-gray-100 text-gray-400">
             <ImageOff className="size-8" aria-hidden />
-            <span className="text-sm">Pas de photo</span>
+            <span className="text-sm">{t('card.noPhoto')}</span>
           </div>
         )}
       </div>
@@ -341,13 +314,13 @@ export default function PropertyDetailsPage() {
         <div className="lg:col-span-2">
           <Card className="p-5">
             <div className="grid gap-4 sm:grid-cols-2">
-              <Fact icon={<Building2 className="size-4.5" />} label={TYPE_LABELS[property.property_type]} />
+              <Fact icon={<Building2 className="size-4.5" />} label={t(`propertyType.${property.property_type}`)} />
 
               {/* rental_type is null on a sale. */}
               {property.rental_type && (
                 <Fact
                   icon={<CalendarRange className="size-4.5" />}
-                  label={RENTAL_LABELS[property.rental_type]}
+                  label={t(`rentalType.${property.rental_type}`)}
                 />
               )}
 
@@ -357,39 +330,39 @@ export default function PropertyDetailsPage() {
               {(!isSale || property.bedrooms > 0) && (
                 <Fact
                   icon={<BedDouble className="size-4.5" />}
-                  label={`${property.bedrooms} chambre${property.bedrooms > 1 ? 's' : ''}`}
+                  label={t('propertyDetails.bedrooms', { n: property.bedrooms })}
                 />
               )}
               {(!isSale || property.bathrooms > 0) && (
                 <Fact
                   icon={<Bath className="size-4.5" />}
-                  label={`${property.bathrooms} salle${property.bathrooms > 1 ? 's' : ''} de bain`}
+                  label={t('propertyDetails.bathrooms', { n: property.bathrooms })}
                 />
               )}
 
               {property.legal_status && (
                 <Fact
                   icon={<ScrollText className="size-4.5" />}
-                  label={LEGAL_STATUS_LABELS[property.legal_status]}
+                  label={t(`propertyDetails.legalStatus.${property.legal_status}`)}
                 />
               )}
               {property.property_condition && (
                 <Fact
                   icon={<Wrench className="size-4.5" />}
-                  label={CONDITION_LABELS[property.property_condition]}
+                  label={t(`propertyDetails.condition.${property.property_condition}`)}
                 />
               )}
               {property.year_built !== null && (
                 <Fact
                   icon={<CalendarDays className="size-4.5" />}
-                  label={`Construit en ${property.year_built}`}
+                  label={t('propertyDetails.builtIn', { year: property.year_built })}
                 />
               )}
 
               {property.max_guests !== null && (
                 <Fact
                   icon={<Users className="size-4.5" />}
-                  label={`${property.max_guests} voyageurs maximum`}
+                  label={t('propertyDetails.maxGuests', { n: property.max_guests })}
                 />
               )}
               {property.area_sqm !== null && (
@@ -399,13 +372,13 @@ export default function PropertyDetailsPage() {
           </Card>
 
           <section className="mt-8">
-            <h2 className="text-xl font-semibold tracking-tight text-gray-900">Description</h2>
+            <h2 className="text-xl font-semibold tracking-tight text-gray-900">{t('propertyDetails.description')}</h2>
             <p className="mt-3 whitespace-pre-line text-gray-600">{property.description}</p>
           </section>
 
           {property.amenities.length > 0 && (
             <section className="mt-8">
-              <h2 className="text-xl font-semibold tracking-tight text-gray-900">Équipements</h2>
+              <h2 className="text-xl font-semibold tracking-tight text-gray-900">{t('propertyDetails.amenities')}</h2>
               <ul className="mt-3 grid gap-2.5 sm:grid-cols-2">
                 {property.amenities.map((amenity) => (
                   <li key={amenity.id} className="flex items-center gap-2.5 text-gray-700">
@@ -422,7 +395,7 @@ export default function PropertyDetailsPage() {
               already covers a property with no coordinates. */}
           {hasLocation && (
             <section className="mt-8">
-              <h2 className="text-xl font-semibold tracking-tight text-gray-900">Localisation</h2>
+              <h2 className="text-xl font-semibold tracking-tight text-gray-900">{t('propertyDetails.location')}</h2>
               <p className="mt-1 text-sm text-gray-500">
                 {property.address}, {property.city}
                 {property.region ? `, ${property.region}` : ''}
@@ -434,7 +407,7 @@ export default function PropertyDetailsPage() {
           )}
 
           <section className="mt-8">
-            <h2 className="text-xl font-semibold tracking-tight text-gray-900">Propriétaire</h2>
+            <h2 className="text-xl font-semibold tracking-tight text-gray-900">{t('propertyDetails.owner')}</h2>
             <div className="mt-3 flex items-center gap-3">
               <UserAvatar
                 name={property.owner?.name}
@@ -443,9 +416,9 @@ export default function PropertyDetailsPage() {
                 size="md"
               />
               <div>
-                <p className="font-medium text-gray-900">{property.owner?.name ?? 'Compte supprimé'}</p>
+                <p className="font-medium text-gray-900">{property.owner?.name ?? t('propertyDetails.deletedAccount')}</p>
                 <p className="text-sm text-gray-500">
-                  {isSale ? 'Vend ce bien' : 'Propose ce logement'}
+                  {isSale ? t('propertyDetails.sellsThis') : t('propertyDetails.offersThis')}
                 </p>
               </div>
             </div>
@@ -464,8 +437,10 @@ export default function PropertyDetailsPage() {
                   {formatMad(price.amount)}
                 </span>
                 {/* No unit on a sale price. */}
-                {price.unit && <span className="text-gray-500">/ {price.unit}</span>}
-                {isSale && property.price_negotiable && <Badge tone="green">Prix négociable</Badge>}
+                {price.unitKey && <span className="text-gray-500">{t(price.unitKey)}</span>}
+                {isSale && property.price_negotiable && (
+                  <Badge tone="green">{t('propertyDetails.negotiable')}</Badge>
+                )}
               </div>
             )}
 

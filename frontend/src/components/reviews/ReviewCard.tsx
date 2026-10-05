@@ -1,8 +1,10 @@
 import { User } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import type { Review } from '@/types/review'
 import StarRating from './StarRating'
 
 export default function ReviewCard({ review }: { review: Review }) {
+  const { t } = useTranslation()
   return (
     <article className="border-b border-gray-100 py-5 last:border-b-0">
       <div className="flex items-start justify-between gap-4">
@@ -19,7 +21,7 @@ export default function ReviewCard({ review }: { review: Review }) {
 
       {review.owner_reply && (
         <div className="mt-3 rounded-lg border border-brand-100 bg-brand-50 p-3.5">
-          <p className="text-sm font-semibold text-brand-700">Réponse du propriétaire</p>
+          <p className="text-sm font-semibold text-brand-700">{t('reviews.ownerReply')}</p>
           <p className="mt-1 text-sm text-gray-700">{review.owner_reply}</p>
         </div>
       )}

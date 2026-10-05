@@ -1,11 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { AlertCircle, Clock, LogIn, MailWarning, MessageSquare, Send, Sparkles } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
 import { useBuyMessagingPack, useStartConversation } from '@/features/messaging/useMessaging'
 import { usePaymentsEnabled, useSettings } from '@/features/settings/useSettings'
 import { getErrorMessage, getValidationErrors, isPaymentRequiredError } from '@/lib/apiErrors'
 import { formatMad } from '@/lib/formatPrice'
+import { formatDate } from '@/lib/formatDate'
 import { Badge, Button, Card, Textarea, UserAvatar, buttonClasses } from '@/components/ui'
 import type { MessagingPackDuration } from '@/features/messaging/messagingApi'
 import type { Property } from '@/types/property'
@@ -17,24 +19,24 @@ import type { Property } from '@/types/property'
  * advertising "3 contacts left" would just be confusing.
  */
 function CreditsStatus() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const paymentsEnabled = usePaymentsEnabled()
 
   if (!paymentsEnabled || !user) return null
 
   if (user.messaging_pack_expires_at) {
-    const expiry = new Date(user.messaging_pack_expires_at).toLocaleDateString('fr-FR')
+    const expiry = formatDate(user.messaging_pack_expires_at)
     return (
       <Badge tone="green" className="mt-2" icon={<Sparkles className="size-3.5" aria-hidden />}>
-        Messages illimités jusqu'au {expiry}
+        {t('contactOwner.unlimitedUntil', { date: expiry })}
       </Badge>
     )
   }
 
   return (
     <Badge tone={user.free_contacts_remaining > 0 ? 'slate' : 'amber'} className="mt-2">
-      {user.free_contacts_remaining} contact{user.free_contacts_remaining > 1 ? 's' : ''} gratuit
-      {user.free_contacts_remaining > 1 ? 's' : ''} restant{user.free_contacts_remaining > 1 ? 's' : ''}
+      {t('contactOwner.freeLeft', { n: user.free_contacts_remaining })}
     </Badge>
   )
 }
@@ -50,6 +52,7 @@ function CreditsStatus() {
  * unlocked until the payer returns through the return URL.
  */
 function MessagingPaywall() {
+  const { t } = useTranslation()
   const { data: settings } = useSettings()
   const buyPack = useBuyMessagingPack()
   const [pending, setPending] = useState<MessagingPackDuration | null>(null)
@@ -71,9 +74,9 @@ function MessagingPaywall() {
       <span className="flex size-10 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
         <Clock className="size-5" aria-hidden />
       </span>
-      <p className="mt-3 font-semibold text-amber-900">Contacts gratuits épuisés</p>
+      <p className="mt-3 font-semibold text-amber-900">{t('contactOwner.paywallTitle')}</p>
       <p className="mt-1 text-sm text-amber-800">
-        Achetez un pass pour continuer à contacter des propriétaires sans limite.
+        {t('contactOwner.paywallText')}
       </p>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -83,10 +86,12 @@ function MessagingPaywall() {
           isLoading={pending === '7d'}
           onClick={() => buy('7d')}
         >
-          7 jours{settings ? ` — ${formatMad(settings.messaging_pack_7d_fee)}` : ''}
+          {t('contactOwner.pack7')}
+          {settings ? ` — ${formatMad(settings.messaging_pack_7d_fee)}` : ''}
         </Button>
         <Button disabled={buyPack.isPending} isLoading={pending === '15d'} onClick={() => buy('15d')}>
-          15 jours{settings ? ` — ${formatMad(settings.messaging_pack_15d_fee)}` : ''}
+          {t('contactOwner.pack15')}
+          {settings ? ` — ${formatMad(settings.messaging_pack_15d_fee)}` : ''}
         </Button>
       </div>
 
@@ -119,6 +124,7 @@ function MessagingPaywall() {
  * component only ever starts new ones).
  */
 export default function ContactOwnerCard({ property }: { property: Property }) {
+  const { t } = useTranslation()
   const { user, isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const startConversation = useStartConversation()
@@ -142,15 +148,15 @@ export default function ContactOwnerCard({ property }: { property: Property }) {
         <span className="flex size-10 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
           <LogIn className="size-5" aria-hidden />
         </span>
-        <p className="mt-3 font-semibold text-gray-900">Connectez-vous pour écrire</p>
+        <p className="mt-3 font-semibold text-gray-900">{t('contactOwner.signInTitle')}</p>
         <p className="mt-1 text-sm text-gray-500">
-          Il faut un compte pour envoyer un message au propriétaire.
+          {t('contactOwner.signInText')}
         </p>
         <Link
           to="/login"
           className={buttonClasses({ variant: 'secondary', fullWidth: true, className: 'mt-4' })}
         >
-          Se connecter
+          {t('auth.login')}
         </Link>
       </Card>
     )
@@ -171,9 +177,9 @@ export default function ContactOwnerCard({ property }: { property: Property }) {
         <span className="flex size-10 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
           <MailWarning className="size-5" aria-hidden />
         </span>
-        <p className="mt-3 font-semibold text-amber-900">Vérifiez votre email</p>
+        <p className="mt-3 font-semibold text-amber-900">{t('contactOwner.verifyTitle')}</p>
         <p className="mt-1 text-sm text-amber-800">
-          L'envoi de messages est réservé aux comptes dont l'adresse email est vérifiée.
+          {t('contactOwner.verifyText')}
         </p>
       </Card>
     )
@@ -221,10 +227,10 @@ export default function ContactOwnerCard({ property }: { property: Property }) {
         <div>
           <h2 className="flex items-center gap-2 font-semibold text-gray-900">
             <MessageSquare className="size-4.5 text-brand-600" aria-hidden />
-            {isSale ? 'Contacter le vendeur' : 'Contacter le propriétaire'}
+            {isSale ? t('contactOwner.titleSeller') : t('contactOwner.titleOwner')}
           </h2>
           <p className="mt-0.5 text-sm text-gray-500">
-            Posez vos questions directement à {property.owner.name}.
+            {t('contactOwner.intro', { name: property.owner.name })}
           </p>
         </div>
       </div>
@@ -232,13 +238,11 @@ export default function ContactOwnerCard({ property }: { property: Property }) {
 
       <form onSubmit={handleSubmit} className="mt-4 space-y-3">
         <Textarea
-          label="Votre message"
+          label={t('contactOwner.messageLabel')}
           rows={4}
           maxLength={2000}
           placeholder={
-            isSale
-              ? 'Bonjour, ce bien est-il toujours à vendre ? Le prix est-il négociable ?'
-              : 'Bonjour, ce logement est-il toujours disponible ?'
+            isSale ? t('contactOwner.placeholderSale') : t('contactOwner.placeholderRent')
           }
           value={body}
           onChange={(event) => setBody(event.target.value)}
@@ -260,7 +264,7 @@ export default function ContactOwnerCard({ property }: { property: Property }) {
           disabled={body.trim() === ''}
           isLoading={startConversation.isPending}
         >
-          {startConversation.isPending ? 'Envoi...' : 'Envoyer le message'}
+          {startConversation.isPending ? t('contactOwner.sending') : t('contactOwner.send')}
         </Button>
       </form>
     </Card>

@@ -1,4 +1,5 @@
 import { Star } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/cn'
 
 interface StarRatingProps {
@@ -14,12 +15,13 @@ interface StarRatingProps {
  * buttons - a rating you cannot change should not be in the tab order.
  */
 export default function StarRating({ value, onChange, size = 'md' }: StarRatingProps) {
+  const { t } = useTranslation()
   const interactive = typeof onChange === 'function'
   const starClass = size === 'sm' ? 'size-4' : 'size-6'
 
   if (!interactive) {
     return (
-      <div className="flex gap-0.5" role="img" aria-label={`Note : ${value} sur 5`}>
+      <div className="flex gap-0.5" role="img" aria-label={t('reviews.ratingLabel', { n: value })}>
         {[1, 2, 3, 4, 5].map((star) => (
           <Star
             key={star}
@@ -38,7 +40,7 @@ export default function StarRating({ value, onChange, size = 'md' }: StarRatingP
           key={star}
           type="button"
           onClick={() => onChange(star)}
-          aria-label={`Donner ${star} etoile${star > 1 ? 's' : ''}`}
+          aria-label={t('reviews.rate', { n: star })}
           aria-pressed={star <= value}
           className="rounded transition hover:scale-110 focus-visible:ring-[3px] focus-visible:ring-brand-500/30 focus-visible:outline-none"
         >

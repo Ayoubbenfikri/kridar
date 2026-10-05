@@ -185,7 +185,7 @@ export default function RoommateListingsPage() {
     chips.push({ key: 'available_by', label: t('roommates.chipAvailableBy', { date: get('available_by') }) })
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+    <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
       <Helmet>
         <title>Colocations et logements partagés au Maroc — Krihouse</title>
         <meta
@@ -194,8 +194,10 @@ export default function RoommateListingsPage() {
         />
       </Helmet>
 
-      <h1 className="text-3xl font-bold tracking-tight text-gray-900">{t('roommates.title')}</h1>
-      <p className="mt-1.5 text-gray-500">
+      <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+        {t('roommates.title')}
+      </h1>
+      <p className="mt-1 text-sm text-gray-500 sm:mt-1.5 sm:text-base">
         {isError
           ? t('roommates.serverDown')
           : data
@@ -204,8 +206,10 @@ export default function RoommateListingsPage() {
       </p>
 
       {/* Offer vs request: two separate pages behind one URL (?type=),
-          never a mixed list — see the TYPE_TABS comment above. */}
-      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          never a mixed list — see the TYPE_TABS comment above. Same
+          compact two-column cards as PropertiesPage (Louer | Acheter):
+          smaller on a phone so the switch costs one thin row. */}
+      <div className="mt-4 grid grid-cols-2 gap-2 sm:mt-6 sm:gap-3">
         {TYPE_TABS.map(({ type: tabType, icon: Icon }) => {
           const isActive = type === tabType
           return (
@@ -215,7 +219,7 @@ export default function RoommateListingsPage() {
               aria-pressed={isActive}
               onClick={() => switchType(tabType)}
               className={cn(
-                'flex items-center gap-3 rounded-xl border p-4 text-start transition',
+                'flex items-center gap-2 rounded-xl border p-2.5 text-start transition sm:gap-3 sm:p-4',
                 isActive
                   ? 'border-brand-500 bg-brand-50 ring-[3px] ring-brand-500/20'
                   : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50',
@@ -223,11 +227,11 @@ export default function RoommateListingsPage() {
             >
               <span
                 className={cn(
-                  'flex size-10 shrink-0 items-center justify-center rounded-lg',
+                  'flex size-8 shrink-0 items-center justify-center rounded-lg sm:size-10',
                   isActive ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-500',
                 )}
               >
-                <Icon className="size-5" aria-hidden />
+                <Icon className="size-4 sm:size-5" aria-hidden />
               </span>
               <span
                 className={cn(
@@ -242,8 +246,11 @@ export default function RoommateListingsPage() {
         })}
       </div>
 
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-        <form onSubmit={submitSearch} className="relative flex-1">
+      {/* Toolbar: [search | Filters | list/map] on one line, like
+          PropertiesPage. On a phone the Filters label and the list/map
+          labels are dropped (icons only) so the search box keeps room. */}
+      <div className="mt-3 flex items-center gap-2 sm:mt-6 sm:gap-3">
+        <form onSubmit={submitSearch} className="relative min-w-0 flex-1">
           <Search
             className="pointer-events-none absolute top-1/2 start-3.5 size-4.5 -translate-y-1/2 text-gray-400"
             aria-hidden
@@ -264,7 +271,7 @@ export default function RoommateListingsPage() {
           onClick={() => setShowFilters((open) => !open)}
           aria-expanded={showFilters}
         >
-          {t('roommates.filters')}
+          <span className="sr-only sm:not-sr-only">{t('roommates.filters')}</span>
           {chips.length > 0 && (
             <span className="ms-0.5 flex size-5 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">
               {chips.length}
@@ -283,23 +290,25 @@ export default function RoommateListingsPage() {
               type="button"
               onClick={() => setView('list')}
               aria-pressed={view === 'list'}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition ${
+              aria-label={t('roommates.viewList')}
+              className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition sm:px-3 ${
                 view === 'list' ? 'bg-brand-50 text-brand-700' : 'text-gray-500 hover:text-gray-900'
               }`}
             >
               <LayoutGrid className="size-4" aria-hidden />
-              {t('roommates.viewList')}
+              <span className="hidden sm:inline">{t('roommates.viewList')}</span>
             </button>
             <button
               type="button"
               onClick={() => setView('map')}
               aria-pressed={view === 'map'}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition ${
+              aria-label={t('roommates.viewMap')}
+              className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition sm:px-3 ${
                 view === 'map' ? 'bg-brand-50 text-brand-700' : 'text-gray-500 hover:text-gray-900'
               }`}
             >
               <MapIcon className="size-4" aria-hidden />
-              {t('roommates.viewMap')}
+              <span className="hidden sm:inline">{t('roommates.viewMap')}</span>
             </button>
           </div>
         )}

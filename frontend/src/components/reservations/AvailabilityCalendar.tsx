@@ -1,12 +1,9 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAvailability } from '@/features/reservations/useReservations'
+import { dateLocale, formatDate } from '@/lib/formatDate'
 
-const WEEKDAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
-const MONTH_LABELS = [
-  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
-]
 
 // How far ahead the calendar lets guests browse/book. One availability
 // fetch covers this whole window (see useAvailability) so navigating
@@ -96,6 +93,7 @@ export default function AvailabilityCalendar({
   endDate,
   onChange,
 }: AvailabilityCalendarProps) {
+  const { t } = useTranslation()
   const today = useMemo(() => startOfToday(), [])
   const windowStart = today
   const windowEnd = useMemo(() => addMonths(today, MONTHS_AHEAD), [today])
@@ -135,6 +133,13 @@ export default function AvailabilityCalendar({
     onChange(hasConflict ? iso : startDate, hasConflict ? null : iso)
   }
 
+  // Weekday headings straight from Intl, Monday first (2024-01-01 was a
+  // Monday), so they follow the interface language with no word list to
+  // maintain. The grid flips on its own under dir="rtl".
+  const weekdayLabels = Array.from({ length: 7 }, (_, index) =>
+    new Date(2024, 0, 1 + index).toLocaleDateString(dateLocale(), { weekday: 'short' }),
+  )
+
   const canGoPrev = viewedMonth.getTime() > startOfMonth(today).getTime()
   const canGoNext = viewedMonth.getTime() < startOfMonth(windowEnd).getTime()
 
@@ -146,34 +151,34 @@ export default function AvailabilityCalendar({
           onClick={() => setViewedMonth((month) => addMonths(month, -1))}
           disabled={!canGoPrev}
           className="rounded px-2 py-1 text-gray-500 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
-          aria-label="Mois precedent"
+          aria-label={t('calendar.previousMonth')}
         >
-          <ChevronLeft className="size-4" aria-hidden />
+          <ChevronLeft className="size-4 rtl:rotate-180" aria-hidden />
         </button>
         <span className="font-medium text-gray-800">
-          {MONTH_LABELS[viewedMonth.getMonth()]} {viewedMonth.getFullYear()}
+          {formatDate(viewedMonth, { month: 'long', year: 'numeric' })}
         </span>
         <button
           type="button"
           onClick={() => setViewedMonth((month) => addMonths(month, 1))}
           disabled={!canGoNext}
           className="rounded px-2 py-1 text-gray-500 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
-          aria-label="Mois suivant"
+          aria-label={t('calendar.nextMonth')}
         >
-          <ChevronRight className="size-4" aria-hidden />
+          <ChevronRight className="size-4 rtl:rotate-180" aria-hidden />
         </button>
       </div>
 
-      {isLoading && <p className="py-6 text-center text-sm text-gray-500">Chargement du calendrier...</p>}
+      {isLoading && <p className="py-6 text-center text-sm text-gray-500">{t('calendar.loading')}</p>}
       {isError && (
-        <p className="py-6 text-center text-sm text-red-600">Impossible de charger les disponibilites.</p>
+        <p className="py-6 text-center text-sm text-red-600">{t('calendar.loadError')}</p>
       )}
 
       {availability && (
         <>
           <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-gray-400">
-            {WEEKDAY_LABELS.map((label) => (
-              <span key={label}>{label}</span>
+            {weekdayLabels.map((label, index) => (
+              <span key={index}>{label}</span>
             ))}
           </div>
 
@@ -214,7 +219,7 @@ export default function AvailabilityCalendar({
       )}
 
       <p className="mt-3 text-xs text-gray-400">
-        Cliquez une date d'arrivee, puis une date de depart. Les dates grisees sont deja reservees.
+        {t('calendar.hint')}
       </p>
     </div>
   )

@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CircleMarker, MapContainer, Marker, Polyline, TileLayer } from 'react-leaflet'
 import type L from 'leaflet'
 import { AlertCircle, Navigation, Route } from 'lucide-react'
@@ -43,6 +44,7 @@ interface PropertyLocationMapProps {
  * Dragging to pan and the +/- zoom buttons still work.
  */
 export default function PropertyLocationMap({ latitude, longitude }: PropertyLocationMapProps) {
+  const { t } = useTranslation()
   const [mapStyle, setMapStyle] = useState<MapStyle>('street')
   const position: [number, number] = [latitude, longitude]
 
@@ -169,10 +171,10 @@ export default function PropertyLocationMap({ latitude, longitude }: PropertyLoc
         >
           <Route className="size-4" aria-hidden />
           {status === 'locating'
-            ? 'Localisation...'
+            ? t('map.locating')
             : status === 'routing'
-              ? 'Calcul de l\'itinéraire...'
-              : 'Itinéraire depuis ma position'}
+              ? t('map.routing')
+              : t('map.route')}
         </button>
 
         <a
@@ -182,27 +184,27 @@ export default function PropertyLocationMap({ latitude, longitude }: PropertyLoc
           className={buttonClasses({ variant: 'ghost', size: 'sm' })}
         >
           <Navigation className="size-4" aria-hidden />
-          Ouvrir dans Google Maps
+          {t('map.openGoogleMaps')}
         </a>
       </div>
 
       {routeSummary && (
         <p className="mt-2 text-sm text-gray-600">
-          {routeSummary.km} km · environ {routeSummary.minutes} min en voiture
+          {t('map.routeSummary', { km: routeSummary.km, minutes: routeSummary.minutes })}
         </p>
       )}
 
       {status === 'denied' && (
         <p className="mt-2 flex items-start gap-1.5 text-sm text-red-600">
           <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
-          Localisation refusée — autorisez l'accès à votre position pour afficher l'itinéraire.
+          {t('map.deniedHelp')}
         </p>
       )}
 
       {status === 'error' && (
         <p className="mt-2 flex items-start gap-1.5 text-sm text-red-600">
           <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
-          La localisation n'est pas disponible sur cet appareil.
+          {t('map.unavailable')}
         </p>
       )}
     </div>
