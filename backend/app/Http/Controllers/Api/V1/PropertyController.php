@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Property\AvailabilityRequest;
+use App\Http\Requests\Property\PriceHistogramRequest;
 use App\Http\Requests\Property\PropertySearchRequest;
 use App\Http\Requests\Property\StorePropertyRequest;
 use App\Http\Requests\Property\UpdatePropertyRequest;
@@ -38,6 +39,21 @@ class PropertyController extends Controller
         // to response()->json() skips that wrapping entirely.
         return PropertyResource::collection($this->properties->listPublished($filters, $perPage))
             ->response();
+    }
+
+    /**
+     * GET /properties/price-histogram?listing_type=&rental_type= — public.
+     * The data behind the price slider: min, max, step and ~30 bars
+     * ({from, to, count}) counting the published listings per price band,
+     * for the same price column the search would compare. Defined BEFORE
+     * the {property} route in routes/api/properties.php, otherwise
+     * "price-histogram" would be read as a property id.
+     */
+    public function priceHistogram(PriceHistogramRequest $request): JsonResponse
+    {
+        return response()->json([
+            'data' => $this->properties->priceHistogram($request->validated()),
+        ]);
     }
 
     /**

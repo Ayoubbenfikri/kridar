@@ -28,6 +28,24 @@ class PropertyService
         return $this->properties->paginatePublished($filters, $perPage);
     }
 
+    /**
+     * Data for the price slider: range, step and the bars of the price
+     * distribution, for the kind of search described by $filters
+     * (listing_type, rental_type). Same price-column rule as the search.
+     *
+     * @param  array<string, mixed>  $filters  validated PriceHistogramRequest data
+     * @return array<string, mixed>
+     */
+    public function priceHistogram(array $filters = []): array
+    {
+        $prices = $this->properties->publishedPrices(
+            $filters['listing_type'] ?? ListingType::Rent->value,
+            $filters['rental_type'] ?? null,
+        );
+
+        return PriceHistogramBuilder::build($prices);
+    }
+
     public function listForOwner(User $owner, int $perPage = 15): LengthAwarePaginator
     {
         return $this->properties->paginateForOwner($owner->id, $perPage);

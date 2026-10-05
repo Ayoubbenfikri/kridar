@@ -30,14 +30,9 @@ class EloquentPropertyRepository implements PropertyRepositoryInterface
         $maxGuests = $isSale ? null : ($filters['max_guests'] ?? null);
 
         // The ONE column "price" means in this search. Used by the price
-        // range filter and by the price sort, so they can never disagree.
-        // Always one of three fixed names — never user input — which is
-        // what makes it safe to put in orderByRaw() below.
-        $priceColumn = match (true) {
-            $isSale => 'sale_price',
-            $rentalType === RentalType::LongTerm->value => 'price_per_month',
-            default => 'price_per_night', // short_term, both, or no rental_type given
-        };
+        // range filter and by the price sort, so they can never disagree
+        // (see priceColumn() for the rule and why it is safe in raw SQL).
+        $priceColumn = $this->priceColumn($isSale, $rentalType);
 
         $sort = $filters['sort'] ?? 'newest';
 
@@ -58,16 +53,7 @@ class EloquentPropertyRepository implements PropertyRepositoryInterface
                 $query->whereRaw('LOWER(city) = ?', [mb_strtolower($city)]);
             })
             ->when($filters['property_type'] ?? null, fn (Builder $query, string $type) => $query->where('property_type', $type))
-            ->when($rentalType, function (Builder $query, string $rentalType) {
-                // A property listed as "both" satisfies a search for
-                // either short_term or long_term specifically, since it
-                // does offer that rental mode.
-                $query->where(
-                    fn (Builder $sub) => $rentalType === RentalType::Both->value
-                        ? $sub->where('rental_type', RentalType::Both->value)
-                        : $sub->whereIn('rental_type', [$rentalType, RentalType::Both->value])
-                );
-            })
+            ->when($rentalType, fn (Builder $query, string $rentalType) => $this->whereOffersRentalType($query, $rentalType))
             ->when(isset($filters['bedrooms']), fn (Builder $query) => $query->where('bedrooms', '>=', $filters['bedrooms']))
             ->when(isset($filters['bathrooms']), fn (Builder $query) => $query->where('bathrooms', '>=', $filters['bathrooms']))
             ->when($maxGuests !== null, fn (Builder $query) => $query->where('max_guests', '>=', $maxGuests))
@@ -109,6 +95,55 @@ class EloquentPropertyRepository implements PropertyRepositoryInterface
             )
             ->latest('published_at')
             ->paginate($perPage);
+    }
+
+    public function publishedPrices(string $listingType, ?string $rentalType = null): array
+    {
+        $isSale = $listingType === ListingType::Sale->value;
+        // Same rule as the search: a sale has no rental type.
+        $rentalType = $isSale ? null : $rentalType;
+        $column = $this->priceColumn($isSale, $rentalType);
+
+        return Property::query()
+            ->where('status', PropertyStatus::Published)
+            ->where('listing_type', $listingType)
+            ->when($rentalType, fn (Builder $query, string $rentalType) => $this->whereOffersRentalType($query, $rentalType))
+            // A listing with no price in THIS column (a long-term-only
+            // rental when looking at nightly prices) is not part of the
+            // distribution.
+            ->where($column, '>', 0)
+            ->orderBy($column)
+            ->pluck($column)
+            ->map(fn ($price) => (float) $price)
+            ->all();
+    }
+
+    /**
+     * Which column "price" means. Always one of three fixed names - never
+     * user input - which is what makes it safe to put in orderByRaw().
+     * sale_price for a sale, price_per_month for a long_term rental,
+     * price_per_night for everything else (short_term, both, or none).
+     */
+    private function priceColumn(bool $isSale, ?string $rentalType): string
+    {
+        return match (true) {
+            $isSale => 'sale_price',
+            $rentalType === RentalType::LongTerm->value => 'price_per_month',
+            default => 'price_per_night',
+        };
+    }
+
+    /**
+     * A property listed as "both" satisfies a search for either short_term
+     * or long_term specifically, since it does offer that rental mode.
+     */
+    private function whereOffersRentalType(Builder $query, string $rentalType): Builder
+    {
+        return $query->where(
+            fn (Builder $sub) => $rentalType === RentalType::Both->value
+                ? $sub->where('rental_type', RentalType::Both->value)
+                : $sub->whereIn('rental_type', [$rentalType, RentalType::Both->value])
+        );
     }
 
     public function paginateForOwner(int $ownerId, int $perPage = 15): LengthAwarePaginator

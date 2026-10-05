@@ -20,6 +20,17 @@ interface PropertyRepositoryInterface
     public function paginatePublished(array $filters = [], int $perPage = 15): LengthAwarePaginator;
 
     /**
+     * Every price (in the column a search of this kind compares) of the
+     * published properties, ascending - the raw material of the price
+     * histogram. Same price-column rule as paginatePublished(): sale_price
+     * for a sale, price_per_month for a long_term rental, price_per_night
+     * otherwise. Listings without a price in that column are left out.
+     *
+     * @return array<int, float>
+     */
+    public function publishedPrices(string $listingType, ?string $rentalType = null): array;
+
+    /**
      * All properties owned by a given user, any status — for the owner's
      * own "my listings" screen (Phase 12), not exposed publicly.
      */

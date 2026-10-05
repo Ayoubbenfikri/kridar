@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\V1\PropertyImageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/properties', [PropertyController::class, 'index']);
+// Before {property}, or "price-histogram" would be taken for a property id.
+Route::get('/properties/price-histogram', [PropertyController::class, 'priceHistogram']);
 Route::get('/properties/{property}', [PropertyController::class, 'show']);
 Route::get('/properties/{property}/availability', [PropertyController::class, 'availability']);
 
