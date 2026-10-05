@@ -94,15 +94,17 @@ export default function HomePage() {
       {/* ---------------------------------------------------------------
           HERO
           --------------------------------------------------------------- */}
-      <section className="relative overflow-hidden">
+      <section className="relative">
         {/* Soft teal wash behind the hero. aria-hidden + pointer-events-none:
-            purely decorative, must never catch a click. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 -top-40 h-96 bg-[radial-gradient(60%_60%_at_50%_50%,var(--color-brand-100),transparent_70%)]"
-        />
+            purely decorative, must never catch a click. It clips ITSELF
+            (overflow-hidden on this wrapper) instead of the whole section:
+            the budget panel of the search bar opens downward and must be
+            allowed to overflow the section. */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute inset-x-0 -top-40 h-96 bg-[radial-gradient(60%_60%_at_50%_50%,var(--color-brand-100),transparent_70%)]" />
+        </div>
 
-        <div className="relative mx-auto w-full max-w-6xl px-4 py-12 text-center sm:px-6 sm:py-16">
+        <div className="relative mx-auto w-full max-w-6xl px-4 py-6 text-center sm:px-6 sm:py-16">
           {/* The heading stays for screen readers and search engines, it is
               just not shown: the search bar is the first thing people see. */}
           <h1 className="sr-only">{t('home.title')}</h1>
@@ -111,12 +113,12 @@ export default function HomePage() {
             <SearchBar mode={mode} onModeChange={setMode} />
           </div>
 
-          <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <div className="mt-4 flex flex-wrap justify-center gap-1.5 sm:mt-6 sm:gap-2">
             {CITIES.map((city) => (
               <Link
                 key={city}
                 to={searchUrl(mode, { city })}
-                className="rounded-full border border-gray-200 bg-white px-4 py-1.5 text-sm text-gray-600 transition hover:border-brand-500 hover:bg-brand-50 hover:text-brand-700"
+                className="rounded-full border border-gray-200 bg-white px-3 py-1 text-[13px] text-gray-600 sm:px-4 sm:py-1.5 sm:text-sm transition hover:border-brand-500 hover:bg-brand-50 hover:text-brand-700"
               >
                 {city}
               </Link>
@@ -128,22 +130,22 @@ export default function HomePage() {
       {/* ---------------------------------------------------------------
           BROWSE BY TYPE
           --------------------------------------------------------------- */}
-      <section className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6">
+      <section className="mx-auto w-full max-w-6xl px-4 pb-10 pt-4 sm:px-6 sm:pb-12 sm:pt-0">
         <h2 className="text-2xl font-bold tracking-tight text-gray-900">{t('search.typesTitle')}</h2>
         <p className="mt-1 text-sm text-gray-500">{t('search.typesSubtitle')}</p>
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="mt-4 grid grid-cols-3 gap-2 sm:mt-5 sm:gap-3 lg:grid-cols-6">
           {tileTypes.map((type) => {
             const Icon = TYPE_ICONS[type]
             return (
               <Link
                 key={type}
                 to={searchUrl(mode, { property_type: type })}
-                className="group flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white p-5 text-center transition hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-md"
+                className="group flex flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white p-3 text-center sm:gap-3 sm:p-5 transition hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-md"
               >
-                <span className="flex size-12 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition group-hover:bg-brand-600 group-hover:text-white">
-                  <Icon className="size-6" aria-hidden />
+                <span className="flex size-10 items-center justify-center rounded-xl bg-brand-50 sm:size-12 text-brand-600 transition group-hover:bg-brand-600 group-hover:text-white">
+                  <Icon className="size-5 sm:size-6" aria-hidden />
                 </span>
-                <span className="text-sm font-semibold text-gray-900">{t(`propertyType.${type}`)}</span>
+                <span className="text-xs font-semibold text-gray-900 sm:text-sm">{t(`propertyType.${type}`)}</span>
               </Link>
             )
           })}

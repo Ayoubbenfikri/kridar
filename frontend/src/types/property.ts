@@ -165,6 +165,28 @@ export interface Property {
  * Laravel's default pagination envelope (from ->response() in
  * PropertyController::index).
  */
+/**
+ * GET /properties/price-histogram - the data behind the price slider.
+ * Mirrors backend PriceHistogramBuilder: `min`/`max` are the slider's
+ * bounds (max is a "nice" number just above the top price, and the last bar
+ * also counts everything above it), `step` a natural increment, `buckets`
+ * the ~30 bars. total === 0 means nothing is published for this kind of
+ * search (min and max are then both 0 and buckets is empty).
+ */
+export interface PriceHistogramBucket {
+  from: number
+  to: number
+  count: number
+}
+
+export interface PriceHistogram {
+  min: number
+  max: number
+  step: number
+  total: number
+  buckets: PriceHistogramBucket[]
+}
+
 export interface PaginatedResponse<T> {
   data: T[]
   meta: {

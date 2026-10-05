@@ -189,3 +189,57 @@ html.js .reveal:not(.reveal-in) {
     animation: none;
   }
 }
+
+/* ---------------------------------------------------------------
+   Slider de prix (components/ui/PriceRangeSlider.tsx).
+   Deux <input type="range"> empiles : l'input lui-meme ignore la souris
+   (sinon celui du dessus bloquerait celui du dessous) et seules les
+   poignees rondes la captent.
+   --------------------------------------------------------------- */
+.price-range-input {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  pointer-events: none;
+}
+.price-range-input::-webkit-slider-runnable-track {
+  height: 2rem;
+  background: transparent;
+}
+.price-range-input::-moz-range-track {
+  height: 2rem;
+  background: transparent;
+}
+.price-range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  box-sizing: border-box;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-gray-300);
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 0.18);
+  cursor: grab;
+}
+.price-range-input::-moz-range-thumb {
+  pointer-events: auto;
+  box-sizing: border-box;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-gray-300);
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 0.18);
+  cursor: grab;
+}
+.price-range-input:active::-webkit-slider-thumb {
+  cursor: grabbing;
+}
+.price-range-input:focus-visible::-webkit-slider-thumb {
+  outline: 3px solid color-mix(in srgb, var(--color-brand-500) 35%, transparent);
+}
+.price-range-input:focus-visible::-moz-range-thumb {
+  outline: 3px solid color-mix(in srgb, var(--color-brand-500) 35%, transparent);
+}

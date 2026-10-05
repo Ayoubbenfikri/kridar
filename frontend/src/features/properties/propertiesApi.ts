@@ -3,6 +3,7 @@ import type {
   LegalStatus,
   ListingType,
   PaginatedResponse,
+  PriceHistogram,
   Property,
   PropertyCondition,
   PropertyImage,
@@ -40,6 +41,23 @@ async function fetchProperties(params: FetchPropertiesParams = {}): Promise<Pagi
     params,
   })
   return data
+}
+
+/**
+ * Mirrors backend PriceHistogramRequest: only the two things that decide
+ * WHICH price column is meant (sale_price / price_per_month /
+ * price_per_night). Same rule as the search itself.
+ */
+export interface FetchPriceHistogramParams {
+  listing_type?: ListingType
+  rental_type?: RentalType
+}
+
+async function fetchPriceHistogram(params: FetchPriceHistogramParams = {}): Promise<PriceHistogram> {
+  const { data } = await axiosClient.get<{ data: PriceHistogram }>('/api/v1/properties/price-histogram', {
+    params,
+  })
+  return data.data
 }
 
 async function fetchProperty(id: number | string): Promise<Property> {
@@ -158,6 +176,7 @@ async function revealPhone(propertyId: number): Promise<PhoneRevealStart> {
 
 export const propertiesApi = {
   fetchProperties,
+  fetchPriceHistogram,
   fetchProperty,
   createProperty,
   updateProperty,

@@ -1,6 +1,10 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { propertiesApi } from './propertiesApi'
-import type { FetchPropertiesParams, PropertyFormPayload } from './propertiesApi'
+import type {
+  FetchPriceHistogramParams,
+  FetchPropertiesParams,
+  PropertyFormPayload,
+} from './propertiesApi'
 
 /**
  * List of published properties, one page at a time. keepPreviousData
@@ -19,6 +23,22 @@ export function useProperties(params: FetchPropertiesParams = {}, options?: { en
     // the up-to-50-results map query entirely while the grid view is
     // showing - undefined (every existing caller) behaves as enabled,
     // same as omitting the option, so this is backward compatible.
+    enabled: options?.enabled,
+  })
+}
+
+/**
+ * Bars + bounds for the price slider. Kept for a few minutes: the
+ * distribution of prices barely moves, and the slider is opened (and its
+ * mode changed) far more often than listings are published. The
+ * 'properties' prefix means publishing/editing a listing still refreshes
+ * it, like every other properties query.
+ */
+export function usePriceHistogram(params: FetchPriceHistogramParams = {}, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ['properties', 'price-histogram', params],
+    queryFn: () => propertiesApi.fetchPriceHistogram(params),
+    staleTime: 5 * 60 * 1000,
     enabled: options?.enabled,
   })
 }

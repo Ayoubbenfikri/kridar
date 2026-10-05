@@ -13,42 +13,6 @@
  */
 export type SearchMode = 'short' | 'long' | 'buy'
 
-export interface BudgetPreset {
-  /** Stable id used as the <option> value. */
-  id: string
-  min?: number
-  max?: number
-}
-
-// Same ranges as the old quick chips: monthly rent and sale price, in MAD.
-export const LONG_BUDGETS: BudgetPreset[] = [
-  { id: 'l1', max: 3_000 },
-  { id: 'l2', min: 3_000, max: 6_000 },
-  { id: 'l3', min: 6_000 },
-]
-
-export const BUY_BUDGETS: BudgetPreset[] = [
-  { id: 'b1', max: 500_000 },
-  { id: 'b2', min: 500_000, max: 1_000_000 },
-  { id: 'b3', min: 1_000_000, max: 2_000_000 },
-  { id: 'b4', min: 2_000_000 },
-]
-
-/** 500000 -> "500 K", 2000000 -> "2 M", 3000 -> "3 K". */
-function compact(amount: number): string {
-  if (amount >= 1_000_000) return `${amount / 1_000_000} M`
-  if (amount >= 1_000) return `${amount / 1_000} K`
-  return String(amount)
-}
-
-export function budgetLabel(preset: BudgetPreset, currency: string): string {
-  if (preset.min === undefined && preset.max !== undefined)
-    return `< ${compact(preset.max)} ${currency}`
-  if (preset.max === undefined && preset.min !== undefined)
-    return `> ${compact(preset.min)} ${currency}`
-  return `${compact(preset.min ?? 0)} – ${compact(preset.max ?? 0)} ${currency}`
-}
-
 /**
  * Builds the listing URL for a mode. Empty values are left out - an empty
  * `q=` would be sent to the API as a real filter.

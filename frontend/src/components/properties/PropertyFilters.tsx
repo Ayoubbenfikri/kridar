@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RotateCcw } from 'lucide-react'
 import { Button, Select } from '@/components/ui'
+import PriceRangeSlider from '@/components/ui/PriceRangeSlider'
 import { useAmenities } from '@/features/amenities/useAmenities'
+import { usePriceHistogram } from '@/features/properties/useProperties'
 import { useAmenityLabels } from '@/features/amenities/useAmenityLabels'
 import type { ListingType, PropertyType, RentalType } from '@/types/property'
 
@@ -125,6 +127,13 @@ export default function PropertyFilters({
       ? t('filters.perMonth')
       : t('filters.perNight')
 
+  // The bars follow the same price column as the unit above: a sale, a
+  // long-term search (monthly) or everything else (nightly).
+  const { data: histogram } = usePriceHistogram({
+    listing_type: isSale ? 'sale' : undefined,
+    rental_type: !isSale && draft.rental_type === 'long_term' ? 'long_term' : undefined,
+  })
+
   return (
     <form
       onSubmit={(event) => {
@@ -134,6 +143,21 @@ export default function PropertyFilters({
       className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* One block for the whole price range, as wide as the grid. */}
+        <div className="sm:col-span-2 lg:col-span-4">
+          <span className="mb-3 block text-sm font-semibold text-gray-900">
+            {t('filters.price', { unit: priceUnit })}
+          </span>
+          <div className="max-w-xl">
+            <PriceRangeSlider
+              histogram={histogram}
+              min={draft.min_price}
+              max={draft.max_price}
+              onChange={(min, max) => setDraft((current) => ({ ...current, min_price: min, max_price: max }))}
+            />
+          </div>
+        </div>
+
         <Select
           label={t('filters.propertyType')}
           value={draft.property_type}
@@ -148,37 +172,22 @@ export default function PropertyFilters({
           <Select
             label={t('filters.rentalType')}
             value={draft.rental_type}
-            onChange={(value) => set('rental_type', value)}
+            onChange={(value) =>
+              // Nightly and monthly prices are different scales: a range
+              // chosen for one would be nonsense for the other.
+              setDraft((current) => ({
+                ...current,
+                rental_type: value,
+                min_price: '',
+                max_price: '',
+              }))
+            }
             options={RENTAL_VALUES.map((option) => ({
               value: option,
               label: option === '' ? t('rentalType.both') : t(`rentalType.${option}`),
             }))}
           />
         )}
-
-        <Field label={t('filters.minPrice', { unit: priceUnit })}>
-          <input
-            type="number"
-            min={0}
-            inputMode="numeric"
-            placeholder="0"
-            value={draft.min_price}
-            onChange={(event) => set('min_price', event.target.value)}
-            className={NUMBER_CLASS}
-          />
-        </Field>
-
-        <Field label={t('filters.maxPrice', { unit: priceUnit })}>
-          <input
-            type="number"
-            min={0}
-            inputMode="numeric"
-            placeholder={t('filters.noLimit')}
-            value={draft.max_price}
-            onChange={(event) => set('max_price', event.target.value)}
-            className={NUMBER_CLASS}
-          />
-        </Field>
 
         {/* These three are minimums server-side (>=), so the labels say so. */}
         <Select

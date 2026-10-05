@@ -114,20 +114,6 @@ export default function PropertiesPage({ listingType }: { listingType: ListingTy
   }
 
   /**
-   * The sort select writes here: merge these into the URL
-   * (undefined removes a param) and go back to page 1.
-   */
-  function updateParams(updates: Record<string, string | undefined>) {
-    const params = new URLSearchParams(searchParams)
-    for (const [key, value] of Object.entries(updates)) {
-      if (value === undefined) params.delete(key)
-      else params.set(key, value)
-    }
-    params.delete('page')
-    setSearchParams(params)
-  }
-
-  /**
    * The Louer | Acheter switch. Carries over only what means the same in
    * both modes (the text search and the city): a price range, a rental
    * duration or a property type chosen for one mode would be misread in
@@ -230,7 +216,7 @@ export default function PropertiesPage({ listingType }: { listingType: ListingTy
   })
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+    <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
       <Helmet>
         <title>
           {isSale
@@ -247,45 +233,25 @@ export default function PropertiesPage({ listingType }: { listingType: ListingTy
         />
       </Helmet>
 
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            {isSale ? t('properties.saleTitle') : t('properties.title')}
-          </h1>
-          <p className="mt-1.5 text-gray-500">
-            {isError
-              ? t('properties.serverDown')
-              : data
-                ? t(isSale ? 'properties.saleAvailable' : 'properties.available', { n: data.meta.total })
-                : t(isSale ? 'properties.saleLoading' : 'properties.loading')}
-          </p>
-        </div>
+      <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+        {isSale ? t('properties.saleTitle') : t('properties.title')}
+      </h1>
+      <p className="mt-1 text-sm text-gray-500 sm:mt-1.5 sm:text-base">
+        {isError
+          ? t('properties.serverDown')
+          : data
+            ? t(isSale ? 'properties.saleAvailable' : 'properties.available', { n: data.meta.total })
+            : t(isSale ? 'properties.saleLoading' : 'properties.loading')}
+      </p>
 
-        {/* Sort: not a filter, so it lives next to the count rather than in
-            the filter panel. Written to the same ?sort= param the backend
-            validates (PropertySearchRequest). */}
-        <label className="flex items-center gap-2 text-sm text-gray-500">
-          {t('quick.sort')}
-          <select
-            value={sort ?? 'newest'}
-            onChange={(event) =>
-              updateParams({ sort: event.target.value === 'newest' ? undefined : event.target.value })
-            }
-            className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 transition hover:border-gray-300 focus:border-brand-500 focus:ring-[3px] focus:ring-brand-500/20 focus:outline-none"
-          >
-            <option value="newest">{t('quick.sortNewest')}</option>
-            <option value="price_asc">{t('quick.sortPriceAsc')}</option>
-            <option value="price_desc">{t('quick.sortPriceDesc')}</option>
-          </select>
-        </label>
-      </div>
-
-      {/* Louer | Acheter - same two big cards as the roommates page. The
-          active one is plain markup, the other a link to the other route
-          (see otherModeSearch for what it carries). */}
+      {/* Louer | Acheter - the same two cards as the roommates page. Two
+          columns even on a phone, with smaller cards there, so the switch
+          costs one thin row instead of two big ones. The active one is
+          plain markup, the other a link to the other route (see
+          otherModeSearch for what it carries). */}
       <nav
         aria-label={t('properties.modeLabel')}
-        className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2"
+        className="mt-4 grid grid-cols-2 gap-2 sm:mt-6 sm:gap-3"
       >
         {(
           [
@@ -298,11 +264,11 @@ export default function PropertiesPage({ listingType }: { listingType: ListingTy
             <>
               <span
                 className={cn(
-                  'flex size-10 shrink-0 items-center justify-center rounded-lg',
+                  'flex size-8 shrink-0 items-center justify-center rounded-lg sm:size-10',
                   isActive ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-500',
                 )}
               >
-                <Icon className="size-5" aria-hidden />
+                <Icon className="size-4 sm:size-5" aria-hidden />
               </span>
               <span
                 className={cn(
@@ -315,7 +281,7 @@ export default function PropertiesPage({ listingType }: { listingType: ListingTy
             </>
           )
           const classes = cn(
-            'flex items-center gap-3 rounded-xl border p-4 text-start transition',
+            'flex items-center gap-2 rounded-xl border p-2.5 text-start transition sm:gap-3 sm:p-4',
             isActive
               ? 'border-brand-500 bg-brand-50 ring-[3px] ring-brand-500/20'
               : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50',
@@ -336,10 +302,12 @@ export default function PropertiesPage({ listingType }: { listingType: ListingTy
         })}
       </nav>
 
-      {/* Toolbar: free-text search (q = partial match on title or city)
-          and the filters toggle. */}
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-        <form onSubmit={submitSearch} className="relative flex-1">
+      {/* Toolbar: [search | Filters | list/map] on one line. On a phone the
+          Filters label and the list/map labels are dropped (icons only) so
+          the search box keeps room. */}
+      <div className="mt-3 flex items-center gap-2 sm:mt-6 sm:gap-3">
+        {/* Free-text search (q = partial match on title or city). */}
+        <form onSubmit={submitSearch} className="relative min-w-0 flex-1">
           <Search
             className="pointer-events-none absolute top-1/2 start-3.5 size-4.5 -translate-y-1/2 text-gray-400"
             aria-hidden
@@ -360,7 +328,7 @@ export default function PropertiesPage({ listingType }: { listingType: ListingTy
           onClick={() => setShowFilters((open) => !open)}
           aria-expanded={showFilters}
         >
-          {t('properties.filters')}
+          <span className="sr-only sm:not-sr-only">{t('properties.filters')}</span>
           {chips.length > 0 && (
             <span className="ms-0.5 flex size-5 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">
               {chips.length}
@@ -370,29 +338,32 @@ export default function PropertiesPage({ listingType }: { listingType: ListingTy
 
         {/* Sub-phase #3: list/map toggle. A segmented control rather
             than a permanent side-by-side split - works the same on
-            mobile and desktop with no extra responsive layout. */}
+            mobile and desktop with no extra responsive layout. The text
+            is hidden on a phone (icons only) to save width. */}
         <div className="flex shrink-0 rounded-lg border border-gray-200 bg-white p-1">
           <button
             type="button"
             onClick={() => setView('list')}
             aria-pressed={view === 'list'}
-            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition ${
+            aria-label={t('properties.viewList')}
+            className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition sm:px-3 ${
               view === 'list' ? 'bg-brand-50 text-brand-700' : 'text-gray-500 hover:text-gray-900'
             }`}
           >
             <LayoutGrid className="size-4" aria-hidden />
-            {t('properties.viewList')}
+            <span className="hidden sm:inline">{t('properties.viewList')}</span>
           </button>
           <button
             type="button"
             onClick={() => setView('map')}
             aria-pressed={view === 'map'}
-            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition ${
+            aria-label={t('properties.viewMap')}
+            className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition sm:px-3 ${
               view === 'map' ? 'bg-brand-50 text-brand-700' : 'text-gray-500 hover:text-gray-900'
             }`}
           >
             <MapIcon className="size-4" aria-hidden />
-            {t('properties.viewMap')}
+            <span className="hidden sm:inline">{t('properties.viewMap')}</span>
           </button>
         </div>
       </div>
