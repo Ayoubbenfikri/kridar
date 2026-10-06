@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { ArrowLeft, ArrowRight, CheckCircle2, TriangleAlert } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { useSubmitReview } from '@/features/reviews/useReviews'
 import StarRating from '@/components/reviews/StarRating'
 import { getErrorMessage } from '@/lib/apiErrors'
@@ -14,7 +13,6 @@ import { Button, Card, Textarea, buttonClasses } from '@/components/ui'
  * surfaces its answer.
  */
 export default function LeaveReviewPage() {
-  const { t } = useTranslation()
   const { reservationId } = useParams<{ reservationId: string }>()
   const submitReview = useSubmitReview(reservationId ?? '')
   const [rating, setRating] = useState(0)
@@ -33,16 +31,16 @@ export default function LeaveReviewPage() {
           <span className="mx-auto flex size-12 items-center justify-center rounded-xl bg-green-50 text-green-700">
             <CheckCircle2 className="size-6" aria-hidden />
           </span>
-          <h1 className="mt-4 text-xl font-semibold text-gray-900">{t('reviewForm.thanksTitle')}</h1>
+          <h1 className="mt-4 text-xl font-semibold text-gray-900">Merci pour votre avis</h1>
           <p className="mt-1.5 text-sm text-gray-500">
-            {t('reviewForm.thanksText')}
+            Il est maintenant visible sur la page du logement.
           </p>
           <Link
             to={`/properties/${review.property_id}`}
             className={buttonClasses({ className: 'mt-6' })}
           >
-            {t('reviewForm.viewProperty')}
-            <ArrowRight className="size-4 rtl:rotate-180" aria-hidden />
+            Voir la propriété
+            <ArrowRight className="size-4" aria-hidden />
           </Link>
         </Card>
       </main>
@@ -55,28 +53,28 @@ export default function LeaveReviewPage() {
         to="/reservations"
         className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-brand-600"
       >
-        <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden />
-        {t('reviewForm.backToReservations')}
+        <ArrowLeft className="size-4" aria-hidden />
+        Mes réservations
       </Link>
 
-      <h1 className="mt-3 text-2xl font-bold tracking-tight text-gray-900">{t('reviewForm.title')}</h1>
-      <p className="mt-1 text-sm text-gray-500">{t('reviewForm.subtitle')}</p>
+      <h1 className="mt-3 text-2xl font-bold tracking-tight text-gray-900">Laisser un avis</h1>
+      <p className="mt-1 text-sm text-gray-500">Votre retour aide les prochains voyageurs.</p>
 
       <Card className="mt-6 p-5 sm:p-6">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <span className="mb-2 block text-sm font-semibold text-gray-900">{t('reviewForm.rating')}</span>
+            <span className="mb-2 block text-sm font-semibold text-gray-900">Note</span>
             <StarRating value={rating} onChange={setRating} />
             <p className="mt-2 text-xs text-gray-500">
-              {rating === 0 ? t('reviewForm.chooseRating') : t('reviewForm.ratingOutOf', { n: rating })}
+              {rating === 0 ? 'Choisissez une note pour continuer.' : `${rating} sur 5`}
             </p>
           </div>
 
           <Textarea
-            label={t('reviewForm.comment')}
+            label="Commentaire"
             required
             rows={5}
-            placeholder={t('reviewForm.commentPlaceholder')}
+            placeholder="Comment s'est passé votre séjour ?"
             value={comment}
             onChange={(event) => setComment(event.target.value)}
           />
@@ -89,7 +87,7 @@ export default function LeaveReviewPage() {
           )}
 
           <Button type="submit" fullWidth disabled={rating === 0} isLoading={submitReview.isPending}>
-            {submitReview.isPending ? t('reviewForm.sending') : t('reviewForm.submit')}
+            {submitReview.isPending ? 'Envoi...' : 'Envoyer mon avis'}
           </Button>
         </form>
       </Card>

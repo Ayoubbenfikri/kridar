@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { ImagePlus, X } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui'
 
 /**
@@ -31,7 +30,6 @@ export default function PropertyImageStager({
   files: File[]
   onChange: (files: File[]) => void
 }) {
-  const { t } = useTranslation()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // One object URL per staged file. These are never garbage-collected on
@@ -61,9 +59,10 @@ export default function PropertyImageStager({
           <ImagePlus className="size-4.5" aria-hidden />
         </span>
         <div>
-          <h2 className="font-semibold text-gray-900">{t('images.title')}</h2>
+          <h2 className="font-semibold text-gray-900">Photos</h2>
           <p className="text-sm text-gray-500">
-            {t('images.stagerHint')}
+            Elles seront envoyées automatiquement dès la création de la propriété. La première
+            devient la couverture.
           </p>
         </div>
       </div>
@@ -77,16 +76,16 @@ export default function PropertyImageStager({
             <img src={previews[index]} alt="" className="aspect-square w-full object-cover" />
 
             {index === 0 && (
-              <span className="absolute top-2 start-2 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-semibold text-gray-900 backdrop-blur-sm">
-                {t('images.cover')}
+              <span className="absolute top-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-semibold text-gray-900 backdrop-blur-sm">
+                Couverture
               </span>
             )}
 
             <button
               type="button"
               onClick={() => handleRemove(index)}
-              aria-label={t('images.removeAria')}
-              className="absolute end-2 bottom-2 flex size-8 items-center justify-center rounded-lg bg-white/90 text-red-600 shadow-sm backdrop-blur-sm transition hover:bg-white hover:text-red-700"
+              aria-label="Retirer cette photo"
+              className="absolute right-2 bottom-2 flex size-8 items-center justify-center rounded-lg bg-white/90 text-red-600 shadow-sm backdrop-blur-sm transition hover:bg-white hover:text-red-700"
             >
               <X className="size-4" aria-hidden />
             </button>
@@ -96,7 +95,7 @@ export default function PropertyImageStager({
         {files.length < MAX_IMAGES && (
           <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 text-gray-500 transition hover:border-brand-500 hover:bg-brand-50 hover:text-brand-700">
             <ImagePlus className="size-5" aria-hidden />
-            <span className="text-xs font-medium">{t('images.add')}</span>
+            <span className="text-xs font-medium">Ajouter</span>
             <input
               ref={fileInputRef}
               type="file"
@@ -110,7 +109,7 @@ export default function PropertyImageStager({
       </div>
 
       <p className="mt-3 text-xs text-gray-500">
-        {t('images.limits', { max: MAX_IMAGES })}
+        JPEG/PNG/WebP, 5 Mo maximum par photo, {MAX_IMAGES} photos au total.
       </p>
     </Card>
   )

@@ -369,7 +369,7 @@ export default function PropertiesPage({ listingType }: { listingType: ListingTy
       </div>
 
       {showFilters && (
-        <div className="pt-4">
+        <div className="mt-4">
           <PropertyFilters
             // The panel edits a local draft. A chip clicked while it is
             // open changes the URL underneath it: remounting on any URL

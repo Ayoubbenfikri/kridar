@@ -1,5 +1,4 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
-import { Trans, useTranslation } from 'react-i18next'
 import {
   AlertCircle,
   Banknote,
@@ -27,19 +26,34 @@ import type {
   RentalType,
 } from '@/types/property'
 
-const PROPERTY_TYPES: PropertyType[] = [
-  'apartment',
-  'villa',
-  'studio',
-  'riad',
-  'office',
-  'land',
-  'commercial',
-]
+const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
+  apartment: 'Appartement',
+  villa: 'Villa',
+  studio: 'Studio',
+  riad: 'Riad',
+  office: 'Bureau',
+  land: 'Terrain',
+  commercial: 'Local commercial',
+}
 
-const RENTAL_TYPES: RentalType[] = ['short_term', 'long_term', 'both']
-const CONDITIONS: PropertyCondition[] = ['new', 'good', 'to_renovate']
-const LEGAL_STATUSES: LegalStatus[] = ['titled', 'registering', 'melkia', 'other']
+const RENTAL_TYPE_LABELS: Record<RentalType, string> = {
+  short_term: 'Courte durée (par nuit)',
+  long_term: 'Longue durée (par mois)',
+  both: 'Les deux',
+}
+
+const CONDITION_LABELS: Record<PropertyCondition, string> = {
+  new: 'Neuf',
+  good: 'Bon état',
+  to_renovate: 'À rénover',
+}
+
+const LEGAL_STATUS_LABELS: Record<LegalStatus, string> = {
+  titled: 'Titre foncier',
+  registering: "En cours d'immatriculation",
+  melkia: 'Melkia',
+  other: 'Autre',
+}
 
 /**
  * Plain strings for every controlled input (including numbers) - this
@@ -264,24 +278,23 @@ function ListingTypeChooser({
   value: ListingType
   onChange: (value: ListingType) => void
 }) {
-  const { t } = useTranslation()
   const options: Array<{ value: ListingType; icon: ReactNode; title: string; hint: string }> = [
     {
       value: 'rent',
       icon: <KeyRound className="size-5" aria-hidden />,
-      title: t('propertyForm.chooser.rent'),
-      hint: t('propertyForm.chooser.rentHint'),
+      title: 'Louer',
+      hint: 'Courte ou longue durée, avec réservations.',
     },
     {
       value: 'sale',
       icon: <Tag className="size-5" aria-hidden />,
-      title: t('propertyForm.chooser.sell'),
-      hint: t('propertyForm.chooser.sellHint'),
+      title: 'Vendre',
+      hint: 'Appartement, villa, terrain, local... Les acheteurs vous contactent.',
     },
   ]
 
   return (
-    <div role="radiogroup" aria-label={t('propertyForm.chooser.groupLabel')} className="grid gap-3 sm:grid-cols-2">
+    <div role="radiogroup" aria-label="Type d'annonce" className="grid gap-3 sm:grid-cols-2">
       {options.map((option) => {
         const checked = value === option.value
         return (
@@ -345,7 +358,6 @@ export default function PropertyForm({
   validationErrors,
   generalError,
 }: PropertyFormProps) {
-  const { t } = useTranslation()
   const [form, setForm] = useState<FormState>(
     initialProperty ? formStateFromProperty(initialProperty) : emptyForm(defaultListingType),
   )
@@ -370,10 +382,9 @@ export default function PropertyForm({
 
   // Land can only be sold: the backend refuses it on a rental, so it is
   // not offered there.
-  const propertyTypeOptions = PROPERTY_TYPES.filter((type) => isSale || type !== 'land').map(
-    (type) => ({ value: type, label: t(`propertyType.${type}`) }),
-  )
-  const currency = t('common.currency')
+  const propertyTypeOptions = (Object.keys(PROPERTY_TYPE_LABELS) as PropertyType[])
+    .filter((type) => isSale || type !== 'land')
+    .map((type) => ({ value: type, label: PROPERTY_TYPE_LABELS[type] }))
 
   function update<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [field]: value }))
@@ -416,8 +427,8 @@ export default function PropertyForm({
       {!isEditing && (
         <Section
           icon={<Building2 className="size-4.5" />}
-          title={t('propertyForm.chooser.title')}
-          description={t('propertyForm.chooser.description')}
+          title="Que souhaitez-vous faire ?"
+          description="Ce choix ne pourra plus être modifié après la création"
         >
           <ListingTypeChooser value={form.listing_type} onChange={chooseListingType} />
         </Section>
@@ -425,33 +436,25 @@ export default function PropertyForm({
 
       <Section
         icon={<Building2 className="size-4.5" />}
-        title={t('propertyForm.info.title')}
+        title="Informations"
         description={
-          isSale ? t('propertyForm.info.descriptionSale') : t('propertyForm.info.descriptionRent')
+          isSale ? "Ce que l'acheteur voit en premier" : 'Ce que le voyageur voit en premier'
         }
       >
         {isEditing && (
           <p className="mb-4 text-sm text-gray-500">
-            <Trans
-              i18nKey="propertyForm.info.listingTypeLine"
-              values={{
-                type: isSale ? t('propertyForm.info.forSale') : t('propertyForm.info.forRent'),
-              }}
-              components={{ strong: <span className="font-semibold text-gray-900" /> }}
-            />
+            Type d'annonce :{' '}
+            <span className="font-semibold text-gray-900">{isSale ? 'À vendre' : 'À louer'}</span>{' '}
+            (non modifiable)
           </p>
         )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <Input
-              label={t('propertyForm.info.titleLabel')}
+              label="Titre"
               required
-              placeholder={
-                isSale
-                  ? t('propertyForm.info.titlePlaceholderSale')
-                  : t('propertyForm.info.titlePlaceholderRent')
-              }
+              placeholder={isSale ? 'Villa avec piscine à vendre' : 'Villa avec piscine privée'}
               value={form.title}
               onChange={(event) => update('title', event.target.value)}
               error={fieldError('title')}
@@ -460,50 +463,50 @@ export default function PropertyForm({
 
           <div className="sm:col-span-2">
             <Textarea
-              label={t('propertyForm.info.descriptionLabel')}
+              label="Description"
               required
               minLength={20}
               rows={5}
               placeholder={
                 isSale
-                  ? t('propertyForm.info.descriptionPlaceholderSale')
-                  : t('propertyForm.info.descriptionPlaceholderRent')
+                  ? 'Décrivez le bien, le quartier, ses atouts...'
+                  : 'Décrivez le logement, le quartier, ce qui le rend agréable...'
               }
               value={form.description}
               onChange={(event) => update('description', event.target.value)}
               error={fieldError('description')}
-              hint={t('propertyForm.info.descriptionHint')}
+              hint="20 caractères minimum"
             />
           </div>
 
           <Select
-            label={t('propertyForm.info.propertyType')}
+            label="Type de bien"
             value={form.property_type}
             onChange={(value) => update('property_type', value as PropertyType)}
             error={fieldError('property_type')}
-            options={[{ value: '', label: t('propertyForm.info.choose') }, ...propertyTypeOptions]}
+            options={[{ value: '', label: 'Choisir...' }, ...propertyTypeOptions]}
           />
 
           {!isSale && (
             <Select
-              label={t('propertyForm.info.rentalType')}
+              label="Type de location"
               value={form.rental_type}
               onChange={(value) => update('rental_type', value as RentalType)}
               error={fieldError('rental_type')}
               options={[
-                { value: '', label: t('propertyForm.info.choose') },
-                ...RENTAL_TYPES.map((value) => ({ value, label: t(`propertyForm.info.rental.${value}`) })),
+                { value: '', label: 'Choisir...' },
+                ...Object.entries(RENTAL_TYPE_LABELS).map(([value, label]) => ({ value, label })),
               ]}
             />
           )}
         </div>
       </Section>
 
-      <Section icon={<MapPin className="size-4.5" />} title={t('propertyForm.location.title')}>
+      <Section icon={<MapPin className="size-4.5" />} title="Localisation">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <Input
-              label={t('propertyForm.location.address')}
+              label="Adresse"
               required
               value={form.address}
               onChange={(event) => update('address', event.target.value)}
@@ -512,7 +515,7 @@ export default function PropertyForm({
           </div>
 
           <Input
-            label={t('common.city')}
+            label="Ville"
             required
             value={form.city}
             onChange={(event) => update('city', event.target.value)}
@@ -520,7 +523,7 @@ export default function PropertyForm({
           />
 
           <Input
-            label={t('propertyForm.location.region')}
+            label="Région (optionnel)"
             value={form.region}
             onChange={(event) => update('region', event.target.value)}
             error={fieldError('region')}
@@ -528,7 +531,7 @@ export default function PropertyForm({
 
           <div className="sm:col-span-2 space-y-2">
             <span className="block text-sm font-semibold text-gray-900">
-              {t('propertyForm.location.mapLabel')}
+              Position sur la carte (optionnel)
             </span>
             <LocationPicker
               // Forces a fresh Leaflet map instance whenever this form is
@@ -545,14 +548,11 @@ export default function PropertyForm({
               }}
             />
             <p className="text-xs text-gray-500">
-              {t('propertyForm.location.mapHint')}
+              Cliquez sur la carte ou déplacez le repère pour définir la position exacte du bien.
               {form.latitude && form.longitude && (
                 <>
                   {' '}
-                  {t('propertyForm.location.currentPosition', {
-                    lat: Number(form.latitude).toFixed(5),
-                    lng: Number(form.longitude).toFixed(5),
-                  })}
+                  Position actuelle : {Number(form.latitude).toFixed(5)}, {Number(form.longitude).toFixed(5)}
                 </>
               )}
             </p>
@@ -569,14 +569,14 @@ export default function PropertyForm({
       {isSale ? (
         <Section
           icon={<Users className="size-4.5" />}
-          title={t('propertyForm.features.title')}
-          description={isLand ? t('propertyForm.features.landNote') : undefined}
+          title="Caractéristiques"
+          description={isLand ? 'Un terrain n’a ni chambres ni salles de bain' : undefined}
         >
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {!isLand && (
               <>
                 <Input
-                  label={t('propertyForm.features.bedroomsOptional')}
+                  label="Chambres (optionnel)"
                   type="number"
                   min={0}
                   value={form.bedrooms}
@@ -585,7 +585,7 @@ export default function PropertyForm({
                 />
 
                 <Input
-                  label={t('propertyForm.features.bathroomsOptional')}
+                  label="Salles de bain (optionnel)"
                   type="number"
                   min={0}
                   value={form.bathrooms}
@@ -596,7 +596,7 @@ export default function PropertyForm({
             )}
 
             <Input
-              label={t('propertyForm.features.areaOptional')}
+              label="Surface m² (optionnel)"
               type="number"
               min={0}
               step="any"
@@ -607,10 +607,10 @@ export default function PropertyForm({
           </div>
         </Section>
       ) : (
-        <Section icon={<Users className="size-4.5" />} title={t('propertyForm.capacity.title')}>
+        <Section icon={<Users className="size-4.5" />} title="Capacité">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Input
-              label={t('propertyForm.capacity.bedrooms')}
+              label="Chambres"
               type="number"
               min={0}
               required
@@ -620,7 +620,7 @@ export default function PropertyForm({
             />
 
             <Input
-              label={t('propertyForm.capacity.bathrooms')}
+              label="Salles de bain"
               type="number"
               min={0}
               required
@@ -630,11 +630,7 @@ export default function PropertyForm({
             />
 
             <Input
-              label={
-                needsNightly
-                  ? `${t('propertyForm.capacity.maxGuests')} *`
-                  : t('propertyForm.capacity.maxGuestsOptional')
-              }
+              label={needsNightly ? 'Voyageurs max *' : 'Voyageurs max (optionnel)'}
               type="number"
               min={1}
               required={needsNightly}
@@ -644,7 +640,7 @@ export default function PropertyForm({
             />
 
             <Input
-              label={t('propertyForm.features.areaOptional')}
+              label="Surface m² (optionnel)"
               type="number"
               min={0}
               step="any"
@@ -659,12 +655,12 @@ export default function PropertyForm({
       {isSale ? (
         <Section
           icon={<Banknote className="size-4.5" />}
-          title={t('propertyForm.salePricing.title')}
-          description={t('propertyForm.salePricing.description')}
+          title="Prix et informations de vente"
+          description="Ce que vous déclarez ici est affiché tel quel aux acheteurs"
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
-              label={`${t('propertyForm.salePricing.salePrice', { currency })} *`}
+              label="Prix de vente (MAD) *"
               type="number"
               min={1}
               step="any"
@@ -691,13 +687,13 @@ export default function PropertyForm({
                   className="sr-only"
                 />
                 {form.price_negotiable && <Check className="size-4 shrink-0" aria-hidden />}
-                {t('propertyForm.salePricing.negotiable')}
+                Prix négociable
               </label>
             </div>
 
             {!isLand && (
               <Input
-                label={t('propertyForm.salePricing.yearBuilt')}
+                label="Année de construction (optionnel)"
                 type="number"
                 min={1800}
                 max={new Date().getFullYear() + 5}
@@ -710,28 +706,25 @@ export default function PropertyForm({
 
             {!isLand && (
               <Select
-                label={t('propertyForm.salePricing.condition')}
+                label="État du bien (optionnel)"
                 value={form.property_condition}
                 onChange={(value) => update('property_condition', value as PropertyCondition | '')}
                 error={fieldError('property_condition')}
                 options={[
-                  { value: '', label: t('propertyForm.salePricing.notSpecified') },
-                  ...CONDITIONS.map((value) => ({ value, label: t(`propertyDetails.condition.${value}`) })),
+                  { value: '', label: 'Non précisé' },
+                  ...Object.entries(CONDITION_LABELS).map(([value, label]) => ({ value, label })),
                 ]}
               />
             )}
 
             <Select
-              label={t('propertyForm.salePricing.legalStatus')}
+              label="Statut juridique (optionnel)"
               value={form.legal_status}
               onChange={(value) => update('legal_status', value as LegalStatus | '')}
               error={fieldError('legal_status')}
               options={[
-                { value: '', label: t('propertyForm.salePricing.notSpecified') },
-                ...LEGAL_STATUSES.map((value) => ({
-                  value,
-                  label: t(`propertyDetails.legalStatus.${value}`),
-                })),
+                { value: '', label: 'Non précisé' },
+                ...Object.entries(LEGAL_STATUS_LABELS).map(([value, label]) => ({ value, label })),
               ]}
             />
           </div>
@@ -739,16 +732,16 @@ export default function PropertyForm({
       ) : (
         <Section
           icon={<Banknote className="size-4.5" />}
-          title={t('propertyForm.rentPricing.title')}
+          title="Tarifs"
           description={
             form.rental_type === ''
-              ? t('propertyForm.rentPricing.chooseTypeFirst')
-              : t('propertyForm.rentPricing.requiredHint')
+              ? "Choisissez d'abord un type de location ci-dessus"
+              : 'Les champs marqués * sont obligatoires pour ce type de location'
           }
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
-              label={`${t('propertyForm.rentPricing.perNight', { currency })}${needsNightly ? ' *' : ''}`}
+              label={needsNightly ? 'Prix par nuit (MAD) *' : 'Prix par nuit (MAD)'}
               type="number"
               min={0}
               step="any"
@@ -759,7 +752,7 @@ export default function PropertyForm({
             />
 
             <Input
-              label={`${t('propertyForm.rentPricing.perMonth', { currency })}${needsMonthly ? ' *' : ''}`}
+              label={needsMonthly ? 'Prix par mois (MAD) *' : 'Prix par mois (MAD)'}
               type="number"
               min={0}
               step="any"
@@ -777,19 +770,15 @@ export default function PropertyForm({
       {!(isSale && isLand) && (
         <Section
           icon={<Sparkles className="size-4.5" />}
-          title={t('propertyForm.amenities.title')}
-          description={
-            isSale
-              ? t('propertyForm.amenities.descriptionSale')
-              : t('propertyForm.amenities.descriptionRent')
-          }
+          title="Équipements"
+          description={isSale ? 'Ce qui est inclus avec le bien' : 'Ce qui est inclus dans le logement'}
         >
           {amenitiesFailed ? (
             <div className="flex flex-wrap items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
               <AlertCircle className="size-4 shrink-0" aria-hidden />
-              <span>{t('propertyForm.amenities.loadError')}</span>
+              <span>Impossible de charger les équipements.</span>
               <Button type="button" variant="secondary" size="sm" onClick={() => refetchAmenities()}>
-                {t('propertyForm.amenities.retry')}
+                Réessayer
               </Button>
             </div>
           ) : !amenities ? (
@@ -799,7 +788,7 @@ export default function PropertyForm({
               ))}
             </div>
           ) : amenities.length === 0 ? (
-            <p className="text-sm text-gray-500">{t('propertyForm.amenities.empty')}</p>
+            <p className="text-sm text-gray-500">Aucun équipement n'est disponible pour le moment.</p>
           ) : (
             <div className="space-y-5">
               {amenityGroups.map((group) => (
@@ -849,7 +838,7 @@ export default function PropertyForm({
 
       <div className="flex justify-end">
         <Button type="submit" isLoading={isSubmitting}>
-          {isSubmitting ? t('common.saving') : submitLabel}
+          {isSubmitting ? 'Enregistrement...' : submitLabel}
         </Button>
       </div>
     </form>

@@ -315,7 +315,7 @@ export default function RoommateListingsPage() {
       </div>
 
       {showFilters && (
-        <div className="pt-4">
+        <div className="mt-4">
           <RoommateListingFilters
             value={filterValues}
             onApply={applyFilters}

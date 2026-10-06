@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import PropertyForm from '@/components/properties/PropertyForm'
 import PropertyImageStager from '@/components/properties/PropertyImageStager'
@@ -21,7 +20,6 @@ import type { PropertyFormPayload } from '@/features/properties/propertiesApi'
  * Same approach as RoommateListingCreatePage.
  */
 export default function PropertyCreatePage() {
-  const { t } = useTranslation()
   const navigate = useNavigate()
   // /owner/properties/new?listing_type=sale opens the form on "Vendre".
   // Only a starting point: the chooser in the form still decides, and the
@@ -59,20 +57,20 @@ export default function PropertyCreatePage() {
         to="/owner/properties"
         className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-brand-600"
       >
-        <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden />
-        {t('owner.nav.properties')}
+        <ArrowLeft className="size-4" aria-hidden />
+        Mes propriétés
       </Link>
 
-      <h1 className="mt-3 text-2xl font-bold tracking-tight text-gray-900">{t('propertyEdit.newTitle')}</h1>
+      <h1 className="mt-3 text-2xl font-bold tracking-tight text-gray-900">Nouvelle propriété</h1>
       <p className="mt-1 mb-6 text-sm text-gray-500">
-        {t('propertyEdit.newSubtitle')}
+        Elle sera créée en brouillon. Ajoutez vos photos ci-dessous, puis publiez-la ensuite.
       </p>
 
       <PropertyForm
         defaultListingType={defaultListingType}
         onSubmit={handleSubmit}
         isSubmitting={createMutation.isPending || isUploadingPhotos}
-        submitLabel={t('propertyEdit.create')}
+        submitLabel="Créer la propriété"
         validationErrors={getValidationErrors(createMutation.error)}
         generalError={
           createMutation.isError && !getValidationErrors(createMutation.error)
