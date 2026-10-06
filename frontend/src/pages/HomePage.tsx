@@ -104,7 +104,7 @@ export default function HomePage() {
           <div className="absolute inset-x-0 -top-40 h-96 bg-[radial-gradient(60%_60%_at_50%_50%,var(--color-brand-100),transparent_70%)]" />
         </div>
 
-        <div className="relative mx-auto w-full max-w-6xl px-4 py-6 text-center sm:px-6 sm:py-16">
+        <div className="relative mx-auto w-full max-w-6xl px-4 py-6 text-center sm:px-6 sm:pb-6 sm:pt-12">
           {/* The heading stays for screen readers and search engines, it is
               just not shown: the search bar is the first thing people see. */}
           <h1 className="sr-only">{t('home.title')}</h1>
@@ -130,7 +130,7 @@ export default function HomePage() {
       {/* ---------------------------------------------------------------
           BROWSE BY TYPE
           --------------------------------------------------------------- */}
-      <section className="mx-auto w-full max-w-6xl px-4 pb-10 pt-4 sm:px-6 sm:pb-12 sm:pt-0">
+      <section className="mx-auto w-full max-w-6xl px-4 pb-8 pt-4 sm:px-6 sm:pb-8 sm:pt-0">
         <h2 className="text-2xl font-bold tracking-tight text-gray-900">{t('search.typesTitle')}</h2>
         <p className="mt-1 text-sm text-gray-500">{t('search.typesSubtitle')}</p>
         <div className="mt-4 grid grid-cols-3 gap-2 sm:mt-5 sm:gap-3 lg:grid-cols-6">
