@@ -28,6 +28,7 @@ import { useSettings } from '@/features/settings/useSettings'
 import { getErrorMessage } from '@/lib/apiErrors'
 import { formatMad, primaryPrice } from '@/lib/formatPrice'
 import ReviewsSection from '@/components/reviews/ReviewsSection'
+import { Reveal, RevealGroup } from '@/components/motion'
 import FavoriteButton from '@/components/properties/FavoriteButton'
 import ContactOwnerCard from '@/components/properties/ContactOwnerCard'
 import BookingPanel from '@/components/reservations/BookingPanel'
@@ -242,7 +243,7 @@ export default function PropertyDetailsPage() {
       </Link>
 
       {/* Header */}
-      <div className="mt-4 flex items-start justify-between gap-4">
+      <Reveal scroll={false} className="mt-4 flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-3xl font-bold tracking-tight text-balance text-gray-900">
             {property.title}
@@ -267,19 +268,23 @@ export default function PropertyDetailsPage() {
         <div className="shrink-0">
           <FavoriteButton propertyId={property.id} />
         </div>
-      </div>
+      </Reveal>
 
       {/* Gallery: one large image, thumbnails underneath. Clicking a
           thumbnail swaps the large one - no lightbox, nothing to trap
           keyboard focus. */}
-      <div className="mt-6">
+      <Reveal scroll={false} delay={0.1} y={0} duration={0.7} className="mt-6">
         {cover ? (
           <>
-            <img
-              src={cover.url}
-              alt={property.title}
-              className="aspect-[16/10] w-full rounded-xl border border-gray-200 object-cover"
-            />
+            {/* key + Reveal: picking another thumbnail swaps the large
+                image with a quick fade instead of a hard cut. */}
+            <Reveal key={cover.url} scroll={false} y={0} duration={0.35}>
+              <img
+                src={cover.url}
+                alt={property.title}
+                className="aspect-[16/10] w-full rounded-xl border border-gray-200 object-cover"
+              />
+            </Reveal>
             {images.length > 1 && (
               <div className="mt-3 flex gap-3 overflow-x-auto pb-1">
                 {images.map((image, index) => (
@@ -307,86 +312,90 @@ export default function PropertyDetailsPage() {
             <span className="text-sm">{t('card.noPhoto')}</span>
           </div>
         )}
-      </div>
+      </Reveal>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
         {/* ---------------- Left column ---------------- */}
         <div className="lg:col-span-2">
-          <Card className="p-5">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Fact icon={<Building2 className="size-4.5" />} label={t(`propertyType.${property.property_type}`)} />
+          <Reveal>
+            <Card className="p-5">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Fact icon={<Building2 className="size-4.5" />} label={t(`propertyType.${property.property_type}`)} />
 
-              {/* rental_type is null on a sale. */}
-              {property.rental_type && (
-                <Fact
-                  icon={<CalendarRange className="size-4.5" />}
-                  label={t(`rentalType.${property.rental_type}`)}
-                />
-              )}
+                {/* rental_type is null on a sale. */}
+                {property.rental_type && (
+                  <Fact
+                    icon={<CalendarRange className="size-4.5" />}
+                    label={t(`rentalType.${property.rental_type}`)}
+                  />
+                )}
 
-              {/* A sale can have 0 rooms (land, commercial premises): a
-                  line saying "0 chambre" would only be noise there. A
-                  rental always shows them, as before. */}
-              {(!isSale || property.bedrooms > 0) && (
-                <Fact
-                  icon={<BedDouble className="size-4.5" />}
-                  label={t('propertyDetails.bedrooms', { n: property.bedrooms })}
-                />
-              )}
-              {(!isSale || property.bathrooms > 0) && (
-                <Fact
-                  icon={<Bath className="size-4.5" />}
-                  label={t('propertyDetails.bathrooms', { n: property.bathrooms })}
-                />
-              )}
+                {/* A sale can have 0 rooms (land, commercial premises): a
+                    line saying "0 chambre" would only be noise there. A
+                    rental always shows them, as before. */}
+                {(!isSale || property.bedrooms > 0) && (
+                  <Fact
+                    icon={<BedDouble className="size-4.5" />}
+                    label={t('propertyDetails.bedrooms', { n: property.bedrooms })}
+                  />
+                )}
+                {(!isSale || property.bathrooms > 0) && (
+                  <Fact
+                    icon={<Bath className="size-4.5" />}
+                    label={t('propertyDetails.bathrooms', { n: property.bathrooms })}
+                  />
+                )}
 
-              {property.legal_status && (
-                <Fact
-                  icon={<ScrollText className="size-4.5" />}
-                  label={t(`propertyDetails.legalStatus.${property.legal_status}`)}
-                />
-              )}
-              {property.property_condition && (
-                <Fact
-                  icon={<Wrench className="size-4.5" />}
-                  label={t(`propertyDetails.condition.${property.property_condition}`)}
-                />
-              )}
-              {property.year_built !== null && (
-                <Fact
-                  icon={<CalendarDays className="size-4.5" />}
-                  label={t('propertyDetails.builtIn', { year: property.year_built })}
-                />
-              )}
+                {property.legal_status && (
+                  <Fact
+                    icon={<ScrollText className="size-4.5" />}
+                    label={t(`propertyDetails.legalStatus.${property.legal_status}`)}
+                  />
+                )}
+                {property.property_condition && (
+                  <Fact
+                    icon={<Wrench className="size-4.5" />}
+                    label={t(`propertyDetails.condition.${property.property_condition}`)}
+                  />
+                )}
+                {property.year_built !== null && (
+                  <Fact
+                    icon={<CalendarDays className="size-4.5" />}
+                    label={t('propertyDetails.builtIn', { year: property.year_built })}
+                  />
+                )}
 
-              {property.max_guests !== null && (
-                <Fact
-                  icon={<Users className="size-4.5" />}
-                  label={t('propertyDetails.maxGuests', { n: property.max_guests })}
-                />
-              )}
-              {property.area_sqm !== null && (
-                <Fact icon={<Ruler className="size-4.5" />} label={`${Number(property.area_sqm)} m²`} />
-              )}
-            </div>
-          </Card>
+                {property.max_guests !== null && (
+                  <Fact
+                    icon={<Users className="size-4.5" />}
+                    label={t('propertyDetails.maxGuests', { n: property.max_guests })}
+                  />
+                )}
+                {property.area_sqm !== null && (
+                  <Fact icon={<Ruler className="size-4.5" />} label={`${Number(property.area_sqm)} m²`} />
+                )}
+              </div>
+            </Card>
+          </Reveal>
 
-          <section className="mt-8">
+          <Reveal as="section" className="mt-8">
             <h2 className="text-xl font-semibold tracking-tight text-gray-900">{t('propertyDetails.description')}</h2>
             <p className="mt-3 whitespace-pre-line text-gray-600">{property.description}</p>
-          </section>
+          </Reveal>
 
           {property.amenities.length > 0 && (
             <section className="mt-8">
-              <h2 className="text-xl font-semibold tracking-tight text-gray-900">{t('propertyDetails.amenities')}</h2>
-              <ul className="mt-3 grid gap-2.5 sm:grid-cols-2">
+              <Reveal>
+                <h2 className="text-xl font-semibold tracking-tight text-gray-900">{t('propertyDetails.amenities')}</h2>
+              </Reveal>
+              <RevealGroup as="ul" y={8} stagger={0.03} className="mt-3 grid gap-2.5 sm:grid-cols-2">
                 {property.amenities.map((amenity) => (
                   <li key={amenity.id} className="flex items-center gap-2.5 text-gray-700">
                     <Check className="size-4 shrink-0 text-brand-600" aria-hidden />
                     {amenityName(amenity.name)}
                   </li>
                 ))}
-              </ul>
+              </RevealGroup>
             </section>
           )}
 
@@ -394,7 +403,7 @@ export default function PropertyDetailsPage() {
               the listing was created/edited - address/city text above
               already covers a property with no coordinates. */}
           {hasLocation && (
-            <section className="mt-8">
+            <Reveal as="section" className="mt-8">
               <h2 className="text-xl font-semibold tracking-tight text-gray-900">{t('propertyDetails.location')}</h2>
               <p className="mt-1 text-sm text-gray-500">
                 {property.address}, {property.city}
@@ -403,10 +412,10 @@ export default function PropertyDetailsPage() {
               <div className="mt-3">
                 <PropertyLocationMap latitude={latitude} longitude={longitude} />
               </div>
-            </section>
+            </Reveal>
           )}
 
-          <section className="mt-8">
+          <Reveal as="section" className="mt-8">
             <h2 className="text-xl font-semibold tracking-tight text-gray-900">{t('propertyDetails.owner')}</h2>
             <div className="mt-3 flex items-center gap-3">
               <UserAvatar
@@ -423,37 +432,42 @@ export default function PropertyDetailsPage() {
               </div>
             </div>
             <OwnerPhone property={property} />
-          </section>
+          </Reveal>
 
           {!isSale && <ReviewsSection propertyId={property.id.toString()} />}
         </div>
 
         {/* ---------------- Right column ---------------- */}
         <div className="lg:col-span-1">
+          {/* The Reveal is INSIDE the sticky div, not around it: a wrapper
+              around a sticky element would shrink its "sticky track" to
+              its own height and the panel would stop sticking. */}
           <div className="lg:sticky lg:top-24">
-            {price && (
-              <div className="mb-4 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <span className="text-2xl font-bold tracking-tight text-gray-900">
-                  {formatMad(price.amount)}
-                </span>
-                {/* No unit on a sale price. */}
-                {price.unitKey && <span className="text-gray-500">{t(price.unitKey)}</span>}
-                {isSale && property.price_negotiable && (
-                  <Badge tone="green">{t('propertyDetails.negotiable')}</Badge>
-                )}
-              </div>
-            )}
+            <Reveal scroll={false} delay={0.15}>
+              {price && (
+                <div className="mb-4 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                  <span className="text-2xl font-bold tracking-tight text-gray-900">
+                    {formatMad(price.amount)}
+                  </span>
+                  {/* No unit on a sale price. */}
+                  {price.unitKey && <span className="text-gray-500">{t(price.unitKey)}</span>}
+                  {isSale && property.price_negotiable && (
+                    <Badge tone="green">{t('propertyDetails.negotiable')}</Badge>
+                  )}
+                </div>
+              )}
 
-            {/* A property for sale cannot be booked (the backend refuses
-                it too, with a 422). */}
-            {!isSale && <BookingPanel property={property} />}
+              {/* A property for sale cannot be booked (the backend refuses
+                  it too, with a 422). */}
+              {!isSale && <BookingPanel property={property} />}
 
-            {/* Under the booking panel on purpose. For a short-term stay
-                booking is the main action and messaging is the fallback;
-                for a long-term listing BookingPanel is the only path
-                Kridar offers, and this is how the tenant actually
-                reaches the owner to arrange the lease. */}
-            <ContactOwnerCard property={property} />
+              {/* Under the booking panel on purpose. For a short-term stay
+                  booking is the main action and messaging is the fallback;
+                  for a long-term listing BookingPanel is the only path
+                  Kridar offers, and this is how the tenant actually
+                  reaches the owner to arrange the lease. */}
+              <ContactOwnerCard property={property} />
+            </Reveal>
           </div>
         </div>
       </div>

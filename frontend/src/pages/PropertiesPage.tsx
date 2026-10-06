@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react'
 import PropertyCard from '@/components/properties/PropertyCard'
+import { Expand, RevealGroup } from '@/components/motion'
 import PropertyFilters from '@/components/properties/PropertyFilters'
 import type { FilterValues } from '@/components/properties/PropertyFilters'
 import PropertiesMapView from '@/components/map/PropertiesMapView'
@@ -369,24 +370,26 @@ export default function PropertiesPage({ listingType }: { listingType: ListingTy
       </div>
 
       {showFilters && (
-        <div className="mt-4">
-          <PropertyFilters
-            // The panel edits a local draft. A chip clicked while it is
-            // open changes the URL underneath it: remounting on any URL
-            // change keeps the draft from going stale and then undoing the
-            // chip on "Apply".
-            key={searchParams.toString()}
-            value={filterValues}
-            listingType={listingType}
-            onApply={applyFilters}
-            onReset={() => {
-              const params = new URLSearchParams()
-              if (get('q')) params.set('q', get('q'))
-              setSearchParams(params)
-              setShowFilters(false)
-            }}
-          />
-        </div>
+        <Expand>
+          <div className="pt-4">
+            <PropertyFilters
+              // The panel edits a local draft. A chip clicked while it is
+              // open changes the URL underneath it: remounting on any URL
+              // change keeps the draft from going stale and then undoing the
+              // chip on "Apply".
+              key={searchParams.toString()}
+              value={filterValues}
+              listingType={listingType}
+              onApply={applyFilters}
+              onReset={() => {
+                const params = new URLSearchParams()
+                if (get('q')) params.set('q', get('q'))
+                setSearchParams(params)
+                setShowFilters(false)
+              }}
+            />
+          </div>
+        </Expand>
       )}
 
       {chips.length > 0 && (
@@ -455,13 +458,16 @@ export default function PropertiesPage({ listingType }: { listingType: ListingTy
           )
         ) : (
           <>
-            <div
+            {/* watch: replays the stagger when the listings on screen change
+                (new page, new filter), not when only isFetching flips. */}
+            <RevealGroup
+              watch={properties.map((property) => property.id).join(',')}
               className={`grid grid-cols-1 gap-6 transition-opacity sm:grid-cols-2 lg:grid-cols-3 ${isFetching ? 'opacity-60' : ''}`}
             >
               {properties.map((property) => (
                 <PropertyCard key={property.id} property={property} />
               ))}
-            </div>
+            </RevealGroup>
 
             {data.meta.last_page > 1 && (
               <div className="mt-10 flex items-center justify-center gap-3">

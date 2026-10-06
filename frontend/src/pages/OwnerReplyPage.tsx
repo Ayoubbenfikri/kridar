@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { ArrowLeft, CheckCircle2, TriangleAlert } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useReplyToReview } from '@/features/reviews/useReviews'
 import { getErrorMessage } from '@/lib/apiErrors'
 import { Button, Card, Textarea, buttonClasses } from '@/components/ui'
@@ -11,6 +12,7 @@ import { Button, Card, Textarea, buttonClasses } from '@/components/ui'
  * reviewed property.
  */
 export default function OwnerReplyPage() {
+  const { t } = useTranslation()
   const { reviewId } = useParams<{ reviewId: string }>()
   const replyToReview = useReplyToReview(reviewId ?? '')
   const [ownerReply, setOwnerReply] = useState('')
@@ -27,12 +29,12 @@ export default function OwnerReplyPage() {
           <span className="mx-auto flex size-12 items-center justify-center rounded-xl bg-green-50 text-green-700">
             <CheckCircle2 className="size-6" aria-hidden />
           </span>
-          <h1 className="mt-4 text-xl font-semibold text-gray-900">Réponse envoyée</h1>
+          <h1 className="mt-4 text-xl font-semibold text-gray-900">{t('ownerReply.sentTitle')}</h1>
           <p className="mt-1.5 text-sm text-gray-500">
-            Elle apparaît sous l'avis, sur la page du logement.
+            {t('ownerReply.sentText')}
           </p>
           <Link to="/owner" className={buttonClasses({ variant: 'secondary', className: 'mt-6' })}>
-            Retour à l'espace propriétaire
+            {t('ownerReply.backToOwner')}
           </Link>
         </Card>
       </main>
@@ -45,22 +47,22 @@ export default function OwnerReplyPage() {
         to="/owner"
         className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-brand-600"
       >
-        <ArrowLeft className="size-4" aria-hidden />
-        Espace propriétaire
+        <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden />
+        {t('ownerReply.back')}
       </Link>
 
-      <h1 className="mt-3 text-2xl font-bold tracking-tight text-gray-900">Répondre à cet avis</h1>
+      <h1 className="mt-3 text-2xl font-bold tracking-tight text-gray-900">{t('ownerReply.title')}</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Votre réponse est publique et apparaît sous l'avis du voyageur.
+        {t('ownerReply.subtitle')}
       </p>
 
       <Card className="mt-6 p-5 sm:p-6">
         <form onSubmit={handleSubmit} className="space-y-5">
           <Textarea
-            label="Votre réponse"
+            label={t('ownerReply.label')}
             required
             rows={5}
-            placeholder="Merci pour votre séjour..."
+            placeholder={t('ownerReply.placeholder')}
             value={ownerReply}
             onChange={(event) => setOwnerReply(event.target.value)}
           />
@@ -78,7 +80,7 @@ export default function OwnerReplyPage() {
             disabled={ownerReply.trim().length === 0}
             isLoading={replyToReview.isPending}
           >
-            {replyToReview.isPending ? 'Envoi...' : 'Répondre'}
+            {replyToReview.isPending ? t('ownerReply.sending') : t('ownerReply.submit')}
           </Button>
         </form>
       </Card>
