@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useAccountLocaleSync } from '@/features/locale/useLocale'
 import AcceptTermsModal from '@/components/legal/AcceptTermsModal'
 import { cn } from '@/lib/cn'
-import { MOTION_OK, gsap, useGSAP, useScrollTriggerAutoRefresh } from '@/lib/gsap'
 import Navbar from './Navbar'
 import MobileTabBar from './MobileTabBar'
 import SiteFooter from './SiteFooter'
@@ -49,30 +48,6 @@ export default function AppLayout() {
     window.scrollTo({ top: 0 })
   }, [pathname])
 
-  // Keeps the scroll-reveal animations (components/motion) measured
-  // correctly when a page changes height after it first rendered.
-  useScrollTriggerAutoRefresh()
-
-  // Page transition: a quick fade each time the route changes. The div
-  // below is re-created on every navigation (key={pathname}), so this runs
-  // again for each new page. Opacity only, on purpose: the sections inside
-  // the page do their own small slide-up (<Reveal>), and moving both would
-  // be too much.
-  const pageRef = useRef<HTMLDivElement>(null)
-  useGSAP(
-    () => {
-      const page = pageRef.current
-      if (!page) return undefined
-
-      const mm = gsap.matchMedia()
-      mm.add(MOTION_OK, () => {
-        gsap.from(page, { autoAlpha: 0, duration: 0.3, clearProps: 'opacity,visibility' })
-      })
-      return () => mm.revert()
-    },
-    { dependencies: [pathname], revertOnUpdate: true },
-  )
-
   // Desktop sidebar show/hide, remembered per browser. Read once on
   // mount; localStorage can throw in private browsing, so this fails
   // safe to "expanded" rather than crashing the whole app.
@@ -111,8 +86,8 @@ export default function AppLayout() {
         <VerifyEmailBanner />
         <AcceptTermsModal />
         {/* key=pathname remounts on navigation, which is what replays the
-            entrance animation (see useGSAP above). */}
-        <div key={pathname} ref={pageRef} className="flex-1 pb-16 lg:pb-0">
+            entrance animation. */}
+        <div key={pathname} className="page-enter flex-1 pb-16 lg:pb-0">
           <Outlet />
         </div>
         {/* Hidden on mobile: MobileTabBar already covers the bottom of the

@@ -14,7 +14,6 @@ import {
   X,
 } from 'lucide-react'
 import RoommateListingCard from '@/components/roommateListings/RoommateListingCard'
-import { Expand, RevealGroup } from '@/components/motion'
 import RoommateListingFilters from '@/components/roommateListings/RoommateListingFilters'
 import type { RoommateFilterValues } from '@/components/roommateListings/RoommateListingFilters'
 import RoommateListingsMapView from '@/components/map/RoommateListingsMapView'
@@ -316,21 +315,19 @@ export default function RoommateListingsPage() {
       </div>
 
       {showFilters && (
-        <Expand>
-          <div className="pt-4">
-            <RoommateListingFilters
-              value={filterValues}
-              onApply={applyFilters}
-              onReset={() => {
-                const params = new URLSearchParams()
-                if (get('q')) params.set('q', get('q'))
-                params.set('type', type)
-                setSearchParams(params)
-                setShowFilters(false)
-              }}
-            />
-          </div>
-        </Expand>
+        <div className="pt-4">
+          <RoommateListingFilters
+            value={filterValues}
+            onApply={applyFilters}
+            onReset={() => {
+              const params = new URLSearchParams()
+              if (get('q')) params.set('q', get('q'))
+              params.set('type', type)
+              setSearchParams(params)
+              setShowFilters(false)
+            }}
+          />
+        </div>
       )}
 
       {chips.length > 0 && (
@@ -399,14 +396,13 @@ export default function RoommateListingsPage() {
           )
         ) : (
           <>
-            <RevealGroup
-              watch={listings.map((listing) => listing.id).join(',')}
+            <div
               className={`grid grid-cols-1 gap-6 transition-opacity sm:grid-cols-2 lg:grid-cols-3 ${isFetching ? 'opacity-60' : ''}`}
             >
               {listings.map((listing) => (
                 <RoommateListingCard key={listing.id} listing={listing} />
               ))}
-            </RevealGroup>
+            </div>
 
             {data.meta.last_page > 1 && (
               <div className="mt-10 flex items-center justify-center gap-3">

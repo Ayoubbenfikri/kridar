@@ -17,7 +17,6 @@ import {
 } from 'lucide-react'
 import SearchBar from '@/components/search/SearchBar'
 import PropertyCard from '@/components/properties/PropertyCard'
-import { Reveal, RevealGroup } from '@/components/motion'
 import { useProperties } from '@/features/properties/useProperties'
 import { Card, EmptyState, Skeleton, buttonClasses } from '@/components/ui'
 import { searchUrl, type SearchMode } from '@/lib/homeSearch'
@@ -110,19 +109,11 @@ export default function HomePage() {
               just not shown: the search bar is the first thing people see. */}
           <h1 className="sr-only">{t('home.title')}</h1>
 
-          {/* Hero entrance: plays on load (scroll={false}), search bar
-              first, then the city chips one after the other. */}
-          <Reveal scroll={false} y={20} duration={0.7}>
+          <div>
             <SearchBar mode={mode} onModeChange={setMode} />
-          </Reveal>
+          </div>
 
-          <RevealGroup
-            scroll={false}
-            delay={0.25}
-            y={10}
-            stagger={0.05}
-            className="mt-4 flex flex-wrap justify-center gap-1.5 sm:mt-6 sm:gap-2"
-          >
+          <div className="mt-4 flex flex-wrap justify-center gap-1.5 sm:mt-6 sm:gap-2">
             {CITIES.map((city) => (
               <Link
                 key={city}
@@ -132,7 +123,7 @@ export default function HomePage() {
                 {city}
               </Link>
             ))}
-          </RevealGroup>
+          </div>
         </div>
       </section>
 
@@ -140,15 +131,9 @@ export default function HomePage() {
           BROWSE BY TYPE
           --------------------------------------------------------------- */}
       <section className="mx-auto w-full max-w-6xl px-4 pb-10 pt-4 sm:px-6 sm:pb-12 sm:pt-0">
-        <Reveal>
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900">{t('search.typesTitle')}</h2>
-          <p className="mt-1 text-sm text-gray-500">{t('search.typesSubtitle')}</p>
-        </Reveal>
-        <RevealGroup
-          y={12}
-          stagger={0.05}
-          className="mt-4 grid grid-cols-3 gap-2 sm:mt-5 sm:gap-3 lg:grid-cols-6"
-        >
+        <h2 className="text-2xl font-bold tracking-tight text-gray-900">{t('search.typesTitle')}</h2>
+        <p className="mt-1 text-sm text-gray-500">{t('search.typesSubtitle')}</p>
+        <div className="mt-4 grid grid-cols-3 gap-2 sm:mt-5 sm:gap-3 lg:grid-cols-6">
           {tileTypes.map((type) => {
             const Icon = TYPE_ICONS[type]
             return (
@@ -164,14 +149,14 @@ export default function HomePage() {
               </Link>
             )
           })}
-        </RevealGroup>
+        </div>
       </section>
 
       {/* ---------------------------------------------------------------
           LATEST PROPERTIES
           --------------------------------------------------------------- */}
       <section className="mx-auto w-full max-w-6xl px-4 pb-4 sm:px-6">
-        <Reveal className="mb-6 flex items-end justify-between gap-5">
+        <div className="mb-6 flex items-end justify-between gap-5">
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-gray-900">{t('home.latest')}</h2>
             <p className="mt-1 text-sm text-gray-500">{t('home.latestSubtitle')}</p>
@@ -187,7 +172,7 @@ export default function HomePage() {
               aria-hidden
             />
           </Link>
-        </Reveal>
+        </div>
 
         {/* Exhaustive on purpose: error, then "no data yet", then empty,
             then the grid. Written as one cascade so there is no
@@ -215,14 +200,11 @@ export default function HomePage() {
           />
         ) : (
           <>
-            <RevealGroup
-              watch={properties.map((property) => property.id).join(',')}
-              className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-            >
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {properties.map((property) => (
                 <PropertyCard key={property.id} property={property} />
               ))}
-            </RevealGroup>
+            </div>
             <div className="mt-8 flex justify-center sm:hidden">
               <Link to="/properties" className={buttonClasses({ variant: 'secondary' })}>
                 {t('home.seeAllProperties')}
@@ -237,7 +219,7 @@ export default function HomePage() {
           --------------------------------------------------------------- */}
       {saleProperties.length > 0 && (
         <section className="mx-auto w-full max-w-6xl px-4 pt-12 sm:px-6">
-          <Reveal className="mb-6 flex items-end justify-between gap-5">
+          <div className="mb-6 flex items-end justify-between gap-5">
             <div>
               <h2 className="text-2xl font-bold tracking-tight text-gray-900">
                 {t('search.saleTitle')}
@@ -254,15 +236,12 @@ export default function HomePage() {
                 aria-hidden
               />
             </Link>
-          </Reveal>
-          <RevealGroup
-            watch={saleProperties.map((property) => property.id).join(',')}
-            className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-          >
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {saleProperties.map((property) => (
               <PropertyCard key={property.id} property={property} />
             ))}
-          </RevealGroup>
+          </div>
         </section>
       )}
 
@@ -270,22 +249,20 @@ export default function HomePage() {
           OWNER CALL TO ACTION
           --------------------------------------------------------------- */}
       <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
-        <Reveal>
-          <Card className="flex flex-col items-start gap-6 p-8 sm:flex-row sm:items-center sm:justify-between sm:p-10">
-            <div className="max-w-lg">
-              <span className="flex size-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
-                <ShieldCheck className="size-5" aria-hidden />
-              </span>
-              <h2 className="mt-4 text-2xl font-bold tracking-tight text-gray-900">
-                {t('home.ownerTitle')}
-              </h2>
-              <p className="mt-2 text-gray-500">{t('home.ownerText')}</p>
-            </div>
-            <Link to="/owner" className={buttonClasses({ className: 'shrink-0' })}>
-              {t('home.ownerCta')}
-            </Link>
-          </Card>
-        </Reveal>
+        <Card className="flex flex-col items-start gap-6 p-8 sm:flex-row sm:items-center sm:justify-between sm:p-10">
+          <div className="max-w-lg">
+            <span className="flex size-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+              <ShieldCheck className="size-5" aria-hidden />
+            </span>
+            <h2 className="mt-4 text-2xl font-bold tracking-tight text-gray-900">
+              {t('home.ownerTitle')}
+            </h2>
+            <p className="mt-2 text-gray-500">{t('home.ownerText')}</p>
+          </div>
+          <Link to="/owner" className={buttonClasses({ className: 'shrink-0' })}>
+            {t('home.ownerCta')}
+          </Link>
+        </Card>
 
         {/* ---------------------------------------------------------------
             SUPPORT (Phase 28)
@@ -299,22 +276,20 @@ export default function HomePage() {
             afterthought now that it's the main donate CTA - the footer
             link and this section are the two places it lives.
             --------------------------------------------------------------- */}
-        <Reveal delay={0.1} className="mt-4">
-          <Card className="flex flex-col items-start gap-4 border-brand-100 bg-brand-50/60 p-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-3">
-              <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white">
-                <Heart className="size-5" aria-hidden />
-              </span>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">{t('home.supportTitle')}</h2>
-                <p className="mt-1 text-sm text-gray-600">{t('home.supportText')}</p>
-              </div>
+        <Card className="mt-4 flex flex-col items-start gap-4 border-brand-100 bg-brand-50/60 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white">
+              <Heart className="size-5" aria-hidden />
+            </span>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">{t('home.supportTitle')}</h2>
+              <p className="mt-1 text-sm text-gray-600">{t('home.supportText')}</p>
             </div>
-            <Link to="/support" className={buttonClasses({ size: 'sm', className: 'shrink-0' })}>
-              {t('home.supportCta')}
-            </Link>
-          </Card>
-        </Reveal>
+          </div>
+          <Link to="/support" className={buttonClasses({ size: 'sm', className: 'shrink-0' })}>
+            {t('home.supportCta')}
+          </Link>
+        </Card>
       </section>
     </main>
   )
