@@ -112,6 +112,13 @@ class ReservationController extends Controller
     {
         $this->authorize('cancel', $reservation);
 
+        // Security audit (Oct 2026): the reason used to be read unchecked,
+        // so an array crashed the request with a 500 and any length was
+        // stored. Same 2000-character limit as a message or a review.
+        $request->validate([
+            'reason' => ['nullable', 'string', 'max:2000'],
+        ]);
+
         $reservation = $this->reservations->cancel($reservation, $request->user(), $request->input('reason'));
 
         return response()->json([

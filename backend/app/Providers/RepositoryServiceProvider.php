@@ -21,6 +21,8 @@ use App\Repositories\Eloquent\EloquentRoommateListingRepository;
 use App\Services\Gateways\FakeCmiGateway;
 use App\Services\Gateways\PaymentGatewayInterface;
 use App\Services\Gateways\PaypalGateway;
+use App\Services\Gateways\UnavailableGateway;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -75,10 +77,28 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(PaymentGatewayInterface::class, function () {
             $name = (string) config('payments.gateway', 'fake');
 
-            // An unknown value falls back to the fake gateway rather
-            // than crashing the whole app on boot: a typo in .env should
-            // not take the site down, and the fake one is always safe.
-            return $this->app->make(self::GATEWAYS[$name] ?? FakeCmiGateway::class);
+            // Security audit (Oct 2026). This used to fall back to the fake
+            // gateway on an unknown name, and the fake gateway was allowed
+            // everywhere. The fake one approves ANY payment that reaches
+            // the public /payments/{id}/return URL - so a typo in .env, or
+            // a missing PAYMENT_GATEWAY on the server, meant anyone could
+            // mark any payment "paid" for free once PAYMENTS_ENABLED=true.
+            //
+            // Both cases now get UnavailableGateway, which never approves
+            // anything, and the reason is written to the log.
+            if (! array_key_exists($name, self::GATEWAYS)) {
+                Log::error('Unknown payment gateway configured; online payments are disabled.', ['gateway' => $name]);
+
+                return new UnavailableGateway;
+            }
+
+            if ($name === 'fake' && ! $this->app->environment(['local', 'testing'])) {
+                Log::error('The fake payment gateway is configured outside local/testing; online payments are disabled.');
+
+                return new UnavailableGateway;
+            }
+
+            return $this->app->make(self::GATEWAYS[$name]);
         });
     }
 }

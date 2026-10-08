@@ -5,7 +5,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/reservations', [ReservationController::class, 'index']);
-    Route::post('/reservations', [ReservationController::class, 'store']);
+    // Security audit (Oct 2026): a pending request blocks the calendar,
+    // so creating them is throttled (see also StoreReservationRequest).
+    Route::post('/reservations', [ReservationController::class, 'store'])->middleware('throttle:10,1');
 
     // Phase 22 (pricing): read-only price + commission breakdown, shown
     // before the guest commits. POST, not GET, because it takes a body

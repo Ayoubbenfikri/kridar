@@ -85,9 +85,19 @@ class AdminService
             ->where('status', PropertyStatus::Published)
             ->update(['status' => PropertyStatus::Suspended]);
 
+        // Security audit (Oct 2026): roommate posts are public too, and
+        // used to stay online after their author was suspended. Same rule
+        // as the properties above, and the same "an admin re-approves each
+        // one" path back (approveRoommateListing).
+        $suspendedRoommatePosts = RoommateListing::query()
+            ->where('user_id', $user->id)
+            ->where('status', RoommateListingStatus::Published)
+            ->update(['status' => RoommateListingStatus::Suspended]);
+
         $this->audit->record($admin, AdminAction::UserSuspended, $user, [
             'email' => $user->email,
             'listings_suspended' => $suspendedListings,
+            'roommate_posts_suspended' => $suspendedRoommatePosts,
         ]);
 
         return $user->fresh();

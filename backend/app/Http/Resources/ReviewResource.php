@@ -23,7 +23,16 @@ class ReviewResource extends JsonResource
             'comment' => $this->comment,
             'owner_reply' => $this->owner_reply,
             'owner_replied_at' => $this->owner_replied_at,
-            'guest' => new UserResource($this->whenLoaded('guest')),
+            // Built by hand, NOT through UserResource (security audit, Oct
+            // 2026). This list is PUBLIC, and UserResource is the account
+            // owner's own view: email, phone, role, messaging pass... Only
+            // the reviewer's public identity belongs here - same convention
+            // as the owner block in PropertyResource.
+            'guest' => $this->whenLoaded('guest', fn () => [
+                'id' => $this->guest?->id,
+                'name' => $this->guest?->name,
+                'avatar_url' => $this->guest?->avatarUrl(),
+            ]),
             'created_at' => $this->created_at,
         ];
     }

@@ -84,6 +84,26 @@ class GoogleAuthController extends Controller
         $user = User::where('google_id', $googleUser->getId())->first();
 
         if (! $user) {
+            // Security audit (Oct 2026): from here on the Google EMAIL is
+            // what matters - it can link to an existing Krihouse account
+            // and is stored as already verified on a new one. So Google
+            // must vouch for it. A Google account can carry an address its
+            // owner never proved (email_verified = false); trusting it
+            // would let someone sign in as whoever really owns that email.
+            $googleEmailVerified = filter_var(
+                $googleUser->getRaw()['email_verified'] ?? false,
+                FILTER_VALIDATE_BOOLEAN,
+            );
+
+            // google_auth_failed, not google_email_unverified: that one
+            // tells the person to verify their KRIHOUSE email, which is
+            // not the problem here. Rare enough not to need its own text.
+            if (! filled($googleUser->getEmail()) || ! $googleEmailVerified) {
+                Log::warning('Google sign-in refused: Google did not confirm the email address.');
+
+                return redirect("{$frontendUrl}/login?error=google_auth_failed");
+            }
+
             $existing = User::where('email', $googleUser->getEmail())->first();
 
             if ($existing && ! $existing->hasVerifiedEmail()) {

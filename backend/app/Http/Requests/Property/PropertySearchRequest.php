@@ -41,7 +41,10 @@ class PropertySearchRequest extends FormRequest
             'bedrooms' => ['sometimes', 'integer', 'min:0'],
             'bathrooms' => ['sometimes', 'integer', 'min:0'],
             'max_guests' => ['sometimes', 'integer', 'min:1'],
-            'amenities' => ['sometimes', 'array'],
+            // max:50 (security audit, Oct 2026): each id runs its own
+            // `exists` query, so an unbounded list was a cheap way to make
+            // one search request cost thousands of queries.
+            'amenities' => ['sometimes', 'array', 'max:50'],
             'amenities.*' => ['integer', 'exists:amenities,id'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:50'],
         ];

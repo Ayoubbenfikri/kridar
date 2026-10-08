@@ -23,6 +23,11 @@ class ReviewController extends Controller
      */
     public function indexForProperty(Property $property): JsonResponse
     {
+        // Security audit (Oct 2026): same visibility as the listing itself
+        // (PropertyPolicy::view) - reviews of a draft or suspended listing
+        // are only for its owner and admins, not for anyone with its id.
+        $this->authorize('view', $property);
+
         return ReviewResource::collection($this->reviews->listForProperty($property))
             ->response();
     }

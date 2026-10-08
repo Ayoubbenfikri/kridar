@@ -3,7 +3,9 @@
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/auth/register', [AuthController::class, 'register']);
+// Security audit (Oct 2026): throttled like login. Without a limit a
+// script could create accounts (and send verification emails) in bulk.
+Route::post('/auth/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
 // "Connect with Google" used to live here too, but it moved to

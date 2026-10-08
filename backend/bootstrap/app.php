@@ -22,6 +22,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\HandleCors::class,
         ]);
 
+        // Security audit (Oct 2026): browser-hardening headers on every
+        // response, API and web alike - see AddSecurityHeaders.
+        $middleware->append(\App\Http\Middleware\AddSecurityHeaders::class);
+
         // 'owner' gates the /owner/* dashboard routes (Phase 12) - see
         // App\Http\Middleware\EnsureUserOwnsAProperty for what it checks.
         // 'admin' gates /admin/* the same way (Phase 13, role=admin).

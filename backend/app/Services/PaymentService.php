@@ -294,22 +294,44 @@ class PaymentService
 
         $result = $this->gateway->handleCallback($payment, $request);
 
+        // Security audit (Oct 2026): both writes below are CONDITIONAL
+        // ("only if it is still not paid"), not a plain save of the model
+        // loaded at the start of this request. Two returns for the same
+        // payment can run at the same time (a double redirect, a refresh,
+        // the POST callback). Before, the slower one could overwrite a
+        // "paid" row with "failed" (PayPal refuses a second capture), and
+        // two successful ones could both run the grants below.
         if (! $result['success']) {
             // A failed publication payment deliberately leaves the
             // property on pending_payment, not "back to nothing": the
             // owner tried, and the owner screen should keep showing the
             // pay button rather than pretending nothing happened.
-            return $this->payments->update($payment, [
-                'status' => PaymentStatus::Failed,
-                'provider_transaction_id' => $result['provider_transaction_id'],
-            ]);
+            Payment::query()
+                ->whereKey($payment->id)
+                ->where('status', '!=', PaymentStatus::Paid->value)
+                ->update([
+                    'status' => PaymentStatus::Failed->value,
+                    'provider_transaction_id' => $result['provider_transaction_id'],
+                ]);
+
+            return $payment->fresh();
         }
 
-        $payment = $this->payments->update($payment, [
-            'status' => PaymentStatus::Paid,
-            'provider_transaction_id' => $result['provider_transaction_id'],
-            'paid_at' => now(),
-        ]);
+        $settledHere = Payment::query()
+            ->whereKey($payment->id)
+            ->where('status', '!=', PaymentStatus::Paid->value)
+            ->update([
+                'status' => PaymentStatus::Paid->value,
+                'provider_transaction_id' => $result['provider_transaction_id'],
+                'paid_at' => now(),
+            ]);
+
+        $payment = $payment->fresh();
+
+        // Another request already settled it and ran the grants.
+        if ($settledHere === 0) {
+            return $payment;
+        }
 
         if ($payment->isListingPublication() && $payment->property !== null) {
             $this->markPublicationPaid($payment->property);

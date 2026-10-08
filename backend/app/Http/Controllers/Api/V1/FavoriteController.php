@@ -38,6 +38,12 @@ class FavoriteController extends Controller
      */
     public function store(Request $request, Property $property): JsonResponse
     {
+        // Security audit (Oct 2026): only a listing you are allowed to SEE
+        // can be favorited. Without this, favoriting the id of someone
+        // else's draft/suspended listing and then reading GET /favorites
+        // returned its full details (description, address, coordinates).
+        $this->authorize('view', $property);
+
         $this->favorites->add($request->user(), $property);
 
         return response()->json([

@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquent;
 
+use App\Enums\PropertyStatus;
 use App\Models\Favorite;
 use App\Models\Property;
 use App\Repositories\Contracts\FavoriteRepositoryInterface;
@@ -14,6 +15,13 @@ class EloquentFavoriteRepository implements FavoriteRepositoryInterface
         return Property::query()
             ->join('favorites', 'favorites.property_id', '=', 'properties.id')
             ->where('favorites.user_id', $userId)
+            // Security audit (Oct 2026): a favorite stays in the table when
+            // its listing is later unpublished or suspended, but the list
+            // only ever shows what the user may still see — a published
+            // listing, or one of their own. Same rule as PropertyPolicy::view.
+            ->where(fn ($query) => $query
+                ->where('properties.status', PropertyStatus::Published)
+                ->orWhere('properties.owner_id', $userId))
             ->select('properties.*')
             ->with([
                 'owner:id,name',

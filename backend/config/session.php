@@ -169,7 +169,11 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    // Security audit (Oct 2026): defaults to true in production, so the
+    // session cookie is never sent over plain HTTP even if
+    // SESSION_SECURE_COOKIE is missing from the server's .env. Local
+    // development (http://localhost) keeps working: APP_ENV=local.
+    'secure' => env('SESSION_SECURE_COOKIE', env('APP_ENV') === 'production'),
 
     /*
     |--------------------------------------------------------------------------

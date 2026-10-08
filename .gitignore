@@ -12,3 +12,14 @@ frontend/.env.local
 
 # Setup archives (temporary, used while syncing files into this folder)
 _setup/
+
+# Security (Oct 2026 audit): never commit environment files or the
+# assistant's scratch folder - "Claude outputs/env" was a full copy of
+# backend/.env (APP_KEY, PayPal credentials) published on GitHub.
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+Claude outputs/

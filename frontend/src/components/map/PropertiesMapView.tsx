@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { formatMad, primaryPrice } from '@/lib/formatPrice'
+import { escapeHtml } from '@/lib/escapeHtml'
 import MapOverlayControls from '@/components/map/MapOverlayControls'
 import { TILE_LAYERS } from '@/components/map/mapTileStyles'
 import type { MapStyle } from '@/components/map/mapTileStyles'
@@ -52,11 +53,16 @@ interface GeolocatedProperty {
  * stays in sync with the brand color instead of a hardcoded hex.
  */
 function priceIcon(label: string): L.DivIcon {
+  // `label` can be a listing TITLE (typed by its author) when there is no
+  // price, and this html string is inserted as-is by Leaflet, outside
+  // React's automatic escaping: it must be escaped here, or a title like
+  // <img src=x onerror=...> runs in every visitor's browser.
+  const safeLabel = escapeHtml(label)
   return L.divIcon({
     className: '',
     html: `
       <div class="inline-flex -translate-x-1/2 -translate-y-full cursor-pointer flex-col items-center transition hover:scale-105">
-        <div class="whitespace-nowrap rounded-lg bg-brand-600 px-2.5 py-1 text-xs font-bold text-white shadow-lg">${label}</div>
+        <div class="whitespace-nowrap rounded-lg bg-brand-600 px-2.5 py-1 text-xs font-bold text-white shadow-lg">${safeLabel}</div>
         <div class="h-0 w-0 border-x-[6px] border-x-transparent border-t-[7px] border-t-brand-600"></div>
       </div>
     `,
