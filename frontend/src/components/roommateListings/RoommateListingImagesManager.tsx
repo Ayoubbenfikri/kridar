@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ImagePlus, Loader2, Trash2, TriangleAlert } from 'lucide-react'
 import {
   useDeleteRoommateListingImage,
@@ -22,6 +23,7 @@ export default function RoommateListingImagesManager({
   listingId: number
   images: RoommateListingImage[]
 }) {
+  const { t } = useTranslation()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const uploadMutation = useUploadRoommateListingImages(listingId)
   const deleteMutation = useDeleteRoommateListingImage(listingId)
@@ -51,9 +53,9 @@ export default function RoommateListingImagesManager({
           <ImagePlus className="size-4.5" aria-hidden />
         </span>
         <div>
-          <h2 className="font-semibold text-gray-900">Photos</h2>
+          <h2 className="font-semibold text-gray-900">{t('images.title')}</h2>
           <p className="text-sm text-gray-500">
-            La première photo ajoutée devient automatiquement la couverture.
+            {t('images.managerHint')}
           </p>
         </div>
       </div>
@@ -67,8 +69,8 @@ export default function RoommateListingImagesManager({
             <img src={image.url} alt="" className="aspect-square w-full object-cover" />
 
             {image.is_cover && (
-              <span className="absolute top-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-semibold text-gray-900 backdrop-blur-sm">
-                Couverture
+              <span className="absolute top-2 start-2 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-semibold text-gray-900 backdrop-blur-sm">
+                {t('images.cover')}
               </span>
             )}
 
@@ -76,8 +78,8 @@ export default function RoommateListingImagesManager({
               type="button"
               onClick={() => handleDelete(image.id)}
               disabled={deletingId === image.id}
-              aria-label="Supprimer cette photo"
-              className="absolute right-2 bottom-2 flex size-8 items-center justify-center rounded-lg bg-white/90 text-red-600 shadow-sm backdrop-blur-sm transition hover:bg-white hover:text-red-700 disabled:opacity-50"
+              aria-label={t('images.deleteAria')}
+              className="absolute end-2 bottom-2 flex size-8 items-center justify-center rounded-lg bg-white/90 text-red-600 shadow-sm backdrop-blur-sm transition hover:bg-white hover:text-red-700 disabled:opacity-50"
             >
               {deletingId === image.id ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -102,7 +104,7 @@ export default function RoommateListingImagesManager({
             <ImagePlus className="size-5" aria-hidden />
           )}
           <span className="text-xs font-medium">
-            {uploadMutation.isPending ? 'Envoi...' : 'Ajouter'}
+            {uploadMutation.isPending ? t('images.sending') : t('images.add')}
           </span>
           <input
             ref={fileInputRef}
@@ -117,7 +119,7 @@ export default function RoommateListingImagesManager({
       </div>
 
       <p className="mt-3 text-xs text-gray-500">
-        JPEG/PNG/WebP, 5 Mo maximum par photo, 10 photos au total.
+        {t('images.limits', { max: 10 })}
       </p>
 
       {(uploadMutation.isError || deleteMutation.isError) && (

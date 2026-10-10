@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import RoommateListingForm from '@/components/roommateListings/RoommateListingForm'
 import RoommateListingImageStager from '@/components/roommateListings/RoommateListingImageStager'
@@ -19,6 +20,7 @@ import type { RoommateListingFormPayload } from '@/features/roommateListings/roo
  * rather than losing it, since that's where photos can be retried.
  */
 export default function RoommateListingCreatePage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const createMutation = useCreateRoommateListing()
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
@@ -51,17 +53,17 @@ export default function RoommateListingCreatePage() {
         to="/owner/roommates"
         className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-brand-600"
       >
-        <ArrowLeft className="size-4" aria-hidden />
-        Mes colocations
+        <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden />
+        {t('roommateEdit.back')}
       </Link>
 
-      <h1 className="mt-3 text-2xl font-bold tracking-tight text-gray-900">Nouveau post</h1>
-      <p className="mt-1 mb-6 text-sm text-gray-500">Il sera créé en brouillon. Vous pourrez le publier ensuite.</p>
+      <h1 className="mt-3 text-2xl font-bold tracking-tight text-gray-900">{t('roommateEdit.newTitle')}</h1>
+      <p className="mt-1 mb-6 text-sm text-gray-500">{t('roommateEdit.newSubtitle')}</p>
 
       <RoommateListingForm
         onSubmit={handleSubmit}
         isSubmitting={createMutation.isPending || isUploadingPhotos}
-        submitLabel="Créer le post"
+        submitLabel={t('roommateEdit.create')}
         validationErrors={getValidationErrors(createMutation.error)}
         generalError={
           createMutation.isError && !getValidationErrors(createMutation.error)

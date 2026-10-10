@@ -1,4 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AlertCircle, Banknote, Home, MapPin, Search, Users } from 'lucide-react'
 import LocationPicker from '@/components/map/LocationPicker'
 import { Button, Card, Input, Select, Textarea } from '@/components/ui'
@@ -7,10 +8,8 @@ import type { RoommateListingFormPayload } from '@/features/roommateListings/roo
 import type { ValidationErrors } from '@/lib/apiErrors'
 import type { RoommateListing, RoommateListingType } from '@/types/roommateListing'
 
-const TYPE_LABELS: Record<RoommateListingType, string> = {
-  offer: "J'ai une place à offrir",
-  request: 'Je cherche une colocation',
-}
+/** Display order of the two post types; labels come from roommateForm.types. */
+const TYPES: RoommateListingType[] = ['offer', 'request']
 
 const TYPE_ICONS: Record<RoommateListingType, typeof Home> = {
   offer: Home,
@@ -170,6 +169,7 @@ export default function RoommateListingForm({
   validationErrors,
   generalError,
 }: RoommateListingFormProps) {
+  const { t } = useTranslation()
   const [form, setForm] = useState<FormState>(
     initialListing ? formStateFromListing(initialListing) : EMPTY_FORM,
   )
@@ -194,54 +194,59 @@ export default function RoommateListingForm({
     return validationErrors?.[field]?.[0]
   }
 
+  // "Lits *" when the field is required for the chosen post type,
+  // "Lits" otherwise - same convention as PropertyForm.
+  const required = (label: string, isRequired: boolean) => (isRequired ? `${label} *` : label)
+  const currency = t('common.currency')
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <Section
         icon={<Users className="size-4.5" />}
-        title="Informations"
-        description="Ce que les autres voient en premier"
+        title={t('roommateForm.info.title')}
+        description={t('roommateForm.info.description')}
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <span className="mb-1.5 block text-sm font-semibold text-gray-900">Type de post</span>
+            <span className="mb-1.5 block text-sm font-semibold text-gray-900">
+              {t('roommateForm.info.typeLabel')}
+            </span>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {(Object.entries(TYPE_LABELS) as Array<[RoommateListingType, string]>).map(
-                ([value, label]) => {
-                  const Icon = TYPE_ICONS[value]
-                  const selected = form.type === value
-                  return (
-                    <button
-                      key={value}
-                      type="button"
-                      aria-pressed={selected}
-                      onClick={() => update('type', value)}
+              {TYPES.map((value) => {
+                const Icon = TYPE_ICONS[value]
+                const selected = form.type === value
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => update('type', value)}
+                    className={cn(
+                      'flex items-center gap-3 rounded-lg border p-3.5 text-start transition',
+                      selected
+                        ? 'border-brand-500 bg-brand-50 ring-[3px] ring-brand-500/20'
+                        : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50',
+                    )}
+                  >
+                    <span
                       className={cn(
-                        'flex items-center gap-3 rounded-lg border p-3.5 text-start transition',
-                        selected
-                          ? 'border-brand-500 bg-brand-50 ring-[3px] ring-brand-500/20'
-                          : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50',
+                        'flex size-9 shrink-0 items-center justify-center rounded-lg',
+                        selected ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-500',
                       )}
                     >
-                      <span
-                        className={cn(
-                          'flex size-9 shrink-0 items-center justify-center rounded-lg',
-                          selected ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-500',
-                        )}
-                      >
-                        <Icon className="size-4.5" aria-hidden />
-                      </span>
-                      <span
-                        className={cn(
-                          'text-sm font-medium',
-                          selected ? 'text-brand-900' : 'text-gray-700',
-                        )}
-                      >
-                        {label}
-                      </span>
-                    </button>
-                  )
-                },
-              )}
+                      <Icon className="size-4.5" aria-hidden />
+                    </span>
+                    <span
+                      className={cn(
+                        'text-sm font-medium',
+                        selected ? 'text-brand-900' : 'text-gray-700',
+                      )}
+                    >
+                      {t(`roommateForm.types.${value}`)}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
             {fieldError('type') && (
               <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-600">
@@ -253,9 +258,9 @@ export default function RoommateListingForm({
 
           <div className="sm:col-span-2">
             <Input
-              label="Titre"
+              label={t('roommateForm.info.titleLabel')}
               required
-              placeholder="Chambre disponible dans appartement lumineux"
+              placeholder={t('roommateForm.info.titlePlaceholder')}
               value={form.title}
               onChange={(event) => update('title', event.target.value)}
               error={fieldError('title')}
@@ -264,24 +269,24 @@ export default function RoommateListingForm({
 
           <div className="sm:col-span-2">
             <Textarea
-              label="Description"
+              label={t('roommateForm.info.descriptionLabel')}
               required
               minLength={20}
               rows={5}
-              placeholder="Décrivez le logement, l'ambiance, ce que vous cherchez..."
+              placeholder={t('roommateForm.info.descriptionPlaceholder')}
               value={form.description}
               onChange={(event) => update('description', event.target.value)}
               error={fieldError('description')}
-              hint="20 caractères minimum"
+              hint={t('roommateForm.info.descriptionHint')}
             />
           </div>
         </div>
       </Section>
 
-      <Section icon={<MapPin className="size-4.5" />} title="Localisation">
+      <Section icon={<MapPin className="size-4.5" />} title={t('roommateForm.location.title')}>
         <div className="grid gap-4 sm:grid-cols-2">
           <Input
-            label="Ville"
+            label={t('roommateForm.location.city')}
             required
             value={form.city}
             onChange={(event) => update('city', event.target.value)}
@@ -289,7 +294,7 @@ export default function RoommateListingForm({
           />
 
           <Input
-            label="Quartier (optionnel)"
+            label={t('roommateForm.location.neighborhood')}
             value={form.neighborhood}
             onChange={(event) => update('neighborhood', event.target.value)}
             error={fieldError('neighborhood')}
@@ -297,7 +302,7 @@ export default function RoommateListingForm({
 
           <div className="sm:col-span-2">
             <Input
-              label="Adresse (optionnel)"
+              label={t('roommateForm.location.address')}
               value={form.address}
               onChange={(event) => update('address', event.target.value)}
               error={fieldError('address')}
@@ -311,7 +316,7 @@ export default function RoommateListingForm({
           {isOffer && (
             <div className="sm:col-span-2 space-y-2">
               <span className="block text-sm font-semibold text-gray-900">
-                Position sur la carte (optionnel)
+                {t('roommateForm.location.mapLabel')}
               </span>
               <LocationPicker
                 // Same reason as PropertyForm: forces a fresh Leaflet
@@ -326,12 +331,14 @@ export default function RoommateListingForm({
                 }}
               />
               <p className="text-xs text-gray-500">
-                Cliquez sur la carte ou déplacez le repère pour indiquer la position du logement.
+                {t('roommateForm.location.mapHint')}
                 {form.latitude && form.longitude && (
                   <>
                     {' '}
-                    Position actuelle : {Number(form.latitude).toFixed(5)},{' '}
-                    {Number(form.longitude).toFixed(5)}
+                    {t('roommateForm.location.currentPosition', {
+                      lat: Number(form.latitude).toFixed(5),
+                      lng: Number(form.longitude).toFixed(5),
+                    })}
                   </>
                 )}
               </p>
@@ -348,11 +355,9 @@ export default function RoommateListingForm({
 
       <Section
         icon={<Banknote className="size-4.5" />}
-        title="Détails"
+        title={t('roommateForm.details.title')}
         description={
-          form.type === ''
-            ? "Choisissez d'abord un type de post ci-dessus"
-            : 'Les champs marqués * sont obligatoires pour ce type de post'
+          form.type === '' ? t('roommateForm.details.chooseTypeFirst') : t('roommateForm.details.requiredHint')
         }
       >
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -364,7 +369,7 @@ export default function RoommateListingForm({
           {isRequest ? (
             <>
               <Input
-                label="Budget min (MAD / mois) *"
+                label={required(t('roommateForm.details.budgetMin', { currency }), true)}
                 type="number"
                 min={0}
                 step="any"
@@ -374,7 +379,7 @@ export default function RoommateListingForm({
                 error={fieldError('budget_min')}
               />
               <Input
-                label="Budget max (MAD / mois) *"
+                label={required(t('roommateForm.details.budgetMax', { currency }), true)}
                 type="number"
                 min={0}
                 step="any"
@@ -386,7 +391,7 @@ export default function RoommateListingForm({
             </>
           ) : (
             <Input
-              label={isOffer ? 'Prix par personne (MAD) *' : 'Prix par personne (MAD)'}
+              label={required(t('roommateForm.details.pricePerPerson', { currency }), isOffer)}
               type="number"
               min={0}
               step="any"
@@ -398,7 +403,7 @@ export default function RoommateListingForm({
           )}
 
           <Input
-            label={isOffer ? 'Lits *' : 'Lits'}
+            label={required(t('roommateForm.details.beds'), isOffer)}
             type="number"
             min={1}
             max={20}
@@ -409,7 +414,7 @@ export default function RoommateListingForm({
           />
 
           <Input
-            label={isOffer ? 'Chambres *' : 'Chambres'}
+            label={required(t('roommateForm.details.bedrooms'), isOffer)}
             type="number"
             min={1}
             max={20}
@@ -420,19 +425,23 @@ export default function RoommateListingForm({
           />
 
           <Select
-            label={isOffer ? 'Meublé *' : 'Meublé'}
+            label={required(t('roommateForm.details.furnished'), isOffer)}
             value={form.furnished}
             onChange={(value) => update('furnished', value as FormState['furnished'])}
             error={fieldError('furnished')}
             options={[
-              { value: '', label: 'Choisir...' },
-              { value: 'yes', label: 'Meublé' },
-              { value: 'no', label: 'Non meublé' },
+              { value: '', label: t('roommateForm.details.choose') },
+              { value: 'yes', label: t('roommateForm.details.furnishedYes') },
+              { value: 'no', label: t('roommateForm.details.furnishedNo') },
             ]}
           />
 
           <Input
-            label={isRequest ? 'Nombre de personnes *' : 'Nombre de personnes (optionnel)'}
+            label={
+              isRequest
+                ? required(t('roommateForm.details.peopleCount'), true)
+                : t('roommateForm.details.optional', { label: t('roommateForm.details.peopleCount') })
+            }
             type="number"
             min={1}
             max={10}
@@ -443,7 +452,7 @@ export default function RoommateListingForm({
           />
 
           <Input
-            label="Disponible à partir du (optionnel)"
+            label={t('roommateForm.details.availableFrom')}
             type="date"
             value={form.available_from}
             onChange={(event) => update('available_from', event.target.value)}
@@ -461,7 +470,7 @@ export default function RoommateListingForm({
 
       <div className="flex justify-end">
         <Button type="submit" isLoading={isSubmitting}>
-          {isSubmitting ? 'Enregistrement...' : submitLabel}
+          {isSubmitting ? t('common.saving') : submitLabel}
         </Button>
       </div>
     </form>

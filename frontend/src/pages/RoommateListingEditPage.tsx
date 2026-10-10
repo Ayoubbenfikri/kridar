@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft, CheckCircle2, TriangleAlert, Trash2 } from 'lucide-react'
 import RoommateListingForm from '@/components/roommateListings/RoommateListingForm'
 import RoommateListingImagesManager from '@/components/roommateListings/RoommateListingImagesManager'
@@ -21,6 +22,7 @@ import type { RoommateListingFormPayload } from '@/features/roommateListings/roo
  * (OwnerRoommateListingsPage), not here - same split as properties.
  */
 export default function RoommateListingEditPage() {
+  const { t } = useTranslation()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   // Set by RoommateListingCreatePage when the post was created successfully
@@ -72,8 +74,8 @@ export default function RoommateListingEditPage() {
         to="/owner/roommates"
         className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-brand-600"
       >
-        <ArrowLeft className="size-4" aria-hidden />
-        Mes colocations
+        <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden />
+        {t('roommateEdit.back')}
       </Link>
 
       <h1 className="mt-3 mb-6 text-2xl font-bold tracking-tight text-gray-900">{listing.title}</h1>
@@ -81,7 +83,7 @@ export default function RoommateListingEditPage() {
       {updateMutation.isSuccess && (
         <Card className="mb-5 flex items-center gap-3 border-green-200 bg-green-50 p-3.5 text-sm text-green-800">
           <CheckCircle2 className="size-4.5 shrink-0" aria-hidden />
-          Post mis à jour.
+          {t('roommateEdit.updated')}
         </Card>
       )}
 
@@ -89,7 +91,7 @@ export default function RoommateListingEditPage() {
         initialListing={listing}
         onSubmit={handleSubmit}
         isSubmitting={updateMutation.isPending}
-        submitLabel="Enregistrer"
+        submitLabel={t('common.save')}
         validationErrors={getValidationErrors(updateMutation.error)}
         generalError={
           updateMutation.isError && !getValidationErrors(updateMutation.error)
@@ -102,19 +104,16 @@ export default function RoommateListingEditPage() {
         {photoUploadError && (
           <Card className="mb-3 flex items-start gap-3 border-amber-200 bg-amber-50 p-3.5 text-sm text-amber-800">
             <TriangleAlert className="mt-0.5 size-4.5 shrink-0" aria-hidden />
-            <span>
-              Le post a bien été créé, mais l'envoi des photos a échoué ({photoUploadError}).
-              Réessayez ci-dessous.
-            </span>
+            <span>{t('roommateEdit.photoUploadFailed', { error: photoUploadError })}</span>
           </Card>
         )}
         <RoommateListingImagesManager listingId={listing.id} images={listing.images} />
       </div>
 
       <Card className="mt-5 border-red-200 p-5">
-        <h2 className="font-semibold text-red-700">Zone dangereuse</h2>
+        <h2 className="font-semibold text-red-700">{t('roommateEdit.dangerTitle')}</h2>
         <p className="mt-1 text-sm text-gray-600">
-          La suppression est définitive et emporte les photos du post.
+          {t('roommateEdit.dangerText')}
         </p>
 
         {!confirmingDelete ? (
@@ -125,11 +124,11 @@ export default function RoommateListingEditPage() {
             className="mt-4"
             onClick={() => setConfirmingDelete(true)}
           >
-            Supprimer ce post
+            {t('roommateEdit.delete')}
           </Button>
         ) : (
           <div className="mt-4">
-            <p className="text-sm font-medium text-gray-900">Confirmer la suppression ?</p>
+            <p className="text-sm font-medium text-gray-900">{t('roommateEdit.confirmDelete')}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button
                 variant="danger"
@@ -137,10 +136,10 @@ export default function RoommateListingEditPage() {
                 isLoading={deleteMutation.isPending}
                 onClick={handleDelete}
               >
-                {deleteMutation.isPending ? 'Suppression...' : 'Oui, supprimer'}
+                {deleteMutation.isPending ? t('roommateEdit.deleting') : t('roommateEdit.confirmYes')}
               </Button>
               <Button variant="secondary" size="sm" onClick={() => setConfirmingDelete(false)}>
-                Annuler
+                {t('common.cancel')}
               </Button>
             </div>
             {deleteMutation.isError && (
