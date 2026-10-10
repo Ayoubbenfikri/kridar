@@ -243,3 +243,17 @@ html.js .reveal:not(.reveal-in) {
 .price-range-input:focus-visible::-moz-range-thumb {
   outline: 3px solid color-mix(in srgb, var(--color-brand-500) 35%, transparent);
 }
+
+/* Impression / « Enregistrer en PDF » (export de la page Audience).
+   Les menus portent la classe Tailwind print:hidden ; ici seulement les
+   marges de la page imprimée. */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  body {
+    background: #fff;
+  }
+}

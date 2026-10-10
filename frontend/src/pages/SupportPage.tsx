@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { useSupport } from '@/features/settings/useSettings'
 import { Card, Skeleton, buttonClasses } from '@/components/ui'
+import { track } from '@/lib/analytics'
 
 /**
  * What the PayPal buttons offer, in the configured currency.
@@ -152,6 +153,7 @@ export default function SupportPage() {
       {support?.donate_url && (
         <a
           href={support.donate_url}
+          onClick={() => track('support_click')}
           target="_blank"
           // noreferrer as well as noopener: the destination is a
           // third-party payment page and has no business knowing which
@@ -213,6 +215,7 @@ export default function SupportPage() {
                     <a
                       key={amount}
                       href={paypalLink(amount)}
+                      onClick={() => track('support_click')}
                       target="_blank"
                       rel="noopener noreferrer"
                       className={buttonClasses({ size: 'sm' })}
@@ -222,6 +225,7 @@ export default function SupportPage() {
                   ))}
                   <a
                     href={paypalLink()}
+                    onClick={() => track('support_click')}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={buttonClasses({ variant: 'secondary', size: 'sm' })}

@@ -26,6 +26,17 @@ return Application::configure(basePath: dirname(__DIR__))
         // response, API and web alike - see AddSecurityHeaders.
         $middleware->append(\App\Http\Middleware\AddSecurityHeaders::class);
 
+        // Phase A3 (admin analytics): the collect endpoint skips the CSRF
+        // check. The very first page view of a visit leaves before the
+        // app has fetched its XSRF cookie, and would be refused (419)
+        // otherwise - losing exactly the landing page and its source.
+        // Safe here: the endpoint is public, changes nothing for the
+        // signed-in person, and only ever writes an anonymous counter
+        // row (validated, throttled).
+        $middleware->validateCsrfTokens(except: [
+            'api/v1/analytics/collect',
+        ]);
+
         // 'owner' gates the /owner/* dashboard routes (Phase 12) - see
         // App\Http\Middleware\EnsureUserOwnsAProperty for what it checks.
         // 'admin' gates /admin/* the same way (Phase 13, role=admin).

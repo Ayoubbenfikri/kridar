@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { useRoommateListing } from '@/features/roommateListings/useRoommateListings'
 import { formatMad } from '@/lib/formatPrice'
+import { useListingViewTracking } from '@/lib/analytics'
 import ContactPosterCard from '@/components/roommateListings/ContactPosterCard'
 import PropertyLocationMap from '@/components/map/PropertyLocationMap'
 import { Card, EmptyState, Skeleton, UserAvatar, buttonClasses } from '@/components/ui'
@@ -53,6 +54,9 @@ export default function RoommateListingDetailsPage() {
   const { id } = useParams<{ id: string }>()
   const { data: listing, isError } = useRoommateListing(id)
   const [activeImage, setActiveImage] = useState(0)
+
+  // Before the early returns below: a hook must run on every render.
+  useListingViewTracking('roommate_view', listing?.id)
 
   if (isError) {
     return (

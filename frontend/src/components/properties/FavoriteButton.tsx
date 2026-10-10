@@ -2,6 +2,7 @@ import { Heart } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
 import { useFavoriteIds, useToggleFavorite } from '@/features/favorites/useFavorites'
 import { cn } from '@/lib/cn'
+import { track } from '@/lib/analytics'
 
 /**
  * Heart toggle, reused on PropertyCard and PropertyDetailsPage.
@@ -22,7 +23,13 @@ export default function FavoriteButton({ propertyId }: { propertyId: number }) {
   return (
     <button
       type="button"
-      onClick={() => toggleFavorite.mutate({ propertyId, isFavorited })}
+      onClick={() =>
+        toggleFavorite.mutate(
+          { propertyId, isFavorited },
+          // Only adding is an action worth counting, not removing.
+          { onSuccess: () => !isFavorited && track('favorite_add', { property_id: propertyId }) },
+        )
+      }
       disabled={toggleFavorite.isPending}
       aria-label={isFavorited ? 'Retirer des favoris' : 'Ajouter aux favoris'}
       aria-pressed={isFavorited}

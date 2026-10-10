@@ -1,5 +1,6 @@
 import axiosClient from '@/api/axiosClient'
 import type { AdminActionValue, AdminActivityLog, AdminPayment, AdminStats } from '@/types/admin'
+import type { AnalyticsRange, AnalyticsReport } from '@/types/analytics'
 import type { PaymentTypeValue } from '@/types/payment'
 import type { PaginatedResponse, Property } from '@/types/property'
 import type { RoommateListing } from '@/types/roommateListing'
@@ -123,7 +124,20 @@ async function suspendRoommateListing(listingId: number): Promise<RoommateListin
   return data.roommate_listing
 }
 
+/**
+ * Phase A4 — visitors, pages, listings, sources and actions for one
+ * period. Only the three ranges the backend accepts (anything else is a
+ * 422 there).
+ */
+async function fetchAnalytics(range: AnalyticsRange): Promise<AnalyticsReport> {
+  const { data } = await axiosClient.get<AnalyticsReport>('/api/v1/admin/analytics', {
+    params: { range },
+  })
+  return data
+}
+
 export const adminApi = {
+  fetchAnalytics,
   fetchUsers,
   fetchProperties,
   fetchStats,

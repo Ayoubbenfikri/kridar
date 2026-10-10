@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { useAccountLocaleSync } from '@/features/locale/useLocale'
 import AcceptTermsModal from '@/components/legal/AcceptTermsModal'
 import { cn } from '@/lib/cn'
+import { usePageViewTracking } from '@/lib/analytics'
 import Navbar from './Navbar'
 import MobileTabBar from './MobileTabBar'
 import SiteFooter from './SiteFooter'
@@ -40,6 +41,10 @@ export default function AppLayout() {
   // account when someone signs in, so a person who chose Darija on their
   // phone gets Darija on their laptop too.
   useAccountLocaleSync()
+
+  // Admin analytics (Phase A3): one page view per route change. Admin
+  // pages are skipped inside lib/analytics.
+  usePageViewTracking(pathname)
 
   // A single-page app keeps the scroll position when the URL changes, so
   // clicking a card near the bottom of a list would open the next page
@@ -96,7 +101,7 @@ export default function AppLayout() {
             bar / the mobile header's "more" panel — it only added scroll
             for nothing. Desktop keeps it since the sidebar doesn't
             duplicate these links. */}
-        <div className="hidden lg:block">
+        <div className="hidden lg:block print:hidden">
           <SiteFooter />
         </div>
       </div>

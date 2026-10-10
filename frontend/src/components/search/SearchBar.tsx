@@ -15,6 +15,7 @@ import Button from '@/components/ui/Button'
 import type { SelectOption } from '@/components/ui/Select'
 import SearchSelect from '@/components/search/SearchSelect'
 import { cn } from '@/lib/cn'
+import { track } from '@/lib/analytics'
 import { searchUrl, type SearchMode } from '@/lib/homeSearch'
 import type { PropertyType } from '@/types/property'
 
@@ -127,6 +128,8 @@ export default function SearchBar({ mode, onModeChange }: SearchBarProps) {
 
     // The range comes from our own preset list, never from free text.
     const budget = mode === 'short' ? undefined : budgets.find((preset) => preset.id === budgetId)
+
+    track('search')
 
     // `q` and not `city`: the backend matches `city` exactly, so a
     // partial word typed here would return nothing. `q` is the partial

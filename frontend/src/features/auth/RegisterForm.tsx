@@ -5,6 +5,7 @@ import { AlertCircle, Eye, EyeOff, Lock, Mail, Phone, User } from 'lucide-react'
 import { useAuth } from './useAuth'
 import GoogleAuthButton from './GoogleAuthButton'
 import { getErrorMessage, getValidationErrors } from '@/lib/apiErrors'
+import { track } from '@/lib/analytics'
 import { Button, Input } from '@/components/ui'
 
 export default function RegisterForm() {
@@ -34,7 +35,12 @@ export default function RegisterForm() {
         phone: phone || undefined,
         terms_accepted: termsAccepted,
       },
-      { onSuccess: () => navigate('/') },
+      {
+        onSuccess: () => {
+          track('register')
+          navigate('/')
+        },
+      },
     )
   }
 

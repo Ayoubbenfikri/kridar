@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import {
+  BarChart3,
   Building2,
   CreditCard,
   HeartHandshake,
@@ -12,6 +13,7 @@ import { cn } from '@/lib/cn'
 
 const LINKS = [
   { to: '/admin', label: 'Tableau de bord', icon: LayoutDashboard, end: true },
+  { to: '/admin/analytics', label: 'Audience', icon: BarChart3, end: false },
   { to: '/admin/users', label: 'Utilisateurs', icon: Users, end: false },
   { to: '/admin/properties', label: 'Propriétés', icon: Building2, end: false },
   { to: '/admin/roommate-listings', label: 'Colocations', icon: HeartHandshake, end: false },
@@ -34,7 +36,7 @@ export default function AdminLayout() {
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
       <div className="lg:grid lg:grid-cols-[232px_1fr] lg:gap-8">
-        <aside className="lg:sticky lg:top-24 lg:self-start">
+        <aside className="lg:sticky lg:top-24 lg:self-start print:hidden">
           <span className="mb-4 hidden items-center gap-2 rounded-lg bg-gray-900 px-3 py-2 text-xs font-semibold tracking-wider text-white uppercase lg:inline-flex">
             <ShieldCheck className="size-4" aria-hidden />
             Administration
@@ -50,7 +52,7 @@ export default function AdminLayout() {
           </nav>
         </aside>
 
-        <div className="mt-6 min-w-0 lg:mt-0">
+        <div className="mt-6 min-w-0 lg:mt-0 print:mt-0">
           <Outlet />
         </div>
       </div>

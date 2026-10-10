@@ -162,7 +162,7 @@ export default function Navbar({
           the note in AppLayout.tsx for why. Rendered only when NOT
           collapsed; the floating button further down takes its place. */}
       {!isSidebarCollapsed && (
-        <aside className="hidden lg:sticky lg:top-0 lg:z-40 lg:flex lg:h-screen lg:flex-col lg:overflow-hidden lg:border-e lg:border-gray-200 lg:bg-white">
+        <aside className="hidden print:hidden lg:sticky lg:top-0 lg:z-40 lg:flex lg:h-screen lg:flex-col lg:overflow-hidden lg:border-e lg:border-gray-200 lg:bg-white">
           <div className="flex items-center justify-between gap-2 px-4 py-5 ps-5">
             <Link
               to="/"
@@ -338,7 +338,7 @@ export default function Navbar({
       {/* Mobile / tablet-portrait: a slim top strip, not a full navbar -
           primary navigation lives in the fixed bottom tab bar instead
           (MobileTabBar.tsx, rendered by AppLayout). */}
-      <header className="border-b border-gray-200 bg-white lg:hidden">
+      <header className="border-b border-gray-200 bg-white lg:hidden print:hidden">
         <div className="flex h-16 items-center justify-between gap-3 px-4 sm:px-6">
           <Link to="/" className="flex items-center gap-2 text-lg font-bold tracking-tight text-gray-900">
             <img src="/logo-icon.png" alt="" aria-hidden="true" className="size-7" />

@@ -26,6 +26,7 @@ import { useAmenityLabels } from '@/features/amenities/useAmenityLabels'
 import { useProperty, useRevealPhone } from '@/features/properties/useProperties'
 import { useSettings } from '@/features/settings/useSettings'
 import { getErrorMessage } from '@/lib/apiErrors'
+import { track, useListingViewTracking } from '@/lib/analytics'
 import { formatMad, primaryPrice } from '@/lib/formatPrice'
 import ReviewsSection from '@/components/reviews/ReviewsSection'
 import FavoriteButton from '@/components/properties/FavoriteButton'
@@ -120,6 +121,7 @@ function OwnerPhone({ property }: { property: Property }) {
   // messaging: someone out of free contacts can still reveal a number.
   if (!property.owner_phone_unlocked) {
     const handleReveal = () => {
+      track('phone_reveal_click', { property_id: property.id })
       revealPhone.mutate(property.id, {
         onSuccess: ({ redirectUrl }) => {
           // Full navigation, not a router push: the destination is the
@@ -167,6 +169,9 @@ export default function PropertyDetailsPage() {
   const { data: property, isError } = useProperty(id)
   const [activeImage, setActiveImage] = useState(0)
   const { amenityName } = useAmenityLabels()
+
+  // Before the early returns below: a hook must run on every render.
+  useListingViewTracking('listing_view', property?.id)
 
   if (isError) {
     return (

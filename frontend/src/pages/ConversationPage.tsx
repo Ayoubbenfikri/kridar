@@ -25,7 +25,21 @@ import ShareListingPicker from '@/components/messaging/ShareListingPicker'
 import type { ShareableListing } from '@/components/messaging/ShareListingPicker'
 import { Card, Skeleton, UserAvatar, useToast } from '@/components/ui'
 import { cn } from '@/lib/cn'
+import { track } from '@/lib/analytics'
+import type { SharedListingAttachment } from '@/features/messaging/messagingApi'
 import type { Message } from '@/types/conversation'
+
+/**
+ * Admin analytics (Phase A3): a listing card was sent in a conversation.
+ * Called once the message is really sent, never on picking alone.
+ */
+function trackShare(attachment: SharedListingAttachment | undefined): void {
+  if (attachment?.sharedPropertyId) {
+    track('share_click', { property_id: attachment.sharedPropertyId })
+  } else if (attachment?.sharedRoommateListingId) {
+    track('share_click', { roommate_listing_id: attachment.sharedRoommateListingId })
+  }
+}
 
 function formatSentAt(value: string): string {
   return new Date(value).toLocaleString('fr-FR', {
@@ -441,6 +455,7 @@ export default function ConversationPage() {
         // Clear only once the server has it — otherwise a failed send
         // silently eats what the user typed.
         onSuccess: () => {
+          trackShare(sharedListing?.attachment)
           setBody('')
           setSharedListing(null)
         },
@@ -481,7 +496,12 @@ export default function ConversationPage() {
 
     sendMessage.mutate(
       { body: `Annonce partagée : ${sharedListing.title}`, shared: sharedListing.attachment },
-      { onSuccess: () => setSharedListing(null) },
+      {
+        onSuccess: () => {
+          trackShare(sharedListing.attachment)
+          setSharedListing(null)
+        },
+      },
     )
   }
 

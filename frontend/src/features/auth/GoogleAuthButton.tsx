@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { track } from '@/lib/analytics'
 
 /**
  * Google's own multicolour "G" mark, inlined so the button needs no extra
@@ -50,6 +51,9 @@ export default function GoogleAuthButton() {
     <div className="space-y-4">
       <a
         href={href}
+        // keepalive in lib/analytics lets this leave even though the
+        // click navigates away to Google straight after.
+        onClick={() => track('google_login_click')}
         className="inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-gray-200 bg-white text-[15px] font-semibold text-gray-700 transition hover:-translate-y-px hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm"
       >
         <GoogleIcon />

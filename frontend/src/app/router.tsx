@@ -32,6 +32,7 @@ import RoommateListingCreatePage from '@/pages/RoommateListingCreatePage'
 import RoommateListingEditPage from '@/pages/RoommateListingEditPage'
 import UiKitPage from '@/pages/UiKitPage'
 import AdminDashboardPage from '@/pages/AdminDashboardPage'
+import AdminAnalyticsPage from '@/pages/AdminAnalyticsPage'
 import AdminUsersPage from '@/pages/AdminUsersPage'
 import AdminPropertiesPage from '@/pages/AdminPropertiesPage'
 import AdminRoommateListingsPage from '@/pages/AdminRoommateListingsPage'
@@ -135,6 +136,7 @@ export const router = createBrowserRouter([
             element: <AdminLayout />,
             children: [
               { index: true, element: <AdminDashboardPage /> },
+              { path: 'analytics', element: <AdminAnalyticsPage /> },
               { path: 'users', element: <AdminUsersPage /> },
               { path: 'properties', element: <AdminPropertiesPage /> },
               { path: 'roommate-listings', element: <AdminRoommateListingsPage /> },

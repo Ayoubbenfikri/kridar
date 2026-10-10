@@ -2,6 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { adminApi } from './adminApi'
 import type { AdminActionValue } from '@/types/admin'
 import type { PaymentTypeValue } from '@/types/payment'
+import type { AnalyticsRange } from '@/types/analytics'
 
 /**
  * Every /admin read is namespaced under the 'admin' query key prefix, so
@@ -21,6 +22,15 @@ export function useAdminProperties(page: number) {
   return useQuery({
     queryKey: ['admin', 'properties', { page }],
     queryFn: () => adminApi.fetchProperties(page),
+    placeholderData: keepPreviousData,
+  })
+}
+
+/** Phase A4. keepPreviousData: switching 7j/30j/90j keeps the old figures on screen while the new ones load. */
+export function useAdminAnalytics(range: AnalyticsRange) {
+  return useQuery({
+    queryKey: ['admin', 'analytics', { range }],
+    queryFn: () => adminApi.fetchAnalytics(range),
     placeholderData: keepPreviousData,
   })
 }

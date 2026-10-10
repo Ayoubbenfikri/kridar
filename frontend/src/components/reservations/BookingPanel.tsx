@@ -10,6 +10,7 @@ import { formatMad } from '@/lib/formatPrice'
 import { formatDate } from '@/lib/formatDate'
 import { Button, Card, Input, Skeleton, buttonClasses } from '@/components/ui'
 import { cn } from '@/lib/cn'
+import { track } from '@/lib/analytics'
 import type { Property } from '@/types/property'
 import type { ReservationRentalType } from '@/types/reservation'
 
@@ -108,13 +109,16 @@ export default function BookingPanel({ property }: BookingPanelProps) {
     event.preventDefault()
     if (!startDate || !endDate) return
 
-    createReservation.mutate({
-      property_id: property.id,
-      rental_type: rentalType,
-      start_date: startDate,
-      end_date: endDate,
-      guests_count: rentalType === 'short_term' && guestsCount ? Number(guestsCount) : undefined,
-    })
+    createReservation.mutate(
+      {
+        property_id: property.id,
+        rental_type: rentalType,
+        start_date: startDate,
+        end_date: endDate,
+        guests_count: rentalType === 'short_term' && guestsCount ? Number(guestsCount) : undefined,
+      },
+      { onSuccess: () => track('booking_request', { property_id: property.id }) },
+    )
   }
 
   if (createReservation.isSuccess) {

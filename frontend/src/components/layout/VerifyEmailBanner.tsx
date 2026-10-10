@@ -15,7 +15,7 @@ export default function VerifyEmailBanner() {
   if (!isAuthenticated || user?.email_verified) return null
 
   return (
-    <div className="border-b border-amber-200 bg-amber-50">
+    <div className="border-b border-amber-200 bg-amber-50 print:hidden">
       <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-center gap-x-2 gap-y-1 px-4 py-2.5 text-sm text-amber-800 sm:px-6">
         {sent ? (
           <>

@@ -6,6 +6,7 @@ import { useBuyMessagingPack, useStartRoommateConversation } from '@/features/me
 import { usePaymentsEnabled, useSettings } from '@/features/settings/useSettings'
 import { getErrorMessage, getValidationErrors, isPaymentRequiredError } from '@/lib/apiErrors'
 import { formatMad } from '@/lib/formatPrice'
+import { track } from '@/lib/analytics'
 import { Badge, Button, Card, Textarea, UserAvatar, buttonClasses } from '@/components/ui'
 import type { MessagingPackDuration } from '@/features/messaging/messagingApi'
 import type { RoommateListing } from '@/types/roommateListing'
@@ -178,7 +179,11 @@ export default function ContactPosterCard({ listing }: { listing: RoommateListin
     startConversation.mutate(
       { roommateListingId: listing.id, body: trimmed },
       {
-        onSuccess: (conversation) => navigate(`/messages/${conversation.id}`),
+        onSuccess: (conversation) => {
+          // Counted once the message is really sent (see ContactOwnerCard).
+          track('contact_click', { roommate_listing_id: listing.id })
+          navigate(`/messages/${conversation.id}`)
+        },
       },
     )
   }

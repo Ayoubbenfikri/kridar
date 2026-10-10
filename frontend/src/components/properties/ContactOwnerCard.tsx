@@ -8,6 +8,7 @@ import { usePaymentsEnabled, useSettings } from '@/features/settings/useSettings
 import { getErrorMessage, getValidationErrors, isPaymentRequiredError } from '@/lib/apiErrors'
 import { formatMad } from '@/lib/formatPrice'
 import { formatDate } from '@/lib/formatDate'
+import { track } from '@/lib/analytics'
 import { Badge, Button, Card, Textarea, UserAvatar, buttonClasses } from '@/components/ui'
 import type { MessagingPackDuration } from '@/features/messaging/messagingApi'
 import type { Property } from '@/types/property'
@@ -203,7 +204,12 @@ export default function ContactOwnerCard({ property }: { property: Property }) {
       {
         // The thread may already exist — the backend does a
         // find-or-create — so we land on whichever one came back.
-        onSuccess: (conversation) => navigate(`/messages/${conversation.id}`),
+        onSuccess: (conversation) => {
+          // Counted once the message is really sent, not on a click
+          // that ends in a validation error or the paywall.
+          track('contact_click', { property_id: property.id })
+          navigate(`/messages/${conversation.id}`)
+        },
       },
     )
   }
