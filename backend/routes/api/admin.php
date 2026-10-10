@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AdminAnalyticsController;
 use App\Http\Controllers\Api\V1\AdminController;
 use Illuminate\Support\Facades\Route;
 
@@ -40,6 +41,9 @@ Route::middleware(['auth:sanctum', 'admin', 'throttle:60,1'])->prefix('admin')->
     Route::patch('/roommate-listings/{roommate_listing}/suspend', [AdminController::class, 'suspendRoommateListing']);
 
     Route::get('/stats', [AdminController::class, 'stats']);
+
+    // Phase A2 - visitors, pages, listings, sources and actions.
+    Route::get('/analytics', [AdminAnalyticsController::class, 'index']);
 
     // Phase 22 (pricing).
     Route::get('/payments', [AdminController::class, 'payments']);

@@ -64,5 +64,6 @@ Route::prefix('v1')->middleware(['locale', 'active'])->group(function () {
     require __DIR__.'/api/owner.php';
     require __DIR__.'/api/amenities.php';
     require __DIR__.'/api/settings.php';
+    require __DIR__.'/api/analytics.php';
     require __DIR__.'/api/admin.php';
 });

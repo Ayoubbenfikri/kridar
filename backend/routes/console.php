@@ -12,3 +12,6 @@ Artisan::command('inspire', function () {
 // remember to run these by hand.
 Schedule::command('reservations:expire-pending')->everyFifteenMinutes();
 Schedule::command('reservations:complete-past')->daily();
+
+// Phase A2 - analytics rows older than 12 months are deleted.
+Schedule::command('analytics:prune')->daily();
