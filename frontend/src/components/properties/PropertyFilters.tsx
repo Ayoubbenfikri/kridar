@@ -2,9 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RotateCcw } from 'lucide-react'
 import { Button, Select } from '@/components/ui'
-import PriceRangeSlider from '@/components/ui/PriceRangeSlider'
 import { useAmenities } from '@/features/amenities/useAmenities'
-import { usePriceHistogram } from '@/features/properties/useProperties'
 import { useAmenityLabels } from '@/features/amenities/useAmenityLabels'
 import type { ListingType, PropertyType, RentalType } from '@/types/property'
 
@@ -67,9 +65,8 @@ const RENTAL_VALUES: Array<RentalType | ''> = ['', 'short_term', 'long_term']
 
 const COUNT_OPTIONS = ['', '1', '2', '3', '4', '5']
 
-// Plain <input> fields (min_price, max_price, guests) aren't part of this
-// request — only the <select> fields switch to the shared <Select> below,
-// so this class stays for those.
+// Plain <input> fields (min_price, max_price, guests); the <select> fields
+// use the shared <Select> below.
 const NUMBER_CLASS =
   'h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-[15px] text-gray-900 transition ' +
   'hover:border-gray-300 focus:border-brand-500 focus:ring-[3px] focus:ring-brand-500/20 focus:outline-none'
@@ -79,6 +76,40 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <label className="block">
       <span className="mb-1.5 block text-sm font-semibold text-gray-900">{label}</span>
       {children}
+    </label>
+  )
+}
+
+/**
+ * One price box (Min or Max): a number input with the currency inside it.
+ */
+function PriceBox({
+  label,
+  value,
+  onChange,
+  suffix,
+}: {
+  label: string
+  value: string
+  onChange: (next: string) => void
+  suffix: string
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-medium text-gray-500">{label}</span>
+      <span className="relative block">
+        <input
+          type="number"
+          min={0}
+          inputMode="numeric"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className={NUMBER_CLASS + ' pe-14'}
+        />
+        <span className="pointer-events-none absolute inset-y-0 end-3 flex items-center text-sm text-gray-400">
+          {suffix}
+        </span>
+      </span>
     </label>
   )
 }
@@ -119,43 +150,71 @@ export default function PropertyFilters({
 
   // The price column the backend compares depends on what is searched:
   // sale_price for a sale, price_per_month for a long_term rental,
-  // price_per_night otherwise — so the label has to follow the same rule
-  // or it would lie.
+  // price_per_night otherwise. A nightly and a monthly price are not
+  // comparable, so with "short or long" (no rental type chosen) there is
+  // no honest unit to show: the price boxes wait until a duration is picked.
+  const priceKnown = isSale || draft.rental_type !== ''
   const priceUnit = isSale
     ? t('common.currency')
     : draft.rental_type === 'long_term'
       ? t('filters.perMonth')
       : t('filters.perNight')
 
-  // The bars follow the same price column as the unit above: a sale, a
-  // long-term search (monthly) or everything else (nightly).
-  const { data: histogram } = usePriceHistogram({
-    listing_type: isSale ? 'sale' : undefined,
-    rental_type: !isSale && draft.rental_type === 'long_term' ? 'long_term' : undefined,
-  })
+  function apply(values: FilterValues) {
+    // Same reason: never send a price range the person cannot see.
+    if (!priceKnown) {
+      onApply({ ...values, min_price: '', max_price: '' })
+      return
+    }
+    // A range typed the wrong way round (min 900, max 300) is put back in
+    // order: the API refuses max < min, which would show an error instead.
+    const min = Number(values.min_price)
+    const max = Number(values.max_price)
+    if (values.min_price !== '' && values.max_price !== '' && min > max) {
+      onApply({ ...values, min_price: values.max_price, max_price: values.min_price })
+      return
+    }
+    onApply(values)
+  }
 
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault()
-        onApply(draft)
+        apply(draft)
       }}
       className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* One block for the whole price range, as wide as the grid. */}
+        {/* Simple price filter: two boxes, Min and Max, in MAD. (It used to
+            be a bar chart + double slider; replaced in Oct 2026 - too heavy
+            for what people do: type a budget.) */}
         <div className="sm:col-span-2 lg:col-span-4">
-          <span className="mb-3 block text-sm font-semibold text-gray-900">
-            {t('filters.price', { unit: priceUnit })}
-          </span>
-          <div className="max-w-xl">
-            <PriceRangeSlider
-              histogram={histogram}
-              min={draft.min_price}
-              max={draft.max_price}
-              onChange={(min, max) => setDraft((current) => ({ ...current, min_price: min, max_price: max }))}
-            />
-          </div>
+          {priceKnown ? (
+            <>
+              <span className="mb-1.5 block text-sm font-semibold text-gray-900">
+                {t('filters.price', { unit: priceUnit })}
+              </span>
+              <div className="grid max-w-md grid-cols-2 gap-3">
+                <PriceBox
+                  label={t('search.budgetMin')}
+                  value={draft.min_price}
+                  onChange={(next) => set('min_price', next)}
+                  suffix={t('common.currency')}
+                />
+                <PriceBox
+                  label={t('search.budgetMax')}
+                  value={draft.max_price}
+                  onChange={(next) => set('max_price', next)}
+                  suffix={t('common.currency')}
+                />
+              </div>
+            </>
+          ) : (
+            <p className="rounded-lg bg-gray-50 px-3 py-2.5 text-sm text-gray-500">
+              {t('filters.priceChooseDuration')}
+            </p>
+          )}
         </div>
 
         <Select

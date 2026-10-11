@@ -615,7 +615,10 @@ export default function PropertyForm({
         </Section>
       ) : (
         <Section icon={<Users className="size-4.5" />} title={t('propertyForm.capacity.title')}>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* 4 columns only on very wide screens: next to the owner sidebar a
+              column is too narrow for the label in Darija, which wrapped
+              onto two lines and pushed its input lower than the others. */}
+          <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
             <Input
               label={t('propertyForm.capacity.bedrooms')}
               type="number"
