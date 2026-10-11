@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { track } from '@/lib/analytics'
 
 /**
  * Google's own multicolour "G" mark, inlined so the button needs no extra
@@ -39,21 +38,26 @@ function GoogleIcon() {
  * clicking it IS the acceptance (terms_accepted_at is stamped
  * automatically), there is no separate checkbox to tick first.
  */
-export default function GoogleAuthButton() {
+export default function GoogleAuthButton({ redirectTo = '/' }: { redirectTo?: string }) {
   const { t } = useTranslation()
 
   // Empty string in production (same-origin, see axiosClient.ts) - set
   // only in frontend/.env.local for local dev where Vite and
   // `php artisan serve` are two different ports.
-  const href = `${import.meta.env.VITE_API_URL ?? ''}/api/v1/auth/google/redirect`
+  //
+  // Phase O1: ?redirect= tells GoogleAuthController where to send the
+  // person once Google is done (it re-checks the value - never trusted).
+  const base = `${import.meta.env.VITE_API_URL ?? ''}/api/v1/auth/google/redirect`
+  const href = redirectTo !== '/' ? `${base}?redirect=${encodeURIComponent(redirectTo)}` : base
 
   return (
     <div className="space-y-4">
       <a
         href={href}
-        // keepalive in lib/analytics lets this leave even though the
-        // click navigates away to Google straight after.
-        onClick={() => track('google_login_click')}
+        // No track() here on purpose: the click is counted by the backend
+        // (GoogleAuthController::redirect). A separate analytics request
+        // sent at the same moment raced this navigation on the session
+        // and could wipe Socialite's OAuth state -> "Google sign-in failed".
         className="inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-gray-200 bg-white text-[15px] font-semibold text-gray-700 transition hover:-translate-y-px hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm"
       >
         <GoogleIcon />

@@ -79,11 +79,10 @@ export default function PropertyCreatePage() {
             ? getErrorMessage(createMutation.error)
             : undefined
         }
+        // Photos sit inside the form, right above "Create property" (they
+        // used to come after the button, so owners clicked it first).
+        beforeSubmit={<PropertyImageStager files={pendingFiles} onChange={setPendingFiles} />}
       />
-
-      <div className="mt-5">
-        <PropertyImageStager files={pendingFiles} onChange={setPendingFiles} />
-      </div>
     </>
   )
 }

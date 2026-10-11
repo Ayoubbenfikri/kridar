@@ -37,6 +37,8 @@ export const ary: TranslationSchema = {
   },
 
   nav: {
+    publishShort: 'نشر',
+    publishHint: 'فابور، فشي دقايق',
     home: 'الرئيسية',
     properties: 'الديور',
     rent: 'كرا',
@@ -170,6 +172,7 @@ export const ary: TranslationSchema = {
     modeBuy: 'شراء',
     budget: 'الميزانية',
     budgetMonth: 'الميزانية فـ الشهر',
+    budgetNight: 'ثمن الليلة',
     budgetMin: 'الأدنى',
     budgetMax: 'الأقصى',
     budgetAny: 'أي حاجة',
@@ -185,6 +188,7 @@ export const ary: TranslationSchema = {
   home: {
     badge: 'كراء وشراء فالمغرب',
     title: 'لقا الدار الجاية ديالك فالمغرب',
+    heroSubtitle: 'شقق، فيلات، رياضات وستوديوهات، بالليلة، بالشهر ولا للشرا.',
     subtitle:
       'شقق، فيلات ورياضات فمراكش، الدار البيضاء، الرباط وفين ما بغيتي. حجز مباشر مع المالك.',
     latest: 'آخر الديور',
@@ -196,6 +200,9 @@ export const ary: TranslationSchema = {
     emptyTitle: 'ماكاين حتى دار منشورة دابا',
     emptyDescription: 'الديور غادي يبانو هنا ملي شي مالك ينشر وحدة.',
     publishCta: 'نشر الدار ديالي',
+    ownerHint: 'عندك دار؟',
+    ownerHintCta: 'نشرها هنا',
+    ownerHintBadge: 'فابور',
     ownerTitle: 'عندك شي دار باش تكريها؟',
     ownerText: 'نشر الإعلان ديالك، دبّر المواعيد والحجوزات من بلاصة وحدة. بلا وسيط.',
     ownerCta: 'ولّي مالك',
@@ -373,6 +380,14 @@ export const ary: TranslationSchema = {
     loginSubtitle: 'دخل باش تدبّر الحجوزات ديالك',
     registerTitle: 'دير حساب جديد',
     registerSubtitle: 'شي ثواني، وتقدر تحجز',
+    loginOwnerTitle: 'مرحبا بيك من جديد',
+    loginOwnerSubtitle: 'دخل باش تنشر الدار ديالك',
+    registerOwnerTitle: 'نشر الدار ديالك',
+    registerOwnerSubtitle: 'دير حساب فابور، ومن بعد زيد الإعلان ديالك فشي دقايق',
+    verifyBannerText: 'الإيميل ديالك مازال ما تأكدش.',
+    verifyBannerResend: 'عاود صيفط الإيميل',
+    verifyBannerSending: 'كيتصيفط…',
+    verifyBannerSent: 'تصيفط الإيميل، شوف البريد ديالك.',
 
     email: 'الإيميل',
     emailPlaceholder: 'nta@exemple.com',
@@ -457,6 +472,16 @@ export const ary: TranslationSchema = {
       noPending: 'ماكاين حتى طلب معلّق دابا.',
       guestFallback: 'الكليان',
       dateRange: '{{start}} حتى {{end}}',
+      draftsWarning: 'إعلانات فالمسودة: {{n}}. الزوار ما كيشوفوهمش، نشرهم.',
+    },
+    welcome: {
+      title: 'مرحبا بيك ف Krihouse',
+      text: 'نشر الدار ديالك فابور وتوصل بطلبات ديال الكراية والمسافرين.',
+      step1: 'وصف الدار ديالك وحط الثمن',
+      step2: 'زيد شي تصاور',
+      step3: 'نشر: الإعلان ديالك كيبان دغيا',
+      cta: 'نشر أول دار ديالي',
+      free: 'فابور، بلا حتى التزام.',
     },
     properties: {
       title: 'الديور ديالي',

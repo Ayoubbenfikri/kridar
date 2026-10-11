@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AlertCircle, Eye, EyeOff, Lock, Mail, Phone, User } from 'lucide-react'
 import { useAuth } from './useAuth'
@@ -7,11 +7,15 @@ import GoogleAuthButton from './GoogleAuthButton'
 import { getErrorMessage, getValidationErrors } from '@/lib/apiErrors'
 import { track } from '@/lib/analytics'
 import { Button, Input } from '@/components/ui'
+import { REDIRECT_PARAM, safeRedirect, withRedirect } from '@/lib/safeRedirect'
 
 export default function RegisterForm() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { register } = useAuth()
+  const [searchParams] = useSearchParams()
+  // Phase O1 - see LoginForm.
+  const redirectTo = safeRedirect(searchParams.get(REDIRECT_PARAM))
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -38,7 +42,7 @@ export default function RegisterForm() {
       {
         onSuccess: () => {
           track('register')
-          navigate('/')
+          navigate(redirectTo, { replace: true })
         },
       },
     )
@@ -46,7 +50,7 @@ export default function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <GoogleAuthButton />
+      <GoogleAuthButton redirectTo={redirectTo} />
 
       <Input
         label={t('auth.fullName')}
@@ -175,7 +179,7 @@ export default function RegisterForm() {
 
       <p className="text-center text-sm text-gray-500">
         {t('auth.haveAccount')}{' '}
-        <Link to="/login" className="font-semibold text-brand-600 transition hover:text-brand-700">
+        <Link to={withRedirect('/login', redirectTo)} className="font-semibold text-brand-600 transition hover:text-brand-700">
           {t('auth.login')}
         </Link>
       </p>

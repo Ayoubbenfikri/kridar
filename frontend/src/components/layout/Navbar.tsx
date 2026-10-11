@@ -8,13 +8,16 @@ import {
   HandCoins,
   Heart,
   Home,
+  LogIn,
   LogOut,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
+  Plus,
   Settings,
   ShieldCheck,
   User,
+  UserPlus,
   Users,
   X,
 } from 'lucide-react'
@@ -24,6 +27,7 @@ import MessagesLink from '@/components/messaging/MessagesLink'
 import LanguageSwitcher from './LanguageSwitcher'
 import { buttonClasses, UserAvatar } from '@/components/ui'
 import { cn } from '@/lib/cn'
+import { OWNER_START_PATH } from '@/lib/safeRedirect'
 
 /**
  * Links shown to everyone. `labelKey` rather than `label` (Phase 27):
@@ -53,6 +57,30 @@ const PRIVATE_LINKS = [
  * other than next to "my bookings".
  */
 const OWNER_LINK = { to: '/owner', labelKey: 'nav.ownerSpace', icon: Briefcase, end: false }
+
+/**
+ * Logged-out actions, in the desktop sidebar and in the mobile panel:
+ * two compact buttons side by side, each with an icon - login as an
+ * outlined button, sign up as the filled one. (Stacked full-width
+ * buttons made the mobile panel long, and a borderless login read as
+ * blank text.)
+ */
+function AuthActions() {
+  const { t } = useTranslation()
+
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      <Link to="/login" className={buttonClasses({ variant: 'secondary', size: 'sm', className: 'h-10 w-full' })}>
+        <LogIn className="size-4 shrink-0 rtl:rotate-180" aria-hidden />
+        {t('nav.login')}
+      </Link>
+      <Link to="/register" className={buttonClasses({ size: 'sm', className: 'h-10 w-full' })}>
+        <UserPlus className="size-4 shrink-0" aria-hidden />
+        {t('nav.register')}
+      </Link>
+    </div>
+  )
+}
 
 /**
  * Site navigation. Desktop (`lg` and up) renders as a left sidebar - the
@@ -182,6 +210,29 @@ export default function Navbar({
           </div>
 
           <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-3">
+            {/* Owner UX: "list my property", for everyone (logged out too -
+                ProtectedRoute sends to /register and back to the form).
+                A card at the very TOP of the sidebar, above "Support",
+                not a button wedged between the links. */}
+            <div className="pb-3">
+              <Link
+                to={OWNER_START_PATH}
+                className="group flex items-center gap-3 rounded-xl border border-brand-100 bg-linear-to-br from-brand-50 to-white p-3 transition hover:border-brand-200 hover:shadow-md"
+              >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-white shadow-sm shadow-brand-600/30">
+                  <Plus className="size-4.5" aria-hidden />
+                </span>
+                {/* No truncate: the sidebar is narrow, and a cut-off
+                    "Publier mon loge…" read worse than two short lines. */}
+                <span className="min-w-0 flex-1 leading-snug">
+                  <span className="block text-sm font-semibold text-gray-900 transition group-hover:text-brand-700">
+                    {t('home.publishCta')}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-gray-500">{t('nav.publishHint')}</span>
+                </span>
+              </Link>
+            </div>
+
             {/* Shown whether or not you're logged in - unlike the links
                 below, supporting the project needs no account. Pinned
                 first, exact same row as the others - HandCoins (a
@@ -245,10 +296,11 @@ export default function Navbar({
                 )}
               </>
             )}
+
           </nav>
 
           <div className="space-y-3 border-t border-gray-100 p-3">
-            <LanguageSwitcher />
+            <LanguageSwitcher openUp />
 
             {isLoadingUser ? null : isAuthenticated ? (
               <div className="relative" ref={userMenuRef}>
@@ -309,14 +361,7 @@ export default function Navbar({
                 )}
               </div>
             ) : (
-              <div className="flex flex-col gap-2">
-                <Link to="/login" className={buttonClasses({ variant: 'secondary', fullWidth: true })}>
-                  {t('nav.login')}
-                </Link>
-                <Link to="/register" className={buttonClasses({ fullWidth: true })}>
-                  {t('nav.register')}
-                </Link>
-              </div>
+              <AuthActions />
             )}
           </div>
         </aside>
@@ -349,6 +394,18 @@ export default function Navbar({
               bottom of the "more" panel below, so it only needs to live
               in one place instead of taking up room in this slim strip
               on every page. */}
+          <div className="flex items-center gap-2">
+          {/* Owner UX: same action as the desktop sidebar button, short
+              label so it fits next to the menu on a 360px phone. */}
+          <Link
+            to={OWNER_START_PATH}
+            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-brand-50 ps-1 pe-3.5 text-sm font-semibold text-brand-700 ring-1 ring-brand-100 transition hover:bg-brand-100"
+          >
+            <span className="flex size-7 items-center justify-center rounded-full bg-brand-600 text-white">
+              <Plus className="size-4" aria-hidden />
+            </span>
+            {t('nav.publishShort')}
+          </Link>
           <button
             type="button"
             onClick={() => setIsMorePanelOpen((open) => !open)}
@@ -358,6 +415,7 @@ export default function Navbar({
           >
             {isMorePanelOpen ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
           </button>
+          </div>
         </div>
 
         {/* overflow-hidden + max-height keeps the open/close smooth
@@ -406,20 +464,14 @@ export default function Navbar({
                 {logout.isPending ? t('nav.loggingOut') : t('nav.logout')}
               </button>
             ) : (
-              <div className="mt-2 flex flex-col gap-2">
-                <Link to="/login" className={buttonClasses({ variant: 'secondary', fullWidth: true })}>
-                  {t('nav.login')}
-                </Link>
-                <Link to="/register" className={buttonClasses({ fullWidth: true })}>
-                  {t('nav.register')}
-                </Link>
+              <div className="mt-2">
+                <AuthActions />
               </div>
             )}
 
+            {/* No "Langue" caption: the globe icon already says it, and the
+                panel was getting long. */}
             <div className="mt-3 border-t border-gray-100 pt-3">
-              <p className="mb-2 px-1 text-xs font-semibold tracking-wider text-gray-400 uppercase">
-                {t('language.label')}
-              </p>
               <LanguageSwitcher />
             </div>
           </nav>

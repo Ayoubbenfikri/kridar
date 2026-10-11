@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Api\V1\Auth;
 
+use App\Enums\AnalyticsEventName;
 use App\Enums\Locale;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\AnalyticsService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,10 +32,68 @@ class GoogleAuthController extends Controller
      * GET /auth/google/redirect — sends the browser to Google's consent
      * screen. Socialite builds that URL from config('services.google'),
      * which reads GOOGLE_CLIENT_ID/GOOGLE_REDIRECT_URI from .env.
+     *
+     * The "google_login_click" analytics event is recorded HERE, not by the
+     * frontend. It used to be a separate POST /analytics/collect sent at
+     * the same moment as this navigation, with the same session cookie:
+     * that request read the session before Socialite saved its 'state'
+     * into it, then saved its own older copy back after - wiping the state.
+     * Google then came back to callback() with a state Laravel no longer
+     * had (InvalidStateException -> "Google sign-in failed"), depending on
+     * which of the two requests finished last.
      */
-    public function redirect(): RedirectResponse
+    public function redirect(Request $request, AnalyticsService $analytics): RedirectResponse
     {
+        try {
+            $analytics->record($request, [
+                'name' => AnalyticsEventName::GoogleLoginClick->value,
+                // The page the button was on (/login or /register).
+                // AnalyticsService keeps only the path of this URL.
+                'path' => (string) $request->headers->get('referer', '/login'),
+            ]);
+        } catch (Throwable $e) {
+            // A counter must never stop someone from signing in.
+            Log::warning('Could not record google_login_click.', ['exception' => $e::class]);
+        }
+
+        // Phase O1 (owner UX): where to land once Google is done, e.g. an
+        // owner who clicked "Publish my property". Kept in the session
+        // until callback(); an unsafe value is simply dropped.
+        $target = self::safeRedirectPath($request->query('redirect'));
+
+        if ($target !== null) {
+            $request->session()->put(self::REDIRECT_SESSION_KEY, $target);
+        } else {
+            $request->session()->forget(self::REDIRECT_SESSION_KEY);
+        }
+
         return Socialite::driver('google')->redirect();
+    }
+
+    private const REDIRECT_SESSION_KEY = 'google_auth_redirect';
+
+    /**
+     * A path on the FRONTEND site only - same rule as the frontend's
+     * lib/safeRedirect.ts. The value comes from a URL anyone can craft:
+     * accepting "//evil.com" or "https://evil.com" would make our sign-in
+     * forward people to a phishing site (open redirect). Auth pages are
+     * refused too (pointless loop).
+     */
+    public static function safeRedirectPath(mixed $value): ?string
+    {
+        if (! is_string($value) || $value === '' || $value === '/' || strlen($value) > 255) {
+            return null;
+        }
+
+        if (preg_match('#^/(?![/\\\\])[A-Za-z0-9\-._~/?=&%]*$#', $value) !== 1) {
+            return null;
+        }
+
+        if (preg_match('#^/(login|register)(/|\?|$)#', $value) === 1) {
+            return null;
+        }
+
+        return $value;
     }
 
     /**
@@ -63,6 +123,14 @@ class GoogleAuthController extends Controller
     {
         $frontendUrl = rtrim(config('app.frontend_url'), '/');
 
+        // Phase O1: read once, re-checked (the session could hold a value
+        // written by an older version of this code).
+        $target = self::safeRedirectPath($request->session()->pull(self::REDIRECT_SESSION_KEY));
+        // Failures go back to /login, still carrying the target, so a
+        // second attempt (Google or password) lands at the same place.
+        $loginUrl = fn (string $error) => "{$frontendUrl}/login?error={$error}"
+            .($target !== null ? '&redirect='.rawurlencode($target) : '');
+
         try {
             $googleUser = Socialite::driver('google')->user();
         } catch (Throwable $e) {
@@ -78,7 +146,7 @@ class GoogleAuthController extends Controller
                 'message' => $e->getMessage(),
             ]);
 
-            return redirect("{$frontendUrl}/login?error=google_auth_failed");
+            return redirect($loginUrl('google_auth_failed'));
         }
 
         $user = User::where('google_id', $googleUser->getId())->first();
@@ -101,13 +169,13 @@ class GoogleAuthController extends Controller
             if (! filled($googleUser->getEmail()) || ! $googleEmailVerified) {
                 Log::warning('Google sign-in refused: Google did not confirm the email address.');
 
-                return redirect("{$frontendUrl}/login?error=google_auth_failed");
+                return redirect($loginUrl('google_auth_failed'));
             }
 
             $existing = User::where('email', $googleUser->getEmail())->first();
 
             if ($existing && ! $existing->hasVerifiedEmail()) {
-                return redirect("{$frontendUrl}/login?error=google_email_unverified");
+                return redirect($loginUrl('google_email_unverified'));
             }
 
             if ($existing) {
@@ -142,12 +210,12 @@ class GoogleAuthController extends Controller
         }
 
         if ($user->status === UserStatus::Suspended) {
-            return redirect("{$frontendUrl}/login?error=account_suspended");
+            return redirect($loginUrl('account_suspended'));
         }
 
         Auth::login($user, remember: true);
         $request->session()->regenerate();
 
-        return redirect($frontendUrl.'/');
+        return redirect($frontendUrl.($target ?? '/'));
     }
 }

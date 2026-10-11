@@ -334,6 +334,12 @@ interface PropertyFormProps {
   submitLabel: string
   validationErrors: ValidationErrors | null
   generalError?: string
+  /**
+   * Rendered just above the submit button. The create page puts its photo
+   * picker here, so on mobile the owner adds photos BEFORE reaching
+   * "Create property" instead of finding them below it.
+   */
+  beforeSubmit?: ReactNode
 }
 
 export default function PropertyForm({
@@ -344,6 +350,7 @@ export default function PropertyForm({
   submitLabel,
   validationErrors,
   generalError,
+  beforeSubmit,
 }: PropertyFormProps) {
   const { t } = useTranslation()
   const [form, setForm] = useState<FormState>(
@@ -839,6 +846,8 @@ export default function PropertyForm({
           )}
         </Section>
       )}
+
+      {beforeSubmit}
 
       {generalError && (
         <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">

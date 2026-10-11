@@ -18,6 +18,8 @@ export const en: TranslationSchema = {
   },
 
   nav: {
+    publishShort: 'List',
+    publishHint: 'Free, in a few minutes',
     home: 'Home',
     properties: 'Properties',
     rent: 'Rent',
@@ -153,6 +155,7 @@ export const en: TranslationSchema = {
     modeBuy: 'Buy',
     budget: 'Budget',
     budgetMonth: 'Budget / month',
+    budgetNight: 'Budget / night',
     budgetMin: 'Min',
     budgetMax: 'Max',
     budgetAny: 'Any',
@@ -168,6 +171,7 @@ export const en: TranslationSchema = {
   home: {
     badge: 'Rent and buy in Morocco',
     title: 'Find your next home in Morocco',
+    heroSubtitle: 'Apartments, villas, riads and studios, by the night, by the month or to buy.',
     subtitle:
       'Apartments, villas and riads in Marrakech, Casablanca, Rabat and everywhere else. Book directly with the owner.',
     latest: 'Latest listings',
@@ -179,6 +183,9 @@ export const en: TranslationSchema = {
     emptyTitle: 'Nothing published yet',
     emptyDescription: 'Listings will show up here as soon as an owner publishes one.',
     publishCta: 'List my property',
+    ownerHint: 'Own a property?',
+    ownerHintCta: 'List it here',
+    ownerHintBadge: 'Free',
     ownerTitle: 'Got a place to rent out?',
     ownerText:
       'Publish your listing, manage your availability and your bookings from one place. No middleman.',
@@ -354,6 +361,14 @@ export const en: TranslationSchema = {
     loginSubtitle: 'Log in to manage your bookings',
     registerTitle: 'Create an account',
     registerSubtitle: 'A few seconds, and you can book',
+    loginOwnerTitle: 'Welcome back',
+    loginOwnerSubtitle: 'Log in to publish your property',
+    registerOwnerTitle: 'List your property',
+    registerOwnerSubtitle: 'Create your free account, then add your listing in a few minutes',
+    verifyBannerText: 'Your email address is not verified yet.',
+    verifyBannerResend: 'Resend the email',
+    verifyBannerSending: 'Sending…',
+    verifyBannerSent: 'Email sent, check your inbox.',
 
     email: 'Email',
     emailPlaceholder: 'you@example.com',
@@ -439,6 +454,16 @@ export const en: TranslationSchema = {
       noPending: 'No pending requests at the moment.',
       guestFallback: 'Guest',
       dateRange: '{{start}} to {{end}}',
+      draftsWarning: 'Draft listings: {{n}}. Visitors cannot see them, publish them.',
+    },
+    welcome: {
+      title: 'Welcome to Krihouse',
+      text: 'List your property for free and get requests from tenants and travellers.',
+      step1: 'Describe your property and set your price',
+      step2: 'Add a few photos',
+      step3: 'Publish: your listing is visible right away',
+      cta: 'List my first property',
+      free: 'Free, no commitment.',
     },
     properties: {
       title: 'My properties',

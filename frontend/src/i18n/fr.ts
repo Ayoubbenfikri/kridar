@@ -38,6 +38,8 @@ export const fr = {
   },
 
   nav: {
+    publishShort: 'Publier',
+    publishHint: 'Gratuit, en quelques minutes',
     home: 'Accueil',
     properties: 'Propriétés',
     // The two modes of the property list: /properties and /buy.
@@ -189,6 +191,7 @@ export const fr = {
     modeBuy: 'Acheter',
     budget: 'Budget',
     budgetMonth: 'Budget / mois',
+    budgetNight: 'Budget / nuit',
     budgetMin: 'Min',
     budgetMax: 'Max',
     budgetAny: 'Peu importe',
@@ -204,6 +207,7 @@ export const fr = {
   home: {
     badge: 'Location et achat au Maroc',
     title: 'Trouvez votre prochain logement au Maroc',
+    heroSubtitle: "Appartements, villas, riads et studios, à la nuit, au mois ou à l'achat.",
     subtitle:
       'Appartements, villas et riads à Marrakech, Casablanca, Rabat et partout ailleurs. Réservation directe avec le propriétaire.',
     latest: 'Derniers logements',
@@ -215,6 +219,9 @@ export const fr = {
     emptyTitle: 'Aucun logement publié pour le moment',
     emptyDescription: "Les propriétés apparaîtront ici dès qu'un propriétaire en publiera une.",
     publishCta: 'Publier mon logement',
+    ownerHint: 'Propriétaire ?',
+    ownerHintCta: 'Publiez votre logement',
+    ownerHintBadge: 'Gratuit',
     ownerTitle: 'Vous avez un logement à louer ?',
     ownerText:
       'Publiez votre annonce, gérez vos disponibilités et vos réservations depuis un seul espace. Sans intermédiaire.',
@@ -402,6 +409,14 @@ export const fr = {
     loginSubtitle: 'Connectez-vous pour gérer vos réservations',
     registerTitle: 'Créer un compte',
     registerSubtitle: 'Quelques secondes, et vous pouvez réserver',
+    loginOwnerTitle: 'Content de vous revoir',
+    loginOwnerSubtitle: 'Connectez-vous pour publier votre logement',
+    registerOwnerTitle: 'Publiez votre logement',
+    registerOwnerSubtitle: 'Créez votre compte gratuit, puis ajoutez votre annonce en quelques minutes',
+    verifyBannerText: "Votre adresse email n'est pas encore vérifiée.",
+    verifyBannerResend: "Renvoyer l'email",
+    verifyBannerSending: 'Envoi…',
+    verifyBannerSent: 'Email envoyé, vérifiez votre boîte de réception.',
 
     email: 'Email',
     emailPlaceholder: 'vous@exemple.com',
@@ -513,6 +528,16 @@ export const fr = {
       noPending: 'Aucune demande en attente pour le moment.',
       guestFallback: 'Client',
       dateRange: '{{start}} au {{end}}',
+      draftsWarning: 'Annonces en brouillon : {{n}}. Elles ne sont pas visibles par les visiteurs, publiez-les.',
+    },
+    welcome: {
+      title: 'Bienvenue sur Krihouse',
+      text: 'Publiez votre logement gratuitement et recevez des demandes de locataires et de voyageurs.',
+      step1: 'Décrivez votre logement et votre prix',
+      step2: 'Ajoutez quelques photos',
+      step3: 'Publiez : votre annonce est visible tout de suite',
+      cta: 'Publier mon premier logement',
+      free: 'Gratuit, sans engagement.',
     },
     properties: {
       title: 'Mes propriétés',

@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Building2, CalendarCheck, HeartHandshake, LayoutDashboard, Plus } from 'lucide-react'
 import { buttonClasses } from '@/components/ui'
@@ -25,6 +25,13 @@ const LINKS = [
  */
 export default function OwnerLayout() {
   const { t } = useTranslation()
+  const { pathname } = useLocation()
+  // The sidebar "Add" follows the section you are in: on the roommate
+  // pages it creates a roommate post, everywhere else a property (it used
+  // to always open the property form, even from "My roommate posts").
+  const add = pathname.startsWith('/owner/roommates')
+    ? { to: '/owner/roommates/new', label: t('roommateEdit.newTitle') }
+    : { to: '/owner/properties/new', label: t('owner.properties.addProperty') }
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
       'flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium whitespace-nowrap transition',
@@ -39,7 +46,9 @@ export default function OwnerLayout() {
             {t('owner.nav.label')}
           </p>
 
-          <nav className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-2 lg:mx-0 lg:flex-col lg:px-0 lg:pb-0">
+          {/* Scrollbar hidden on the mobile tab row: the tabs still scroll
+              with a swipe, the grey bar under them was just noise. */}
+          <nav className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-2 [scrollbar-width:none] lg:mx-0 lg:flex-col lg:px-0 lg:pb-0 [&::-webkit-scrollbar]:hidden">
             {LINKS.map((link) => (
               <NavLink key={link.to} to={link.to} end={link.end} className={linkClass}>
                 <link.icon className="size-4.5 shrink-0" aria-hidden />
@@ -48,13 +57,16 @@ export default function OwnerLayout() {
             ))}
           </nav>
 
-          <NavLink
-            to="/owner/properties/new"
-            className={buttonClasses({ size: 'sm', className: 'mt-3 hidden w-full lg:inline-flex' })}
-          >
-            <Plus className="size-4" aria-hidden />
-            {t('common.add')}
-          </NavLink>
+          {/* Desktop only. Phase O1 fix: 'hidden' sat on the button itself,
+              next to buttonClasses' own 'inline-flex' - same CSS property,
+              and inline-flex won, so this showed on mobile too (two "Add"
+              buttons on one screen). The wrapper owns the visibility now. */}
+          <div className="mt-3 hidden lg:block">
+            <Link to={add.to} className={buttonClasses({ size: 'sm', fullWidth: true })}>
+              <Plus className="size-4" aria-hidden />
+              {add.label}
+            </Link>
+          </div>
         </aside>
 
         <div className="mt-6 min-w-0 lg:mt-0">

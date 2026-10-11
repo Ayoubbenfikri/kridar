@@ -4,47 +4,16 @@ import { useTranslation } from 'react-i18next'
 import { Helmet } from 'react-helmet-async'
 import {
   ArrowRight,
-  BedDouble,
-  Briefcase,
-  Building,
   Building2,
   Heart,
-  Home,
-  Landmark,
   ShieldCheck,
-  Store,
-  Trees,
 } from 'lucide-react'
 import SearchBar from '@/components/search/SearchBar'
 import PropertyCard from '@/components/properties/PropertyCard'
 import { useProperties } from '@/features/properties/useProperties'
 import { Card, EmptyState, Skeleton, buttonClasses } from '@/components/ui'
-import { searchUrl, type SearchMode } from '@/lib/homeSearch'
-import type { PropertyType } from '@/types/property'
-
-/**
- * City names are proper nouns and stay as they are in all three
- * languages — a Moroccan reading Darija still recognises "Marrakech",
- * and transliterating them would break the `city=` filter they link to,
- * which matches the exact value stored in the database.
- */
-const CITIES = ['Marrakech', 'Casablanca', 'Rabat', 'Tanger', 'Agadir', 'Essaouira']
-
-/**
- * "Browse by type" tiles. They follow the search bar's mode: in "buy" the
- * last tile is land (only sold, never rented), otherwise it is offices.
- */
-const TYPE_ICONS: Record<string, typeof Home> = {
-  apartment: Building,
-  villa: Home,
-  riad: Landmark,
-  studio: BedDouble,
-  commercial: Store,
-  land: Trees,
-  office: Briefcase,
-}
-const TILE_TYPES_RENT: PropertyType[] = ['apartment', 'villa', 'riad', 'studio', 'commercial', 'office']
-const TILE_TYPES_BUY: PropertyType[] = ['apartment', 'villa', 'riad', 'land', 'commercial', 'studio']
+import type { SearchMode } from '@/lib/homeSearch'
+import { OWNER_START_PATH } from '@/lib/safeRedirect'
 
 /** Same shape as a PropertyCard, so the grid does not jump on load. */
 function PropertyCardSkeleton() {
@@ -63,8 +32,7 @@ function PropertyCardSkeleton() {
 
 export default function HomePage() {
   const { t } = useTranslation()
-  // One mode for the whole hero: the search bar's tabs, the city chips and
-  // the type tiles all build their links from it (see lib/homeSearch).
+  // The search bar's intent tab (short stay / monthly / buy).
   const [mode, setMode] = useState<SearchMode>('short')
 
   // Newest published properties. The listing endpoint returns them
@@ -79,7 +47,6 @@ export default function HomePage() {
   // launch day would look broken, not honest.
   const { data: saleData } = useProperties({ listing_type: 'sale', per_page: 3 })
   const saleProperties = saleData?.data ?? []
-  const tileTypes = mode === 'buy' ? TILE_TYPES_BUY : TILE_TYPES_RENT
 
   return (
     <main>
@@ -104,51 +71,36 @@ export default function HomePage() {
           <div className="absolute inset-x-0 -top-40 h-96 bg-[radial-gradient(60%_60%_at_50%_50%,var(--color-brand-100),transparent_70%)]" />
         </div>
 
-        <div className="relative mx-auto w-full max-w-6xl px-4 py-6 text-center sm:px-6 sm:pb-6 sm:pt-12">
-          {/* The heading stays for screen readers and search engines, it is
-              just not shown: the search bar is the first thing people see. */}
+        <div className="relative mx-auto w-full max-w-6xl px-4 pt-5 pb-8 text-center sm:px-6 sm:pt-12 sm:pb-12">
+          {/* Owner UX (Oct 2026): a visible headline again, and only the
+              search under it - the city chips and type tiles that used to
+              follow made the page read as a wall of filters. */}
+          {/* Not shown (phone or desktop): the search is the first thing on
+              screen. The heading stays for screen readers and search
+              engines (sr-only). */}
           <h1 className="sr-only">{t('home.title')}</h1>
 
           <div>
             <SearchBar mode={mode} onModeChange={setMode} />
           </div>
 
-          <div className="mt-4 flex flex-wrap justify-center gap-1.5 sm:mt-6 sm:gap-2">
-            {CITIES.map((city) => (
-              <Link
-                key={city}
-                to={searchUrl(mode, { city })}
-                className="rounded-full border border-gray-200 bg-white px-3 py-1 text-[13px] text-gray-600 sm:px-4 sm:py-1.5 sm:text-sm transition hover:border-brand-500 hover:bg-brand-50 hover:text-brand-700"
-              >
-                {city}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ---------------------------------------------------------------
-          BROWSE BY TYPE
-          --------------------------------------------------------------- */}
-      <section className="mx-auto w-full max-w-6xl px-4 pb-8 pt-4 sm:px-6 sm:pb-8 sm:pt-0">
-        <h2 className="text-2xl font-bold tracking-tight text-gray-900">{t('search.typesTitle')}</h2>
-        <p className="mt-1 text-sm text-gray-500">{t('search.typesSubtitle')}</p>
-        <div className="mt-4 grid grid-cols-3 gap-2 sm:mt-5 sm:gap-3 lg:grid-cols-6">
-          {tileTypes.map((type) => {
-            const Icon = TYPE_ICONS[type]
-            return (
-              <Link
-                key={type}
-                to={searchUrl(mode, { property_type: type })}
-                className="group flex flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white p-3 text-center sm:gap-3 sm:p-5 transition hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-md"
-              >
-                <span className="flex size-10 items-center justify-center rounded-xl bg-brand-50 sm:size-12 text-brand-600 transition group-hover:bg-brand-600 group-hover:text-white">
-                  <Icon className="size-5 sm:size-6" aria-hidden />
-                </span>
-                <span className="text-xs font-semibold text-gray-900 sm:text-sm">{t(`propertyType.${type}`)}</span>
-              </Link>
-            )
-          })}
+          {/* Owner UX: visible without scrolling, for the owners the ads
+              bring here. Same target as the navbar button. */}
+          <Link
+            to={OWNER_START_PATH}
+            className="group mt-5 inline-flex max-w-full items-center gap-2 rounded-full border border-gray-200 bg-white/80 py-1 ps-1 pe-3 text-[13px] text-gray-600 shadow-sm backdrop-blur transition hover:border-brand-200 hover:shadow-md sm:mt-6 sm:text-sm"
+          >
+            <span className="shrink-0 rounded-full bg-brand-600 px-2.5 py-0.5 text-xs font-semibold text-white">
+              {t('home.ownerHintBadge')}
+            </span>
+            <span className="truncate">
+              {t('home.ownerHint')} <span className="font-semibold text-brand-700">{t('home.ownerHintCta')}</span>
+            </span>
+            <ArrowRight
+              className="size-4 shrink-0 text-brand-600 transition group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5"
+              aria-hidden
+            />
+          </Link>
         </div>
       </section>
 
@@ -193,7 +145,7 @@ export default function HomePage() {
             title={t('home.emptyTitle')}
             description={t('home.emptyDescription')}
             action={
-              <Link to="/owner/properties/new" className={buttonClasses()}>
+              <Link to={OWNER_START_PATH} className={buttonClasses()}>
                 {t('home.publishCta')}
               </Link>
             }
@@ -259,7 +211,10 @@ export default function HomePage() {
             </h2>
             <p className="mt-2 text-gray-500">{t('home.ownerText')}</p>
           </div>
-          <Link to="/owner" className={buttonClasses({ className: 'shrink-0' })}>
+          {/* Phase O1: straight to the listing form - a new owner has
+              nothing to see on the dashboard yet. Logged out, ProtectedRoute
+              sends them to /register and back here afterwards. */}
+          <Link to={OWNER_START_PATH} className={buttonClasses({ className: 'shrink-0' })}>
             {t('home.ownerCta')}
           </Link>
         </Card>

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { MessageSquare } from 'lucide-react'
 import { useMessagesUnreadCount } from '@/features/messaging/useMessaging'
+import { useAuth } from '@/features/auth/useAuth'
 
 /**
  * Messages icon + unread dot, deliberately built to match NotificationBell
@@ -23,7 +24,10 @@ import { useMessagesUnreadCount } from '@/features/messaging/useMessaging'
  */
 export default function MessagesLink({ showLabel = false }: { showLabel?: boolean }) {
   const { t } = useTranslation()
-  const unreadCount = useMessagesUnreadCount(true)
+  const { user } = useAuth()
+  // Phase O1: an unverified account gets a 403 from /conversations - see
+  // MobileTabBar.
+  const unreadCount = useMessagesUnreadCount(Boolean(user?.email_verified))
   const hasUnread = unreadCount > 0
 
   return (

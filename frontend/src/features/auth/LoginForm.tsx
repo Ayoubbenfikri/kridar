@@ -6,6 +6,7 @@ import { useAuth } from './useAuth'
 import GoogleAuthButton from './GoogleAuthButton'
 import { getErrorMessage, getValidationErrors } from '@/lib/apiErrors'
 import { Button, Input, useToast } from '@/components/ui'
+import { REDIRECT_PARAM, safeRedirect, withRedirect } from '@/lib/safeRedirect'
 
 // GoogleAuthController redirects every failure case back here as
 // /login?error=<code> (a real browser redirect, not JSON - see that
@@ -28,6 +29,9 @@ export default function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  // Phase O1: the page that sent the visitor here (ProtectedRoute), kept
+  // through Google and the link to /register too.
+  const redirectTo = safeRedirect(searchParams.get(REDIRECT_PARAM))
 
   // Runs once per mount, not on every render: an empty dependency array,
   // plus setSearchParams(..., { replace: true }) below so the error code
@@ -56,12 +60,12 @@ export default function LoginForm() {
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    login.mutate({ email, password }, { onSuccess: () => navigate('/') })
+    login.mutate({ email, password }, { onSuccess: () => navigate(redirectTo, { replace: true }) })
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <GoogleAuthButton />
+      <GoogleAuthButton redirectTo={redirectTo} />
 
       <Input
         label={t('auth.email')}
@@ -115,7 +119,7 @@ export default function LoginForm() {
 
       <p className="text-center text-sm text-gray-500">
         {t('auth.noAccount')}{' '}
-        <Link to="/register" className="font-semibold text-brand-600 transition hover:text-brand-700">
+        <Link to={withRedirect('/register', redirectTo)} className="font-semibold text-brand-600 transition hover:text-brand-700">
           {t('auth.register')}
         </Link>
       </p>

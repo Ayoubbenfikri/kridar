@@ -27,7 +27,9 @@ import { cn } from '@/lib/cn'
 export default function MobileTabBar() {
   const { t } = useTranslation()
   const { user, isAuthenticated, isLoadingUser } = useAuth()
-  const unreadMessages = useMessagesUnreadCount(isAuthenticated)
+  // Phase O1: /conversations sits behind the 'verified' middleware, so
+  // polling it for an unverified account only collected a 403 every 30s.
+  const unreadMessages = useMessagesUnreadCount(isAuthenticated && Boolean(user?.email_verified))
   const { pathname } = useLocation()
 
   const initials = (user?.name ?? '')

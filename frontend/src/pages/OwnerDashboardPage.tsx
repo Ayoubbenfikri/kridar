@@ -1,12 +1,16 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { isAxiosError } from 'axios'
 import {
   ArrowRight,
   Building2,
   CalendarCheck,
+  Camera,
   CheckCircle2,
   Clock,
+  FilePen,
   Inbox,
+  Plus,
   Star,
   TriangleAlert,
   Wallet,
@@ -15,13 +19,19 @@ import { useOwnerReservations, useOwnerStats } from '@/features/owner/useOwner'
 import { formatMad } from '@/lib/formatPrice'
 import { formatDate } from '@/lib/formatDate'
 import { getErrorMessage } from '@/lib/apiErrors'
-import { Card, Skeleton } from '@/components/ui'
+import { Card, Skeleton, buttonClasses } from '@/components/ui'
+import { OWNER_START_PATH } from '@/lib/safeRedirect'
 
 /**
  * /owner - the owner dashboard "home": a summary that links out to the
  * full lists. Reachable by anyone logged in, but the backend's 'owner'
  * middleware (EnsureUserOwnsAProperty) 403s for a user who owns no
- * property at all - shown here as a plain notice, not a crash.
+ * property at all.
+ *
+ * Phase O1 (owner UX): that 403 is exactly what a brand-new owner coming
+ * from an ad hits first, so it is shown as a welcome screen with one big
+ * "publish" button - not as a red English error. Any OTHER error still
+ * shows the notice.
  */
 function Stat({
   icon,
@@ -61,10 +71,51 @@ function Stat({
   )
 }
 
+function OwnerWelcome() {
+  const { t } = useTranslation()
+  const steps = [
+    { icon: <FilePen className="size-4.5" />, text: t('owner.welcome.step1') },
+    { icon: <Camera className="size-4.5" />, text: t('owner.welcome.step2') },
+    { icon: <CheckCircle2 className="size-4.5" />, text: t('owner.welcome.step3') },
+  ]
+
+  return (
+    <Card className="p-6 text-center sm:p-8">
+      <span className="mx-auto flex size-12 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+        <Building2 className="size-6" aria-hidden />
+      </span>
+      <h1 className="mt-4 text-2xl font-bold tracking-tight text-gray-900">{t('owner.welcome.title')}</h1>
+      <p className="mx-auto mt-2 max-w-md text-gray-500">{t('owner.welcome.text')}</p>
+
+      <ol className="mx-auto mt-6 max-w-sm space-y-3 text-start">
+        {steps.map((step, index) => (
+          <li key={index} className="flex items-center gap-3 text-sm text-gray-700">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+              {step.icon}
+            </span>
+            {step.text}
+          </li>
+        ))}
+      </ol>
+
+      <Link to={OWNER_START_PATH} className={buttonClasses({ className: 'mt-8 h-12 w-full px-6 text-base sm:w-auto' })}>
+        <Plus className="size-5" aria-hidden />
+        {t('owner.welcome.cta')}
+      </Link>
+      <p className="mt-3 text-xs text-gray-400">{t('owner.welcome.free')}</p>
+    </Card>
+  )
+}
+
 export default function OwnerDashboardPage() {
   const { t } = useTranslation()
   const { data: stats, isError: statsIsError, error: statsError } = useOwnerStats()
   const { data: reservationsData } = useOwnerReservations(1)
+
+  // 403 = "owns no property yet" (EnsureUserOwnsAProperty).
+  if (statsIsError && isAxiosError(statsError) && statsError.response?.status === 403) {
+    return <OwnerWelcome />
+  }
 
   if (statsIsError) {
     return (
@@ -95,6 +146,24 @@ export default function OwnerDashboardPage() {
         </div>
       ) : (
         <>
+          {/* Phase O1: a listing left as a draft is invisible to every
+              visitor - the most common reason an owner "published" and got
+              nothing. Said plainly, with the way out. */}
+          {stats.properties_count > stats.published_properties_count && (
+            <Link
+              to="/owner/properties"
+              className="mt-6 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 transition hover:border-amber-300"
+            >
+              <TriangleAlert className="size-5 shrink-0 text-amber-600" aria-hidden />
+              <span className="min-w-0 flex-1">
+                {t('owner.dashboard.draftsWarning', {
+                  n: stats.properties_count - stats.published_properties_count,
+                })}
+              </span>
+              <ArrowRight className="size-4 shrink-0 rtl:rotate-180" aria-hidden />
+            </Link>
+          )}
+
           <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
             <Stat
               icon={<Building2 className="size-4.5" />}

@@ -1,49 +1,38 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import {
-  Building2,
-  CalendarDays,
-  CalendarRange,
-  Home,
-  MapPin,
-  Search,
-  Users,
-  Wallet,
-} from 'lucide-react'
-import Button from '@/components/ui/Button'
-import type { SelectOption } from '@/components/ui/Select'
-import SearchSelect from '@/components/search/SearchSelect'
+import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/react'
+import { Building2, CalendarDays, CalendarRange, Check, ChevronDown, Home, MapPin, Search, Wallet } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { track } from '@/lib/analytics'
 import { searchUrl, type SearchMode } from '@/lib/homeSearch'
 import type { PropertyType } from '@/types/property'
 
 /**
- * The hero search, with one tab per intent (short stay / monthly rental /
- * buy). The tab decides which route the search goes to AND which third
- * field is shown: guests only mean something for a short stay, a budget
- * for a monthly rental or a purchase.
+ * The hero search: one tab per intent (short stay / monthly rental / buy),
+ * the destination, and two compact pickers - property type and budget.
  *
- * Every field maps onto a parameter the backend already accepts
- * (see PropertySearchRequest: q, property_type, max_guests, min_price,
- * max_price, rental_type) - there is deliberately no "dates" field,
- * because search does not filter on availability.
+ * Owner UX (Oct 2026): the home page had become a wall of filters (type,
+ * guests, budget, city chips, type tiles). It keeps only these three
+ * questions; everything else (guests, bedrooms, amenities...) lives on
+ * the results page (PropertyFilters).
  *
- * The mode is owned by the home page (it also drives the city chips and
- * the type tiles under the bar), so this component is controlled.
+ * Every value maps onto a parameter the backend already accepts
+ * (PropertySearchRequest: q, property_type, min_price, max_price,
+ * rental_type). The price column depends on the intent, decided by the
+ * backend (EloquentPropertyRepository): price_per_night for a short stay,
+ * price_per_month for a monthly rental, sale_price for a purchase.
  *
- * Phase 27: the type list holds VALUES and translation keys, never
- * labels, so the dropdown follows the current language.
+ * The mode is owned by the home page, so this component is controlled.
  */
 const RENT_TYPES: Array<PropertyType | ''> = ['', 'apartment', 'villa', 'studio', 'riad', 'office', 'commercial']
 const SALE_TYPES: Array<PropertyType | ''> = ['', 'apartment', 'villa', 'studio', 'riad', 'office', 'land', 'commercial']
 
 /**
- * Budget choices. Each one is a ready-made price range (min and/or max,
- * in MAD): the backend gets the same min_price / max_price it always did.
- * A monthly rent and a sale price live on very different scales, so each
- * has its own list.
+ * Ready-made price ranges (MAD). The backend receives the same
+ * min_price / max_price it always did - the browser never sends free
+ * text here. A night, a month and a sale price live on very different
+ * scales, so each intent has its own list.
  */
 interface BudgetPreset {
   id: string
@@ -51,40 +40,111 @@ interface BudgetPreset {
   max?: number
 }
 
-const RENT_BUDGETS: BudgetPreset[] = [
-  { id: 'any' },
-  { id: 'r1', max: 3000 },
-  { id: 'r2', min: 3000, max: 6000 },
-  { id: 'r3', min: 6000 },
-]
-
-const SALE_BUDGETS: BudgetPreset[] = [
-  { id: 'any' },
-  { id: 's1', max: 500_000 },
-  { id: 's2', min: 500_000, max: 1_000_000 },
-  { id: 's3', min: 1_000_000, max: 2_000_000 },
-  { id: 's4', min: 2_000_000 },
-]
-
-/** 3000 -> "3 K", 1500000 -> "1.5 M". */
-function shortAmount(amount: number): string {
-  if (amount >= 1_000_000) return `${amount / 1_000_000} M`
-  return `${amount / 1000} K`
+const BUDGETS: Record<SearchMode, BudgetPreset[]> = {
+  short: [{ id: 'any' }, { id: 'n1', max: 500 }, { id: 'n2', min: 500, max: 1000 }, { id: 'n3', min: 1000, max: 2000 }, { id: 'n4', min: 2000 }],
+  long: [{ id: 'any' }, { id: 'r1', max: 3000 }, { id: 'r2', min: 3000, max: 6000 }, { id: 'r3', min: 6000 }],
+  buy: [
+    { id: 'any' },
+    { id: 's1', max: 500_000 },
+    { id: 's2', min: 500_000, max: 1_000_000 },
+    { id: 's3', min: 1_000_000, max: 2_000_000 },
+    { id: 's4', min: 2_000_000 },
+  ],
 }
 
-function budgetLabel(preset: BudgetPreset, currency: string, anyLabel: string): string {
-  const { min, max } = preset
-  if (min === undefined && max === undefined) return anyLabel
-  if (min !== undefined && max !== undefined) return `${shortAmount(min)} \u2013 ${shortAmount(max)} ${currency}`
+/** 450 -> "450", 3000 -> "3 K", 1500000 -> "1.5 M". */
+function shortAmount(amount: number): string {
+  if (amount >= 1_000_000) return `${amount / 1_000_000} M`
+  if (amount >= 1000) return `${amount / 1000} K`
+  return String(amount)
+}
+
+function budgetLabel({ min, max }: BudgetPreset, currency: string): string {
+  if (min !== undefined && max !== undefined) return `${shortAmount(min)} – ${shortAmount(max)} ${currency}`
   if (max !== undefined) return `< ${shortAmount(max)} ${currency}`
   return `> ${shortAmount(min as number)} ${currency}`
 }
 
-const TABS: Array<{ mode: SearchMode; icon: typeof Home; labelKey: string }> = [
+const TABS: Array<{ mode: SearchMode; icon: typeof Building2; labelKey: string }> = [
   { mode: 'short', icon: CalendarDays, labelKey: 'search.modeShort' },
   { mode: 'long', icon: CalendarRange, labelKey: 'search.modeLong' },
   { mode: 'buy', icon: Building2, labelKey: 'search.modeBuy' },
 ]
+
+interface ChipOption {
+  value: string
+  label: string
+}
+
+/**
+ * A small pill that opens a list - the compact replacement for the old
+ * tall "LABEL / value" fields. Shows the chosen value, or `placeholder`
+ * while nothing is chosen (first option).
+ */
+function FilterChip({
+  icon,
+  value,
+  onChange,
+  options,
+  placeholder,
+  ariaLabel,
+  className,
+}: {
+  icon: ReactNode
+  value: string
+  onChange: (value: string) => void
+  options: ChipOption[]
+  placeholder: string
+  ariaLabel: string
+  className?: string
+}) {
+  const isDefault = value === options[0]?.value
+  const selected = options.find((option) => option.value === value)
+
+  return (
+    <Listbox as="div" value={value} onChange={onChange} className={cn('relative min-w-0', className)}>
+      <ListboxButton
+        aria-label={ariaLabel}
+        className={cn(
+          'flex h-10 w-full items-center gap-1.5 rounded-full px-3 text-[13px] font-medium whitespace-nowrap transition sm:gap-2 sm:px-3.5 sm:text-sm',
+          'focus:outline-none data-[focus]:ring-[3px] data-[focus]:ring-brand-500/30',
+          // Phone: soft grey pills inside the search card. Desktop: they sit
+          // inside the white pill, so no fill until something is chosen.
+          isDefault
+            ? 'bg-gray-100 text-gray-600 hover:bg-gray-200 sm:bg-transparent sm:hover:bg-gray-100'
+            : 'bg-brand-50 text-brand-700 hover:bg-brand-100',
+        )}
+      >
+        {icon}
+        <span className="min-w-0 flex-1 truncate text-start">{isDefault ? placeholder : selected?.label}</span>
+        {/* No chevron on very narrow phones (< 380px): it is what made
+            "Tous les types" get cut off at 360px. */}
+        <ChevronDown className="hidden size-4 shrink-0 opacity-60 min-[380px]:block" aria-hidden />
+      </ListboxButton>
+
+      <ListboxOptions
+        anchor="bottom start"
+        transition
+        className={cn(
+          'z-50 mt-2 max-h-72 w-[max(var(--button-width),13rem)] overflow-auto rounded-xl border border-gray-200 bg-white p-1 shadow-lg',
+          'transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0',
+          'focus:outline-none',
+        )}
+      >
+        {options.map((option) => (
+          <ListboxOption
+            key={option.value}
+            value={option.value}
+            className="group flex cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 data-[focus]:bg-gray-50 data-[selected]:font-semibold data-[selected]:text-brand-700"
+          >
+            {option.label}
+            <Check className="invisible size-4 shrink-0 text-brand-600 group-data-[selected]:visible" aria-hidden />
+          </ListboxOption>
+        ))}
+      </ListboxOptions>
+    </Listbox>
+  )
+}
 
 interface SearchBarProps {
   mode: SearchMode
@@ -96,30 +156,27 @@ export default function SearchBar({ mode, onModeChange }: SearchBarProps) {
   const navigate = useNavigate()
   const [city, setCity] = useState('')
   const [propertyType, setPropertyType] = useState<PropertyType | ''>('')
-  const [guests, setGuests] = useState('')
   const [budgetId, setBudgetId] = useState('any')
 
-  const isBuy = mode === 'buy'
-  const typeValues = isBuy ? SALE_TYPES : RENT_TYPES
-  const budgets = isBuy ? SALE_BUDGETS : RENT_BUDGETS
   const currency = t('common.currency')
-
-  const typeOptions: SelectOption[] = typeValues.map((value) => ({
+  const budgets = BUDGETS[mode]
+  const typeOptions: ChipOption[] = (mode === 'buy' ? SALE_TYPES : RENT_TYPES).map((value) => ({
     value,
     label: value === '' ? t('propertyType.all') : t(`propertyType.${value}`),
   }))
-  const budgetOptions: SelectOption[] = budgets.map((preset) => ({
+  const budgetOptions: ChipOption[] = budgets.map((preset) => ({
     value: preset.id,
-    label: budgetLabel(preset, currency, t('search.budgetAny')),
+    label: preset.id === 'any' ? t('search.budgetAny') : budgetLabel(preset, currency),
   }))
+  const budgetPlaceholder =
+    mode === 'short' ? t('search.budgetNight') : mode === 'long' ? t('search.budgetMonth') : t('search.budget')
 
   function changeMode(next: SearchMode) {
     onModeChange(next)
-    // A budget or type picked for one intent would mean something else in
-    // another (monthly rent vs sale price, "terrain" in a rental), and
-    // guests only exist for a short stay: start those fields clean.
+    // A budget picked for one intent means something else in another (a
+    // night vs a month vs a sale price), and "land" is never rented:
+    // start those clean.
     setBudgetId('any')
-    setGuests('')
     if (next !== 'buy' && propertyType === 'land') setPropertyType('')
   }
 
@@ -127,7 +184,7 @@ export default function SearchBar({ mode, onModeChange }: SearchBarProps) {
     event.preventDefault()
 
     // The range comes from our own preset list, never from free text.
-    const budget = mode === 'short' ? undefined : budgets.find((preset) => preset.id === budgetId)
+    const budget = budgets.find((preset) => preset.id === budgetId)
 
     track('search')
 
@@ -138,7 +195,6 @@ export default function SearchBar({ mode, onModeChange }: SearchBarProps) {
       searchUrl(mode, {
         q: city.trim() || undefined,
         property_type: propertyType || undefined,
-        max_guests: mode === 'short' && guests ? guests : undefined,
         min_price: budget?.min !== undefined ? String(budget.min) : undefined,
         max_price: budget?.max !== undefined ? String(budget.max) : undefined,
       }),
@@ -152,7 +208,7 @@ export default function SearchBar({ mode, onModeChange }: SearchBarProps) {
       <div
         role="tablist"
         aria-label={t('search.modeLabel')}
-        className="mb-2.5 flex w-full rounded-full border border-gray-200 bg-white p-1 shadow-sm sm:mb-3 sm:inline-flex sm:w-auto"
+        className="mb-3 flex w-full rounded-full border border-gray-200 bg-white p-1 shadow-sm sm:inline-flex sm:w-auto"
       >
         {TABS.map(({ mode: tabMode, icon: Icon, labelKey }) => {
           const active = tabMode === mode
@@ -176,71 +232,58 @@ export default function SearchBar({ mode, onModeChange }: SearchBarProps) {
         })}
       </div>
 
+      {/* ONE search box holding everything, so the button clearly
+          searches with all of it (it used to sit inside the destination
+          field on a phone and read as that field's own button).
+          Phone: a card - destination, the two pickers, a full-width
+          button. Desktop (sm+): the same elements in one pill. */}
       <form
         onSubmit={handleSubmit}
-        className="grid w-full grid-cols-2 gap-1 rounded-2xl border border-gray-200 bg-white p-1.5 text-start shadow-lg sm:flex sm:flex-row sm:items-stretch"
+        className="w-full rounded-3xl border border-gray-200 bg-white p-2 shadow-lg shadow-gray-200/60 transition focus-within:border-brand-300 focus-within:ring-4 focus-within:ring-brand-500/10 sm:flex sm:items-center sm:gap-1 sm:rounded-full sm:p-1.5 sm:ps-4"
       >
-        <label className="col-span-2 flex flex-1 cursor-text items-center gap-3 rounded-xl border-b border-gray-100 px-3 py-2 transition hover:bg-gray-50 sm:col-span-1 sm:border-b-0 sm:px-4 sm:py-2.5">
+        <label className="flex min-w-0 items-center gap-2 px-2 sm:flex-1 sm:px-0">
           <MapPin className="size-5 shrink-0 text-gray-400" aria-hidden />
-          <span className="min-w-0 flex-1">
-            <span className="block text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
-              {t('search.destination')}
-            </span>
-            <input
-              value={city}
-              onChange={(event) => setCity(event.target.value)}
-              placeholder={t('search.destinationPlaceholder')}
-              className="w-full border-0 bg-transparent p-0 text-[15px] text-gray-900 placeholder:text-gray-400 focus:outline-none"
-            />
-          </span>
+          <input
+            value={city}
+            onChange={(event) => setCity(event.target.value)}
+            placeholder={t('search.destinationPlaceholder')}
+            aria-label={t('search.destination')}
+            className="min-w-0 flex-1 border-0 bg-transparent py-2.5 ps-1 text-[15px] text-gray-900 placeholder:text-gray-400 focus:outline-none"
+          />
         </label>
 
-        {/* border-s rather than border-l: the divider belongs between the
-            fields, whichever way they are laid out. */}
-        <SearchSelect
-          label={t('search.propertyType')}
-          icon={<Home className="hidden size-5 shrink-0 text-gray-400 sm:block" aria-hidden />}
-          value={propertyType}
-          onChange={(value) => setPropertyType(value as PropertyType | '')}
-          options={typeOptions}
-          className={cn(
-            'flex-1 sm:col-span-1 sm:border-s sm:border-gray-200',
-            // The budget needs a full row on a phone, so the type does too.
-            mode !== 'short' && 'col-span-2 border-b border-gray-100 sm:border-b-0',
-          )}
-        />
-
-        {mode === 'short' ? (
-          <label className="flex min-w-0 cursor-text items-center gap-3 rounded-xl border-s border-gray-100 px-3 py-2 transition hover:bg-gray-50 sm:w-40 sm:border-gray-200 sm:px-4 sm:py-2.5">
-            <Users className="hidden size-5 shrink-0 text-gray-400 sm:block" aria-hidden />
-            <span className="min-w-0 flex-1">
-              <span className="block text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
-                {t('search.guests')}
-              </span>
-              <input
-                type="number"
-                min={1}
-                value={guests}
-                onChange={(event) => setGuests(event.target.value)}
-                placeholder={t('search.guestsPlaceholder')}
-                className="w-full border-0 bg-transparent p-0 text-[15px] text-gray-900 placeholder:text-gray-400 focus:outline-none"
-              />
-            </span>
-          </label>
-        ) : (
-          <SearchSelect
-            label={`${isBuy ? t('search.budget') : t('search.budgetMonth')} (${currency})`}
-            icon={<Wallet className="hidden size-5 shrink-0 text-gray-400 sm:block" aria-hidden />}
+        <div className="mt-1 flex gap-2 border-t border-gray-100 pt-2 sm:mt-0 sm:shrink-0 sm:gap-1 sm:border-t-0 sm:border-s sm:border-gray-200 sm:ps-1 sm:pt-0">
+          <FilterChip
+            icon={<Home className="size-4 shrink-0" aria-hidden />}
+            value={propertyType}
+            onChange={(value) => setPropertyType(value as PropertyType | '')}
+            options={typeOptions}
+            placeholder={t('propertyType.all')}
+            ariaLabel={t('search.propertyType')}
+            className="flex-1 sm:flex-none"
+          />
+          <FilterChip
+            icon={<Wallet className="size-4 shrink-0" aria-hidden />}
             value={budgetId}
             onChange={setBudgetId}
             options={budgetOptions}
-            className="col-span-2 sm:col-span-1 sm:w-56 sm:border-s sm:border-gray-200"
+            placeholder={budgetPlaceholder}
+            ariaLabel={budgetPlaceholder}
+            className="flex-1 sm:flex-none"
           />
-        )}
+        </div>
 
-        <Button type="submit" icon={<Search className="size-4.5" />} className="col-span-2 h-11 sm:col-span-1 sm:h-12 sm:w-auto">
+        <button
+          type="submit"
+          // A teal sheen (dark -> brand -> light, left to right) + soft
+          // coloured glow + thin top highlight, instead of a flat dark
+          // block. The text sits on the brand-600 middle (5.5:1 contrast
+          // with white - the lighter end never reaches the label).
+          className="group mt-2 inline-flex h-12 w-full shrink-0 items-center justify-center gap-2 rounded-full bg-linear-to-r from-brand-700 via-brand-600 to-brand-500 px-6 text-[15px] font-semibold text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.25),0_8px_20px_-6px_rgb(15_118_110/0.55)] transition hover:from-brand-800 hover:via-brand-700 hover:to-brand-600 hover:shadow-[inset_0_1px_0_rgb(255_255_255/0.25),0_10px_24px_-6px_rgb(15_118_110/0.65)] active:scale-[0.98] focus-visible:ring-[3px] focus-visible:ring-brand-500/30 focus-visible:outline-none sm:mt-0 sm:h-11 sm:w-auto"
+        >
+          <Search className="size-4.5 transition group-hover:scale-110" aria-hidden />
           {t('search.submit')}
-        </Button>
+        </button>
       </form>
     </div>
   )

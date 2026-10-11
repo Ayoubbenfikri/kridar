@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CheckCircle2, MailWarning } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
 
@@ -7,8 +8,12 @@ import { useAuth } from '@/features/auth/useAuth'
  * (creating a property, booking, paying - see routes wrapped in
  * ['auth:sanctum', 'verified']), not on browsing. So this is a
  * reminder banner, not a page that blocks the app.
+ *
+ * Phase O1: translated (it was hardcoded French without accents, and
+ * showed in French to Darija/English visitors too).
  */
 export default function VerifyEmailBanner() {
+  const { t } = useTranslation()
   const { user, isAuthenticated, resendVerification } = useAuth()
   const [sent, setSent] = useState(false)
 
@@ -20,19 +25,19 @@ export default function VerifyEmailBanner() {
         {sent ? (
           <>
             <CheckCircle2 className="size-4 shrink-0" aria-hidden />
-            <span>Email envoye - verifie ta boite de reception.</span>
+            <span>{t('auth.verifyBannerSent')}</span>
           </>
         ) : (
           <>
             <MailWarning className="size-4 shrink-0" aria-hidden />
-            <span>Ton email n'est pas encore verifie.</span>
+            <span>{t('auth.verifyBannerText')}</span>
             <button
               type="button"
               onClick={() => resendVerification.mutate(undefined, { onSuccess: () => setSent(true) })}
               disabled={resendVerification.isPending}
               className="font-semibold underline underline-offset-2 transition hover:no-underline disabled:opacity-50"
             >
-              {resendVerification.isPending ? 'Envoi...' : "Renvoyer l'email"}
+              {resendVerification.isPending ? t('auth.verifyBannerSending') : t('auth.verifyBannerResend')}
             </button>
           </>
         )}
